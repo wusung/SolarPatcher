@@ -1,0 +1,102 @@
+{
+    "nickhider": {
+        "from": "You",
+        "to": "BESTWW",
+        "method": {
+            "name": "IIIlIlIlIIIllIlIIllllllIl",
+            "descriptor": "(Z)Ljava/lang/String;"
+        },
+        "className": "lunar/bF/lllIlIIllllIllIIIlIlIIIll",
+        "isEnabled": false
+    },
+    "fps": {
+        "from": "FPS",
+        "to": "FPM",
+        "method": {
+            "name": "llllllIlIlIIIIIllIIIIIIlI",
+            "descriptor": "()Ljava/lang/String;"
+        },
+        "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
+        "isEnabled": false
+    },
+    "autoGG": {
+        "from": "/achat gg",
+        "to": "Good game",
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
+        },
+        "className": "lunar/bv/llIIIllIIllIIIllIIlIllIIl",
+        "isEnabled": false
+    },
+    "levelHead": {
+        "from": "Level: ",
+        "to": "Braincells: ",
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
+        },
+        "className": "lunar/bv/llIIIllIIllIIIllIIlIllIIl",
+        "isEnabled": false
+    },
+    "freelook": {
+        "method": {
+            "name": "run",
+            "descriptor": "()V"
+        },
+        "isEnabled": false,
+        "className": "lunar/et/llIllIIllIlIlIIIIlIlIllll",
+        "toRemove": {
+            "name": "llIllIIllIlIlIIIIlIlIllll",
+            "descriptor": "(Lcom/google/gson/JsonArray;)V"
+        }
+    },
+    "pinnedServers": {
+        "method": {
+            "name": "run",
+            "descriptor": "()V"
+        },
+        "isEnabled": false,
+        "className": "lunar/et/llIllIIllIlIlIIIIlIlIllll",
+        "toRemove": {
+            "name": "llIIIllIIllIIIllIIlIllIIl",
+            "descriptor": "(Lcom/google/gson/JsonArray;)V"
+        }
+    },
+    "blogPosts": {
+        "method": {
+            "name": "run",
+            "descriptor": "()V"
+        },
+        "isEnabled": false,
+        "className": "lunar/et/llIllIIllIlIlIIIIlIlIllll",
+        "toRemove": {
+            "name": "forEach",
+            "descriptor": "(Ljava/util/function/Consumer;)V"
+        }
+    },
+    "modpacketRemoval": {
+        "isEnabled": true,
+        "className": "com/lunarclient/bukkitapi/nethandler/LCPacket"
+    },
+    "mantleIntegration": {
+        "from": "s.optifine.net",
+        "to": "capes.mantle.gg",
+        "isEnabled": false,
+        "className": "lunar/a/llIllIIllIlIlIIIIlIlIllll",
+        "method": {
+            "name": "<clinit>",
+            "descriptor": "()V"
+        }
+    },
+    "windowName": {
+        "from": "Lunar Client (\u0001-\u0001/\u0001)",
+        "to": "Solar Tweaks",
+        "isEnabled": false,
+        "className": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
+        "method": {
+            "name": "llIIIllIIllIIIllIIlIllIIl",
+            "descriptor": "()Ljava/lang/String;"
+        }
+    }
+}
