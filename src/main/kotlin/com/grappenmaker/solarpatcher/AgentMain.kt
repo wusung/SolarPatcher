@@ -12,7 +12,7 @@ fun premain(arg: String?, inst: Instrumentation) {
     // Get the config based on the args
     val filename = arg ?: "config.json"
     val config = try {
-        Json.decodeFromString(File(filename).readText())
+        Json { ignoreUnknownKeys = true }.decodeFromString(File(filename).readText())
     } catch (e: Exception) {
         e.printStackTrace()
         println("Something went wrong loading the config, error is above")
@@ -22,7 +22,7 @@ fun premain(arg: String?, inst: Instrumentation) {
 
     // Define transforms and visitors
     val transforms = config.getModules()
-//        .filter { it.isEnabled }
+       .filter { it.isEnabled }
         .map { it.asTransform() }
 
     // Add them to the instrumentation backend implementation of the jvm

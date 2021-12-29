@@ -101,7 +101,6 @@ data class LevelHead(
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
-// serverIntegration
 @Serializable
 data class Freelook(
     override val method: MethodDescription = runMethodDescription,
@@ -116,7 +115,6 @@ data class Freelook(
     override val popCount = 2
 }
 
-// pinnedServers
 @Serializable
 data class PinnedServers(
     override val method: MethodDescription = runMethodDescription,
