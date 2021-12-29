@@ -90,8 +90,7 @@
         }
     },
     "windowName": {
-        "from": "Lunar Client (\u0001-\u0001/\u0001)",
-        "to": "Solar Tweaks",
+        "name": "SolarTweaks",
         "isEnabled": false,
         "className": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
         "method": {
