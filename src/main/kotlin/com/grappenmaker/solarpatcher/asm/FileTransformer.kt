@@ -1,8 +1,7 @@
-package com.grappenmaker.solarpatcher
+package com.grappenmaker.solarpatcher.asm
 
-import com.grappenmaker.solarpatcher.util.ClassTransform
-import com.grappenmaker.solarpatcher.util.TransformVisitor
-import com.grappenmaker.solarpatcher.util.toVisitor
+import com.grappenmaker.solarpatcher.asm.util.LoaderClassWriter
+import com.grappenmaker.solarpatcher.asm.util.toVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.TraceClassVisitor
@@ -26,27 +25,33 @@ class FileTransformer(
         val classTransform = transforms.getFromName(className) ?: return null
 
         // Not interested to transform if there are no transforms or visitors
-        if (classTransform.methodTransformers.isEmpty() && classTransform.visitors.isEmpty()) return null
+        if (classTransform.methodTransforms.isEmpty() && classTransform.visitors.isEmpty()) return null
         val actualLoader = loader ?: return null // Not interested in transforming classes from bootstrap loader
 
         val reader = ClassReader(classFile)
         val writer = LoaderClassWriter(actualLoader, reader, ClassWriter.COMPUTE_FRAMES)
 
-        val parent = if (debug) TraceClassVisitor(writer, PrintWriter(System.out)) else writer
-        val visitor = classTransform.visitors.toVisitor(parent)
-
         try {
+//            val parent = if (debug) TraceClassVisitor(writer, PrintWriter(System.out)) else writer
+//            val visitor = classTransform.visitors.toVisitor(parent)
+            val visitor = classTransform.visitors.toVisitor(writer)
             val options = (if (removeDebugInfo) ClassReader.SKIP_DEBUG else 0) or
                     if (classTransform.shouldExpand) ClassReader.EXPAND_FRAMES else 0
 
-            reader.accept(TransformVisitor(classTransform.methodTransformers, visitor), options)
+            reader.accept(TransformVisitor(classTransform.methodTransforms, visitor), options)
         } catch (e: Exception) {
             println("Error while transforming: $e")
             e.printStackTrace()
             return null
         }
 
-        return writer.toByteArray()
+        return writer.toByteArray().also {
+            if (debug) {
+                println("Result of transforming $className (applying ${classTransform.methodTransforms.size} transforms)")
+                println()
+                ClassReader(it).accept(TraceClassVisitor(PrintWriter(System.out)), 0)
+            }
+        }
     }
 }
 
@@ -55,7 +60,7 @@ private fun Collection<ClassTransform>.getFromName(className: String) =
     filter { it.className == className }.reduceOrNull { acc, cur ->
         ClassTransform(
             className,
-            acc.methodTransformers + cur.methodTransformers,
+            acc.methodTransforms + cur.methodTransforms,
             acc.visitors + cur.visitors,
             acc.shouldExpand || cur.shouldExpand
         )

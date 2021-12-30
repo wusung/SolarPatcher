@@ -1,4 +1,5 @@
 {
+    "enableAll": true,
     "nickhider": {
         "from": "You",
         "to": "BESTWW",
@@ -31,7 +32,7 @@
     },
     "levelHead": {
         "from": "Level: ",
-        "to": "Braincells: ",
+        "to": "IQ: ",
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
             "descriptor": "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
@@ -90,11 +91,28 @@
         }
     },
     "windowName": {
-        "name": "SolarTweaks",
+        "to": "SolarTweaks",
         "isEnabled": false,
         "className": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
         "method": {
             "name": "llIIIllIIllIIIllIIlIllIIl",
+            "descriptor": "()Ljava/lang/String;"
+        }
+    },
+    "noHitDelay": {
+        "isEnabled": false,
+        "className": "lunar/es/llIllIIllIlIlIIIIlIlIllll",
+        "method": {
+            "name": "llIIIllIIllIIIllIIlIllIIl",
+            "descriptor": "()Ljava/util/Map;"
+        }
+    },
+    "fpsSpoof": {
+        "multiplier": 2.0,
+        "isEnabled": false,
+        "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
+        "method": {
+            "name": "llllllIlIlIIIIIllIIIIIIlI",
             "descriptor": "()Ljava/lang/String;"
         }
     }

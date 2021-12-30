@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.grappenmaker"
-version = "1.0.0"
+version = "1.1"
 
 repositories {
     mavenCentral()
@@ -40,7 +40,7 @@ tasks.create("saveDefaultConfig") {
         )
 
         val args = arrayOf("config.example.json")
-        Class.forName("com.grappenmaker.solarpatcher.SaveDefaultConfig", true, classLoader)
+        Class.forName("com.grappenmaker.solarpatcher.config.SaveDefaultConfig", true, classLoader)
             .getMethod("main", args::class.java)(null, args)
     }
 }

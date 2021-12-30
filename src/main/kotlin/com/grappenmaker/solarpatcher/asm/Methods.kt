@@ -1,4 +1,4 @@
-package com.grappenmaker.solarpatcher.util
+package com.grappenmaker.solarpatcher.asm
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

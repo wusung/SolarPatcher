@@ -1,4 +1,4 @@
-package com.grappenmaker.solarpatcher.util
+package com.grappenmaker.solarpatcher.asm
 
 import org.objectweb.asm.Type
 import java.lang.reflect.Method

@@ -1,6 +1,8 @@
-package com.grappenmaker.solarpatcher.util
+package com.grappenmaker.solarpatcher.asm
 
-import com.grappenmaker.solarpatcher.API
+import com.grappenmaker.solarpatcher.asm.util.ClassVisitorWrapper
+import com.grappenmaker.solarpatcher.asm.util.MethodVisitorWrapper
+import com.grappenmaker.solarpatcher.config.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle
 import org.objectweb.asm.MethodVisitor
@@ -39,8 +41,8 @@ class TransformVisitor(private val transforms: List<MethodTransform>, parent: Cl
 // A class transformer
 class ClassTransform(
     val className: String,
-    val methodTransformers: List<MethodTransform> = listOf(),
-    val visitors: List<(ClassVisitor) -> ClassVisitor> = listOf(),
+    val methodTransforms: List<MethodTransform> = listOf(),
+    val visitors: List<ClassVisitorWrapper> = listOf(),
     val shouldExpand: Boolean = false
 )
 
@@ -179,4 +181,12 @@ class ImplementTransform(
             parent.visitEnd()
         }
     }
+}
+
+// Utility to wrap a methodvisitor into a transform
+class VisitorTransform(
+    desc: MethodDescription,
+    val visitor: MethodVisitorWrapper
+) : MethodTransform(desc) {
+    override fun asVisitor(parent: MethodVisitor) = visitor(parent)
 }

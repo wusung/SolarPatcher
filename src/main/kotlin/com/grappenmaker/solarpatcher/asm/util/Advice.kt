@@ -1,6 +1,7 @@
-package com.grappenmaker.solarpatcher.util
+package com.grappenmaker.solarpatcher.asm.util
 
-import com.grappenmaker.solarpatcher.API
+import com.grappenmaker.solarpatcher.asm.MethodDescription
+import com.grappenmaker.solarpatcher.config.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.AdviceAdapter
@@ -14,10 +15,10 @@ fun createAdvice(
     desc: MethodDescription,
     parent: MethodVisitor,
     enterAdvice: MethodVisitor.() -> Unit = {},
-    exitAdvice: MethodVisitor.() -> Unit = {}
+    exitAdvice: MethodVisitor.(Int) -> Unit = {}
 ) = object : AdviceAdapter(API, parent, desc.access, desc.name, desc.descriptor) {
     override fun onMethodEnter() = enterAdvice()
-    override fun onMethodExit(opcode: Int) = exitAdvice()
+    override fun onMethodExit(opcode: Int) = exitAdvice(opcode)
 }
 
 // Creates a class visitor that applies advice to a given method
@@ -29,7 +30,7 @@ class AdviceClassVisitor(
     parent: ClassVisitor,
     private val desc: MethodDescription,
     private val enterAdvice: MethodVisitor.() -> Unit = {},
-    private val exitAdvice: MethodVisitor.() -> Unit = {}
+    private val exitAdvice: MethodVisitor.(Int) -> Unit = {}
 ) : ClassVisitor(API, parent) {
     private lateinit var owner: String
 

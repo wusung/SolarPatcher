@@ -1,4 +1,4 @@
-package com.grappenmaker.solarpatcher
+package com.grappenmaker.solarpatcher.asm.util
 
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter

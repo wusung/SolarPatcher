@@ -1,40 +1,16 @@
 package com.grappenmaker.solarpatcher
 
-import com.grappenmaker.solarpatcher.util.*
+import com.grappenmaker.solarpatcher.asm.*
+import com.grappenmaker.solarpatcher.asm.util.AdviceClassVisitor
+import com.grappenmaker.solarpatcher.config.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
+import kotlin.math.floor
 
 private const val metadataClass = "lunar/et/llIllIIllIlIlIIIIlIlIllll"
-
-@Serializable
-data class Configuration(
-    val nickhider: Nickhider = Nickhider(),
-    val fps: FPS = FPS(),
-    val autoGG: AutoGG = AutoGG(),
-    val levelHead: LevelHead = LevelHead(),
-    val freelook: Freelook = Freelook(),
-    val pinnedServers: PinnedServers = PinnedServers(),
-    val blogPosts: BlogPosts = BlogPosts(),
-    val modpacketRemoval: ModpacketRemoval = ModpacketRemoval(),
-    val mantleIntegration: MantleIntegration = MantleIntegration(),
-    val windowName: WindowName = WindowName()
-) {
-    fun getModules() = arrayOf(
-        nickhider,
-        fps,
-        autoGG,
-        levelHead,
-        freelook,
-        pinnedServers,
-        blogPosts,
-        modpacketRemoval,
-        mantleIntegration,
-        windowName
-    )
-}
 
 @Serializable
 sealed class Module {
@@ -92,7 +68,7 @@ data class AutoGG(
 @Serializable
 data class LevelHead(
     override val from: String = defaultLevelHeadText,
-    override val to: String = "Braincells: ",
+    override val to: String = "IQ: ",
     override val method: MethodDescription = MethodDescription(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
@@ -150,6 +126,14 @@ data class ModpacketRemoval(
             parent,
             MethodDescription("addPacket", "(ILjava/lang/Class;)V"),
             enterAdvice = {
+                // Debug log
+                visitPrint("Adding packet id ")
+                visitPrint {
+                    loadVariable(0)
+                    invokeMethod(Integer::class.java.getMethod("toString"))
+                }
+                visitPrint("\n")
+
                 loadVariable(0)
                 visitIntInsn(BIPUSH, 31)
 
@@ -173,13 +157,71 @@ data class MantleIntegration(
 
 @Serializable
 data class WindowName(
-    val name: String = "SolarTweaks",
+    val to: String = "SolarTweaks",
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
     private val method = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/lang/String;")
     override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method) {
-        visitLdcInsn(name)
+        visitLdcInsn(to)
         returnMethod(ARETURN)
     }))
+}
+
+private const val serverRuleClass = "com/lunarclient/bukkitapi/nethandler/client/obj/ServerRule"
+
+@Serializable
+data class NoHitDelay(
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/es/llIllIIllIlIlIIIIlIlIllll"
+) : Module() {
+    private val method = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/util/Map;")
+    override fun asTransform() = ClassTransform(className, visitors = listOf {
+        AdviceClassVisitor(it, method, exitAdvice = { opcode: Int ->
+            if (opcode == ARETURN) {
+                // No, this is not a redundant dup-pop
+                dup()
+                visitFieldInsn(GETSTATIC, serverRuleClass, "LEGACY_COMBAT", "L$serverRuleClass;")
+                visitInsn(ICONST_1)
+                invokeMethod(java.lang.Boolean::class.java.getMethod("valueOf", Boolean::class.javaPrimitiveType))
+                invokeMethod(Map::class.java.getMethod("put", Object::class.java, Object::class.java))
+                pop()
+            }
+        })
+    }, shouldExpand = true)
+}
+
+@Serializable
+data class FPSSpoof(
+    val multiplier: Double = 2.0,
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    private val method = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;")
+    override fun asTransform() = ClassTransform(className, listOf(InvokeAdviceTransform(
+        method,
+        MethodDescription("bridge\$getDebugFPS", "()I"),
+        afterAdvice = {
+            // Load multiplier after getting fps
+            if (floor(multiplier) == multiplier && multiplier <= 0xFF) {
+                // Whole number, can load as byte integer
+                visitIntInsn(BIPUSH, multiplier.toInt())
+
+                // Can immediately multiply
+                visitInsn(IMUL)
+            } else {
+                // Can't immediately multiply, should first convert fps to double
+                visitInsn(I2D)
+
+                // Should use ldc instruction
+                visitLdcInsn(multiplier)
+
+                // Multiply now
+                visitInsn(DMUL)
+
+                // Convert back to int
+                visitInsn(D2I)
+            }
+        }
+    )))
 }

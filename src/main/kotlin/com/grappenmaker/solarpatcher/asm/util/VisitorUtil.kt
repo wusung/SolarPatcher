@@ -1,4 +1,4 @@
-package com.grappenmaker.solarpatcher.util
+package com.grappenmaker.solarpatcher.asm.util
 
 import org.objectweb.asm.*
 

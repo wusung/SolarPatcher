@@ -1,7 +1,7 @@
-package com.grappenmaker.solarpatcher.util
+package com.grappenmaker.solarpatcher.asm
 
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import java.io.PrintStream
 import java.lang.reflect.Constructor
@@ -35,7 +35,7 @@ fun MethodVisitor.invokeMethod(invocationType: InvocationType, methodDescription
 // Caller is responsible for providing a target, if applicable
 fun MethodVisitor.getField(field: Field) =
     visitFieldInsn(
-        if (Modifier.isStatic(field.modifiers)) Opcodes.GETSTATIC else Opcodes.GETFIELD,
+        if (Modifier.isStatic(field.modifiers)) GETSTATIC else GETFIELD,
         field.declaringClass.internalName,
         field.name,
         Type.getDescriptor(field.type)
@@ -45,7 +45,7 @@ fun MethodVisitor.getField(field: Field) =
 // Caller is responsible for providing a value and target
 fun MethodVisitor.setField(field: Field) =
     visitFieldInsn(
-        if (Modifier.isStatic(field.modifiers)) Opcodes.PUTSTATIC else Opcodes.PUTFIELD,
+        if (Modifier.isStatic(field.modifiers)) PUTSTATIC else PUTFIELD,
         field.declaringClass.internalName,
         field.name,
         Type.getDescriptor(field.type)
@@ -55,11 +55,11 @@ fun MethodVisitor.setField(field: Field) =
 // New instance will be pushed onto the stack
 // Arguments for the constructor are initialized with the given block
 inline fun MethodVisitor.construct(constructor: Constructor<*>, block: MethodVisitor.() -> Unit = {}) {
-    visitTypeInsn(Opcodes.NEW, constructor.declaringClass.internalName)
-    visitInsn(Opcodes.DUP)
+    visitTypeInsn(NEW, constructor.declaringClass.internalName)
+    visitInsn(DUP)
     block()
     visitMethodInsn(
-        Opcodes.INVOKESPECIAL,
+        INVOKESPECIAL,
         constructor.declaringClass.internalName,
         "<init>",
         Type.getConstructorDescriptor(constructor),
@@ -95,15 +95,21 @@ fun MethodVisitor.visitPrint(string: String) = visitPrint { visitLdcInsn(string)
 // Utility to pop n elements from the stack
 fun MethodVisitor.pop(n: Int = 1) {
     require(n >= 1) { "Can only pop at least one element from the stack" }
-    repeat(n) { visitInsn(Opcodes.POP) }
+    repeat(n) { visitInsn(POP) }
+}
+
+// Utility to duplicate n elements onto the stack
+fun MethodVisitor.dup(n: Int = 1) {
+    require(n >= 1) { "At least one duplication should be performed" }
+    repeat(n) { visitInsn(DUP) }
 }
 
 // Utility to return the method
 // Return type must be valid
-fun MethodVisitor.returnMethod(opcode: Int = Opcodes.RETURN) {
+fun MethodVisitor.returnMethod(opcode: Int = RETURN) {
     require(opcode in (172..177)) { "Must be valid return" }
     visitInsn(opcode)
 }
 
 // Utililty to load a local variable or parameter
-fun MethodVisitor.loadVariable(num: Int, opcode: Int = Opcodes.ALOAD) = visitVarInsn(opcode, num)
+fun MethodVisitor.loadVariable(num: Int, opcode: Int = ALOAD) = visitVarInsn(opcode, num)
