@@ -1,5 +1,5 @@
 {
-    "enableAll": true,
+    "enableAll": false,
     "nickhider": {
         "from": "You",
         "to": "BESTWW",
@@ -22,7 +22,7 @@
     },
     "autoGG": {
         "from": "/achat gg",
-        "to": "Good game",
+        "to": "/ac Good game",
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
             "descriptor": "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
@@ -92,28 +92,59 @@
     },
     "windowName": {
         "to": "SolarTweaks",
-        "isEnabled": false,
-        "className": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
         "method": {
             "name": "llIIIllIIllIIIllIIlIllIIl",
             "descriptor": "()Ljava/lang/String;"
-        }
+        },
+        "isEnabled": false,
+        "className": "lunar/as/llIllIIllIlIlIIIIlIlIllll"
     },
     "noHitDelay": {
-        "isEnabled": false,
-        "className": "lunar/es/llIllIIllIlIlIIIIlIlIllll",
         "method": {
             "name": "llIIIllIIllIIIllIIlIllIIl",
             "descriptor": "()Ljava/util/Map;"
-        }
+        },
+        "isEnabled": false,
+        "className": "lunar/es/llIllIIllIlIlIIIIlIlIllll"
     },
     "fpsSpoof": {
         "multiplier": 2.0,
-        "isEnabled": false,
-        "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
         "method": {
             "name": "llllllIlIlIIIIIllIIIIIIlI",
             "descriptor": "()Ljava/lang/String;"
-        }
+        },
+        "isEnabled": false,
+        "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
+    },
+    "customCommands": {
+        "commands": {
+            "qb": {
+                "prefix": "/play duels_bridge_duel",
+                "suffix": ""
+            },
+            "qbd": {
+                "prefix": "/play duels_bridge_doubles",
+                "suffix": ""
+            },
+            "db": {
+                "prefix": "/duel ",
+                "suffix": " bridge"
+            }
+        },
+        "isEnabled": false,
+        "className": "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
+        "instanceName": "llIllIIllIlIlIIIIlIlIllll",
+        "registerMethod": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z"
+        },
+        "chatEventClass": "lunar/aH/llIlIIIllIlllllIllIIIIIlI"
+    },
+    "rpcUpdate": {
+        "clientID": 920998351430901790,
+        "icon": "logo",
+        "iconText": "Solar Tweaks",
+        "isEnabled": true,
+        "className": "lunar/et/llIlIIIllIlllllIllIIIIIlI"
     }
 }

@@ -17,7 +17,9 @@ data class Configuration(
     val mantleIntegration: MantleIntegration = MantleIntegration(),
     val windowName: WindowName = WindowName(),
     val noHitDelay: NoHitDelay = NoHitDelay(),
-    val fpsSpoof: FPSSpoof = FPSSpoof()
+    val fpsSpoof: FPSSpoof = FPSSpoof(),
+    val customCommands: CustomCommands = CustomCommands(),
+    val rpcUpdate: RPCUpdate = RPCUpdate()
 ) {
     fun getModules() = arrayOf(
         nickhider,
@@ -31,6 +33,8 @@ data class Configuration(
         mantleIntegration,
         windowName,
         noHitDelay,
-        fpsSpoof
+        fpsSpoof,
+        customCommands,
+        rpcUpdate
     )
 }

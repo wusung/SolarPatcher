@@ -2,12 +2,15 @@ package com.grappenmaker.solarpatcher
 
 import com.grappenmaker.solarpatcher.asm.*
 import com.grappenmaker.solarpatcher.asm.util.AdviceClassVisitor
+import com.grappenmaker.solarpatcher.asm.util.replaceLdcs
 import com.grappenmaker.solarpatcher.config.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
+import java.util.function.Consumer
 import kotlin.math.floor
 
 private const val metadataClass = "lunar/et/llIllIIllIlIlIIIIlIlIllll"
@@ -56,7 +59,7 @@ data class FPS(
 @Serializable
 data class AutoGG(
     override val from: String = defaultAutoGGText,
-    override val to: String = "Good game",
+    override val to: String = "/ac Good game",
     override val method: MethodDescription = MethodDescription(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
@@ -126,14 +129,6 @@ data class ModpacketRemoval(
             parent,
             MethodDescription("addPacket", "(ILjava/lang/Class;)V"),
             enterAdvice = {
-                // Debug log
-                visitPrint("Adding packet id ")
-                visitPrint {
-                    loadVariable(0)
-                    invokeMethod(Integer::class.java.getMethod("toString"))
-                }
-                visitPrint("\n")
-
                 loadVariable(0)
                 visitIntInsn(BIPUSH, 31)
 
@@ -158,10 +153,10 @@ data class MantleIntegration(
 @Serializable
 data class WindowName(
     val to: String = "SolarTweaks",
+    val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/lang/String;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
-    private val method = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/lang/String;")
     override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method) {
         visitLdcInsn(to)
         returnMethod(ARETURN)
@@ -172,10 +167,10 @@ private const val serverRuleClass = "com/lunarclient/bukkitapi/nethandler/client
 
 @Serializable
 data class NoHitDelay(
+    val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/util/Map;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/es/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
-    private val method = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/util/Map;")
     override fun asTransform() = ClassTransform(className, visitors = listOf {
         AdviceClassVisitor(it, method, exitAdvice = { opcode: Int ->
             if (opcode == ARETURN) {
@@ -194,10 +189,10 @@ data class NoHitDelay(
 @Serializable
 data class FPSSpoof(
     val multiplier: Double = 2.0,
+    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
-    private val method = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;")
     override fun asTransform() = ClassTransform(className, listOf(InvokeAdviceTransform(
         method,
         MethodDescription("bridge\$getDebugFPS", "()I"),
@@ -224,4 +219,88 @@ data class FPSSpoof(
             }
         }
     )))
+}
+
+@Serializable
+data class CustomCommands(
+    val commands: Map<String, Command> = mapOf(
+        "qb" to Command("/play duels_bridge_duel"),
+        "qbd" to Command("/play duels_bridge_doubles"),
+        "db" to Command("/duel ", " bridge")
+    ),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
+    val instanceName: String = "llIllIIllIlIlIIIIlIlIllll",
+    val registerMethod: MethodDescription = MethodDescription(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z",
+        className
+    ),
+    val chatEventClass: String = "lunar/aH/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    companion object {
+        // Instance of this class, initialized at runtime
+        @JvmStatic
+        lateinit var INSTANCE: CustomCommands
+
+        // Function that will return our listener (at runtime),
+        // so that we don't have to implement it with bytecode
+        @Suppress("Unused") // it is used obviously
+        @JvmStatic
+        fun handler() = Consumer<Any?> { event ->
+            val textField = event.javaClass.fields.first()
+            val text = textField[event] as String
+            if (!text.startsWith("/")) return@Consumer
+
+            val components = text.split(" ")
+            INSTANCE.commands[components.first().substring(1)]?.let {
+                // Change text sent
+                textField[event] = it.prefix + components.drop(1).joinToString(" ") + it.suffix
+            }
+        }
+    }
+
+    override fun asTransform() = ClassTransform(className, visitors = listOf {
+        AdviceClassVisitor(it, MethodDescription.CLINIT, exitAdvice = {
+            // Set instance of customcommands
+            INSTANCE = this@CustomCommands
+
+            // Get event bus instance
+            visitFieldInsn(GETSTATIC, className, instanceName, "L$className;")
+
+            // Load chat event class onto the stack
+            visitLdcInsn(Type.getObjectType(chatEventClass))
+
+            // Load consumer onto the stack
+            invokeMethod(
+                InvocationType.STATIC,
+                MethodDescription(
+                    "handler",
+                    "()L${Consumer::class.java.internalName};",
+                    CustomCommands::class.java.internalName
+                )
+            )
+
+            // Register custom listener
+            invokeMethod(InvocationType.VIRTUAL, registerMethod)
+        })
+    })
+}
+
+@Serializable
+data class Command(val prefix: String, val suffix: String = "")
+
+@Serializable
+data class RPCUpdate(
+    val clientID: Long = 920998351430901790,
+    val icon: String = "logo",
+    val iconText: String = "Solar Tweaks",
+    override val isEnabled: Boolean = true,
+    override val className: String = "lunar/et/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    override fun asTransform() = ClassTransform(className, visitors = listOf { replaceLdcs(it, mapOf(
+        562286213059444737L to clientID,
+        "icon_07_11_2020" to icon,
+        "Lunar Client" to iconText
+    )) })
 }
