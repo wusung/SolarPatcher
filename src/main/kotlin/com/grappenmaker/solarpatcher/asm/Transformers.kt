@@ -3,9 +3,9 @@ package com.grappenmaker.solarpatcher.asm
 import com.grappenmaker.solarpatcher.asm.util.ClassVisitorWrapper
 import com.grappenmaker.solarpatcher.asm.util.MethodVisitorWrapper
 import com.grappenmaker.solarpatcher.config.API
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.Handle
-import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.*
+import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type.*
 import java.lang.reflect.Method
 
 // A visitor that applies method transforms
@@ -148,7 +148,7 @@ class RemoveInvokeTransform(
     desc: MethodDescription,
     invokedDescription: MethodDescription,
     popCount: Int = 0
-) : ReplaceCodeTransform(desc, invokedDescription, { _, _ -> pop(popCount) })
+) : ReplaceCodeTransform(desc, invokedDescription, { _, _ -> if (popCount > 0) pop(popCount) })
 
 // Transformer to add code before and/or after a method call
 class InvokeAdviceTransform(
@@ -168,7 +168,7 @@ class InvokeAdviceTransform(
 // WARNING: all other transforms are likely not to work with this transform,
 // same for visitors. Use with cause!
 // Parameters (and other meta) should also be declared manually (again)
-class ImplementTransform(
+open class ImplementTransform(
     desc: MethodDescription,
     val implementation: MethodVisitor.() -> Unit
 ) : MethodTransform(desc) {
@@ -182,6 +182,37 @@ class ImplementTransform(
         }
     }
 }
+
+// Transfomer to replace the method with a stub method
+class StubMethodTransform(desc: MethodDescription) : ImplementTransform(desc, {
+    val returnType = getMethodType(desc.descriptor).returnType
+    when (returnType.sort) {
+        VOID -> visitInsn(RETURN)
+        BOOLEAN, BYTE, SHORT, CHAR, INT -> {
+            visitInsn(ICONST_0)
+            visitInsn(IRETURN)
+        }
+        Type.FLOAT -> {
+            visitInsn(ICONST_0)
+            visitInsn(I2F)
+            visitInsn(FRETURN)
+        }
+        Type.DOUBLE -> {
+            visitInsn(ICONST_0)
+            visitInsn(I2D)
+            visitInsn(DRETURN)
+        }
+        Type.LONG -> {
+            visitInsn(ICONST_0)
+            visitInsn(I2L)
+            visitInsn(LRETURN)
+        }
+        OBJECT, ARRAY -> {
+            visitInsn(ACONST_NULL)
+            visitInsn(ARETURN)
+        }
+    }
+})
 
 // Utility to wrap a methodvisitor into a transform
 class VisitorTransform(

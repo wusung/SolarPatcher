@@ -8,10 +8,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Label
+import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
+import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
 import kotlin.math.floor
+import kotlin.reflect.jvm.javaMethod
 
 private const val metadataClass = "lunar/et/llIllIIllIlIlIIIIlIlIllll"
 
@@ -54,6 +57,15 @@ data class FPS(
     override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
     override val isEnabled: Boolean = false
+) : TextTransformModule()
+
+@Serializable
+data class CPS(
+    override val from: String = "CPS",
+    override val to: String = "CPM",
+    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bk/llIlIIIllIlllllIllIIIIIlI",
 ) : TextTransformModule()
 
 @Serializable
@@ -196,29 +208,81 @@ data class FPSSpoof(
     override fun asTransform() = ClassTransform(className, listOf(InvokeAdviceTransform(
         method,
         MethodDescription("bridge\$getDebugFPS", "()I"),
-        afterAdvice = {
-            // Load multiplier after getting fps
-            if (floor(multiplier) == multiplier && multiplier <= 0xFF) {
-                // Whole number, can load as byte integer
-                visitIntInsn(BIPUSH, multiplier.toInt())
-
-                // Can immediately multiply
-                visitInsn(IMUL)
-            } else {
-                // Can't immediately multiply, should first convert fps to double
-                visitInsn(I2D)
-
-                // Should use ldc instruction
-                visitLdcInsn(multiplier)
-
-                // Multiply now
-                visitInsn(DMUL)
-
-                // Convert back to int
-                visitInsn(D2I)
-            }
-        }
+        afterAdvice = { spoof(multiplier) }
     )))
+}
+
+@Serializable
+data class CPSSpoof(
+    val chance: Double = .1,
+    val method: MethodDescription = MethodDescription(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V"
+    ),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/dp/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    init {
+        require(chance > 0 && chance < 1) { "chance must be >0 and <1" }
+    }
+
+    override fun asTransform(): ClassTransform {
+        return ClassTransform(className, listOf(InvokeAdviceTransform(
+            method,
+            MethodDescription("add", "(Ljava/lang/Object;)Z"),
+            afterAdvice = {
+                // Init label
+                val label = Label()
+
+                // Boolean from add
+                pop()
+
+                // Load chance, get random double
+                visitLdcInsn(chance)
+                invokeMethod(ThreadLocalRandom::current.javaMethod!!)
+                invokeMethod(java.util.Random::class.java.getMethod("nextDouble"))
+
+                // Check if chance is met, if so, add another
+                visitInsn(DCMPG)
+                visitJumpInsn(IFLE, label)
+
+                // Call ourselves. Yep, hacky, but idk what else to do
+                // because if i were to visit another add method, that would get advice too...
+                loadVariable(0)
+                loadVariable(1)
+                visitMethodInsn(INVOKEVIRTUAL, className, method.name, method.descriptor, false)
+
+                // Done, let's add back a fake boolean, because otherwise
+                // the stack height doesn't match
+                visitLabel(label)
+                visitInsn(ICONST_1)
+            }
+        )))
+    }
+}
+
+// Util to multiply by arbitrary double value
+// Used for spoofing cps/fps values
+private fun MethodVisitor.spoof(multiplier: Double) {
+    if (floor(multiplier) == multiplier && multiplier <= 0xFF) {
+        // Whole number, can load as byte integer
+        visitIntInsn(BIPUSH, multiplier.toInt())
+
+        // Can immediately multiply
+        visitInsn(IMUL)
+    } else {
+        // Can't immediately multiply, should first convert fps/cps to double
+        visitInsn(I2D)
+
+        // Should use ldc instruction
+        visitLdcInsn(multiplier)
+
+        // Multiply now
+        visitInsn(DMUL)
+
+        // Convert back to int
+        visitInsn(D2I)
+    }
 }
 
 @Serializable
@@ -226,7 +290,8 @@ data class CustomCommands(
     val commands: Map<String, Command> = mapOf(
         "qb" to Command("/play duels_bridge_duel"),
         "qbd" to Command("/play duels_bridge_doubles"),
-        "db" to Command("/duel ", " bridge")
+        "db" to Command("/duel ", " bridge"),
+        "bwp" to Command("/play bedwars_practice")
     ),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
@@ -298,9 +363,39 @@ data class RPCUpdate(
     override val isEnabled: Boolean = true,
     override val className: String = "lunar/et/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
-    override fun asTransform() = ClassTransform(className, visitors = listOf { replaceLdcs(it, mapOf(
-        562286213059444737L to clientID,
-        "icon_07_11_2020" to icon,
-        "Lunar Client" to iconText
-    )) })
+    override fun asTransform() = ClassTransform(className, visitors = listOf {
+        replaceLdcs(
+            it, mapOf(
+                562286213059444737L to clientID,
+                "icon_07_11_2020" to icon,
+                "Lunar Client" to iconText
+            )
+        )
+    })
+}
+
+@Serializable
+data class WebsocketPrivacy(
+    val method: MethodDescription = MethodDescription(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V"
+    ),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/av/lllIIIllllllIlIIIIIlIIlII"
+) : Module() {
+    override fun asTransform() = ClassTransform(className, listOf(StubMethodTransform(method)))
+}
+
+@Serializable
+data class UncapReach(
+    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    override fun asTransform() =
+        ClassTransform(
+            className,
+            listOf(RemoveInvokeTransform(method, MethodDescription("min", "(DD)D"))),
+            listOf { parent: ClassVisitor -> replaceLdcs(parent, mapOf(3.0 to null)) }
+        )
 }

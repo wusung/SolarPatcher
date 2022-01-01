@@ -21,7 +21,7 @@ fun Collection<FieldVisitorWrapper>.toVisitor(parent: FieldVisitor) = foldWrappe
 fun Collection<MethodVisitorWrapper>.toVisitor(parent: MethodVisitor) = foldWrappers(parent)
 
 // Utility to remap ldc instructions
-fun replaceLdcs(parent: ClassVisitor, map: Map<Any, Any>) = object : ClassVisitor(API, parent) {
+fun replaceLdcs(parent: ClassVisitor, map: Map<Any, Any?>) = object : ClassVisitor(API, parent) {
     override fun visitMethod(
         access: Int,
         name: String,
@@ -30,10 +30,13 @@ fun replaceLdcs(parent: ClassVisitor, map: Map<Any, Any>) = object : ClassVisito
         exceptions: Array<out String>?
     ) = object : MethodVisitor(API, super.visitMethod(access, name, descriptor, signature, exceptions)) {
         override fun visitLdcInsn(value: Any?) {
-            super.visitLdcInsn(when (value) {
-                in map -> map.getValue(value!!)
-                else -> value
-            })
+            when (value) {
+                in map -> {
+                    val replace = map.getValue(value!!)
+                    if (replace != null) super.visitLdcInsn(replace)
+                }
+                else -> super.visitLdcInsn(value)
+            }
         }
     }
 }

@@ -20,6 +20,16 @@
         "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
         "isEnabled": false
     },
+    "cps": {
+        "from": "CPS",
+        "to": "CPM",
+        "method": {
+            "name": "llllllIlIlIIIIIllIIIIIIlI",
+            "descriptor": "()Ljava/lang/String;"
+        },
+        "isEnabled": false,
+        "className": "lunar/bk/llIlIIIllIlllllIllIIIIIlI"
+    },
     "autoGG": {
         "from": "/achat gg",
         "to": "/ac Good game",
@@ -116,6 +126,15 @@
         "isEnabled": false,
         "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
     },
+    "cpsSpoof": {
+        "chance": 0.1,
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V"
+        },
+        "isEnabled": false,
+        "className": "lunar/dp/llIlIIIllIlllllIllIIIIIlI"
+    },
     "customCommands": {
         "commands": {
             "qb": {
@@ -129,6 +148,10 @@
             "db": {
                 "prefix": "/duel ",
                 "suffix": " bridge"
+            },
+            "bwp": {
+                "prefix": "/play bedwars_practice",
+                "suffix": ""
             }
         },
         "isEnabled": false,
@@ -146,5 +169,21 @@
         "iconText": "Solar Tweaks",
         "isEnabled": true,
         "className": "lunar/et/llIlIIIllIlllllIllIIIIIlI"
+    },
+    "websocketPrivacy": {
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V"
+        },
+        "isEnabled": false,
+        "className": "lunar/av/lllIIIllllllIlIIIIIlIIlII"
+    },
+    "uncapReach": {
+        "method": {
+            "name": "llllllIlIlIIIIIllIIIIIIlI",
+            "descriptor": "()Ljava/lang/String;"
+        },
+        "isEnabled": false,
+        "className": "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
     }
 }

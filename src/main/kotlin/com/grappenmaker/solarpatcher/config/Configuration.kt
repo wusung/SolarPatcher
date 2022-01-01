@@ -8,6 +8,7 @@ data class Configuration(
     val enableAll: Boolean = false,
     val nickhider: Nickhider = Nickhider(),
     val fps: FPS = FPS(),
+    val cps: CPS = CPS(),
     val autoGG: AutoGG = AutoGG(),
     val levelHead: LevelHead = LevelHead(),
     val freelook: Freelook = Freelook(),
@@ -18,12 +19,16 @@ data class Configuration(
     val windowName: WindowName = WindowName(),
     val noHitDelay: NoHitDelay = NoHitDelay(),
     val fpsSpoof: FPSSpoof = FPSSpoof(),
+    val cpsSpoof: CPSSpoof = CPSSpoof(),
     val customCommands: CustomCommands = CustomCommands(),
-    val rpcUpdate: RPCUpdate = RPCUpdate()
+    val rpcUpdate: RPCUpdate = RPCUpdate(),
+    val websocketPrivacy: WebsocketPrivacy = WebsocketPrivacy(),
+    val uncapReach: UncapReach = UncapReach()
 ) {
     fun getModules() = arrayOf(
         nickhider,
         fps,
+        cps,
         autoGG,
         levelHead,
         freelook,
@@ -34,7 +39,10 @@ data class Configuration(
         windowName,
         noHitDelay,
         fpsSpoof,
+        cpsSpoof,
         customCommands,
-        rpcUpdate
+        rpcUpdate,
+        websocketPrivacy,
+        uncapReach
     )
 }
