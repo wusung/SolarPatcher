@@ -3,8 +3,11 @@ package com.grappenmaker.solarpatcher.asm
 import com.grappenmaker.solarpatcher.asm.util.ClassVisitorWrapper
 import com.grappenmaker.solarpatcher.asm.util.MethodVisitorWrapper
 import com.grappenmaker.solarpatcher.config.API
-import org.objectweb.asm.*
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.Handle
+import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
 import org.objectweb.asm.Type.*
 import java.lang.reflect.Method
 
@@ -33,7 +36,7 @@ class TransformVisitor(private val transforms: List<MethodTransform>, parent: Cl
         exceptions: Array<out String>?
     ): MethodVisitor {
         val parent = super.visitMethod(access, name, descriptor, signature, exceptions)
-        return transforms.filter { it.desc.match(MethodDescription(name, descriptor, owner, access)) }
+        return transforms.filter { it.matcher.matches(MethodDescription(name, descriptor, owner, access)) }
             .fold(parent) { acc, cur -> cur.asVisitor(acc) }
     }
 }
@@ -47,16 +50,16 @@ class ClassTransform(
 )
 
 // A method transformer
-abstract class MethodTransform(val desc: MethodDescription) {
+abstract class MethodTransform(val matcher: MethodMatcher) {
     abstract fun asVisitor(parent: MethodVisitor): MethodVisitor
 }
 
 // Transformer to search-and-replace text in a given method
 class TextTransform(
-    description: MethodDescription,
+    matcher: MethodMatcher,
     val from: String,
     val to: String
-) : MethodTransform(description) {
+) : MethodTransform(matcher) {
     override fun asVisitor(parent: MethodVisitor) = object : MethodVisitor(API, parent) {
         override fun visitLdcInsn(value: Any?) =
             if (value is String) super.visitLdcInsn(value.replace(from, to)) else super.visitLdcInsn(value)
@@ -75,9 +78,9 @@ class TextTransform(
 
 // Transformer used to transform method invocations
 abstract class InvokeTransform(
-    desc: MethodDescription,
-    val transformed: MethodDescription
-) : MethodTransform(desc) {
+    matcher: MethodMatcher,
+    val transformedMatcher: MethodMatcher
+) : MethodTransform(matcher) {
     abstract val replacement: MethodVisitor.(opcode: Int, description: MethodDescription) -> Unit
 
     override fun asVisitor(parent: MethodVisitor) = object : MethodVisitor(API, parent) {
@@ -88,9 +91,8 @@ abstract class InvokeTransform(
             descriptor: String,
             isInterface: Boolean
         ) {
-            // Using transformed.access here to avoid being checked on access
-            val calledMethod = MethodDescription(name, descriptor, owner, transformed.access)
-            if (transformed.match(calledMethod)) {
+            val calledMethod = MethodDescription(name, descriptor, owner)
+            if (transformedMatcher.matches(calledMethod)) {
                 replacement(parent, opcode, calledMethod)
                 return
             }
@@ -103,13 +105,13 @@ abstract class InvokeTransform(
 // Replaces the invocation of a method with a new method, with an optional
 // "preparation" code block
 class ReplaceInvokeTransform(
-    desc: MethodDescription,
-    invokedDescription: MethodDescription,
+    matcher: MethodMatcher,
+    invokedMatcher: MethodMatcher,
     newMethod: MethodDescription,
     invocationType: InvocationType,
     isInterface: Boolean = invocationType == InvocationType.INTERFACE,
     prepare: MethodVisitor.() -> Unit = {}
-) : InvokeTransform(desc, invokedDescription) {
+) : InvokeTransform(matcher, invokedMatcher) {
     override val replacement: MethodVisitor.(Int, MethodDescription) -> Unit = { _, _ ->
         prepare()
 
@@ -121,13 +123,13 @@ class ReplaceInvokeTransform(
         // Constructs a transformer that replaces the invocation of a method
         // with a given Method, with a preperation block
         fun fromMethod(
-            desc: MethodDescription,
-            invokedDescription: MethodDescription,
+            matcher: MethodMatcher,
+            invokedMatcher: MethodMatcher,
             method: Method,
             prepare: (MethodVisitor) -> Unit = {}
         ) = ReplaceInvokeTransform(
-            desc,
-            invokedDescription,
+            matcher,
+            invokedMatcher,
             method.asDescription(),
             method.invocationType,
             method.isStatic,
@@ -138,25 +140,25 @@ class ReplaceInvokeTransform(
 
 // Transformer to replace a method with a code block
 open class ReplaceCodeTransform(
-    desc: MethodDescription,
-    invokedDescription: MethodDescription,
+    matcher: MethodMatcher,
+    invokedMatcher: MethodMatcher,
     override val replacement: MethodVisitor.(Int, MethodDescription) -> Unit,
-) : InvokeTransform(desc, invokedDescription)
+) : InvokeTransform(matcher, invokedMatcher)
 
 // Transformer to remove a method call
 class RemoveInvokeTransform(
-    desc: MethodDescription,
-    invokedDescription: MethodDescription,
+    matcher: MethodMatcher,
+    invokedMatcher: MethodMatcher,
     popCount: Int = 0
-) : ReplaceCodeTransform(desc, invokedDescription, { _, _ -> if (popCount > 0) pop(popCount) })
+) : ReplaceCodeTransform(matcher, invokedMatcher, { _, _ -> if (popCount > 0) pop(popCount) })
 
 // Transformer to add code before and/or after a method call
 class InvokeAdviceTransform(
-    desc: MethodDescription,
-    invokedDescription: MethodDescription,
+    matcher: MethodMatcher,
+    invokedMatcher: MethodMatcher,
     val beforeAdvice: MethodVisitor.() -> Unit = {},
     val afterAdvice: MethodVisitor.() -> Unit = {}
-) : InvokeTransform(desc, invokedDescription) {
+) : InvokeTransform(matcher, invokedMatcher) {
     override val replacement: MethodVisitor.(Int, MethodDescription) -> Unit = { opcode, call ->
         beforeAdvice()
         invokeMethod(InvocationType.getFromOpcode(opcode)!!, call)
@@ -169,9 +171,9 @@ class InvokeAdviceTransform(
 // same for visitors. Use with cause!
 // Parameters (and other meta) should also be declared manually (again)
 open class ImplementTransform(
-    desc: MethodDescription,
+    matcher: MethodMatcher,
     val implementation: MethodVisitor.() -> Unit
-) : MethodTransform(desc) {
+) : MethodTransform(matcher) {
     // Ignoring parent, won't delegate
     override fun asVisitor(parent: MethodVisitor) = object : MethodVisitor(API, null) {
         override fun visitCode() {
@@ -180,11 +182,15 @@ open class ImplementTransform(
             parent.visitMaxs(-1, -1)
             parent.visitEnd()
         }
+
+        override fun visitParameter(name: String, access: Int) {
+            parent.visitParameter(name, access)
+        }
     }
 }
 
 // Transfomer to replace the method with a stub method
-class StubMethodTransform(desc: MethodDescription) : ImplementTransform(desc, {
+class StubMethodTransform(desc: MethodDescription) : ImplementTransform(desc.asMethodMatcher(), {
     val returnType = getMethodType(desc.descriptor).returnType
     when (returnType.sort) {
         VOID -> visitInsn(RETURN)
@@ -216,8 +222,8 @@ class StubMethodTransform(desc: MethodDescription) : ImplementTransform(desc, {
 
 // Utility to wrap a methodvisitor into a transform
 class VisitorTransform(
-    desc: MethodDescription,
+    matcher: MethodMatcher,
     val visitor: MethodVisitorWrapper
-) : MethodTransform(desc) {
+) : MethodTransform(matcher) {
     override fun asVisitor(parent: MethodVisitor) = visitor(parent)
 }

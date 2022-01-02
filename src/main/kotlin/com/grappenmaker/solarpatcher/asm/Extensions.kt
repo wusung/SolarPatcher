@@ -18,6 +18,7 @@ val Class<*>.internalName: String get() = fullyQualifiedName.replace('.', '/')
 
 // Gives the description of this method
 fun Method.asDescription() = MethodDescription(name, Type.getMethodDescriptor(this), declaringClass.internalName)
+fun Method.asMethodMatcher() = asDescription().asMethodMatcher()
 
 // Give the invocation type that should be used to invoke this method
 val Method.invocationType

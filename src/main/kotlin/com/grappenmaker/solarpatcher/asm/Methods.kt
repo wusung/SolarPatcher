@@ -18,7 +18,9 @@ data class MethodDescription(
         other.name == name
                 && other.descriptor == descriptor
                 && (other.owner == owner || owner.isEmpty())
-                && (other.access == access || access == -1)
+                && (other.access == access || access == -1 || other.access == -1) // Not a bug, intentional
+
+    fun asMethodMatcher() = MatchDescription(this)
 
     companion object {
         val CLINIT = MethodDescription("<clinit>", "()V")

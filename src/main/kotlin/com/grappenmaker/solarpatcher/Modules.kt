@@ -30,7 +30,7 @@ sealed class TextTransformModule : Module() {
     abstract val from: String
     abstract val to: String
     abstract val method: MethodDescription
-    override fun asTransform() = ClassTransform(className, listOf(TextTransform(method, from, to)))
+    override fun asTransform() = ClassTransform(className, listOf(TextTransform(method.asMethodMatcher(), from, to)))
 }
 
 @Serializable
@@ -38,7 +38,10 @@ sealed class RemoveInvokeModule : Module() {
     abstract val method: MethodDescription
     abstract val toRemove: MethodDescription
     abstract val popCount: Int
-    override fun asTransform() = ClassTransform(className, listOf(RemoveInvokeTransform(method, toRemove, popCount)))
+    override fun asTransform() = ClassTransform(
+        className,
+        listOf(RemoveInvokeTransform(method.asMethodMatcher(), toRemove.asMethodMatcher(), popCount))
+    )
 }
 
 @Serializable
@@ -169,7 +172,7 @@ data class WindowName(
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
-    override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method) {
+    override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method.asMethodMatcher()) {
         visitLdcInsn(to)
         returnMethod(ARETURN)
     }))
@@ -206,8 +209,8 @@ data class FPSSpoof(
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
     override fun asTransform() = ClassTransform(className, listOf(InvokeAdviceTransform(
-        method,
-        MethodDescription("bridge\$getDebugFPS", "()I"),
+        method.asMethodMatcher(),
+        MethodDescription("bridge\$getDebugFPS", "()I").asMethodMatcher(),
         afterAdvice = { spoof(multiplier) }
     )))
 }
@@ -228,8 +231,8 @@ data class CPSSpoof(
 
     override fun asTransform(): ClassTransform {
         return ClassTransform(className, listOf(InvokeAdviceTransform(
-            method,
-            MethodDescription("add", "(Ljava/lang/Object;)Z"),
+            method.asMethodMatcher(),
+            MethodDescription("add", "(Ljava/lang/Object;)Z").asMethodMatcher(),
             afterAdvice = {
                 // Init label
                 val label = Label()
@@ -395,7 +398,45 @@ data class UncapReach(
     override fun asTransform() =
         ClassTransform(
             className,
-            listOf(RemoveInvokeTransform(method, MethodDescription("min", "(DD)D"))),
+            listOf(
+                RemoveInvokeTransform(
+                    method.asMethodMatcher(),
+                    MethodDescription("min", "(DD)D").asMethodMatcher()
+                )
+            ),
             listOf { parent: ClassVisitor -> replaceLdcs(parent, mapOf(3.0 to null)) }
         )
+}
+
+@Serializable
+data class RemoveFakeLevelhead(
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
+) : Module() {
+    override fun asTransform() = ClassTransform(
+        className, listOf(
+            ReplaceCodeTransform(
+                MatchAny,
+                ThreadLocalRandom::class.java.getMethod("nextInt", Int::class.javaPrimitiveType).asMethodMatcher()
+            ) { _, _ ->
+                pop(2)
+                visitIntInsn(BIPUSH, -26) // Hacky bro
+            }
+        )
+    )
+}
+
+@Serializable
+data class RemoveHashing(
+    override val isEnabled: Boolean = false,
+    override val className: String = "WMMWMWMMWMWWMWMWWWWWWWMMM"
+) : Module() {
+    override fun asTransform() = ClassTransform(
+        className, listOf(ImplementTransform(
+            MethodDescription("WWWWWNNNNWMWWWMWWMMMWMMWM", "(Ljava/lang/String;[BZ)Z").asMethodMatcher()
+        ) {
+            visitInsn(ICONST_1)
+            returnMethod(IRETURN)
+        })
+    )
 }
