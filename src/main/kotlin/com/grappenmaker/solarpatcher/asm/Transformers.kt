@@ -199,18 +199,15 @@ class StubMethodTransform(desc: MethodDescription) : ImplementTransform(desc.asM
             visitInsn(IRETURN)
         }
         Type.FLOAT -> {
-            visitInsn(ICONST_0)
-            visitInsn(I2F)
+            visitInsn(FCONST_0)
             visitInsn(FRETURN)
         }
         Type.DOUBLE -> {
-            visitInsn(ICONST_0)
-            visitInsn(I2D)
+            visitInsn(DCONST_0)
             visitInsn(DRETURN)
         }
         Type.LONG -> {
-            visitInsn(ICONST_0)
-            visitInsn(I2L)
+            visitInsn(LCONST_0)
             visitInsn(LRETURN)
         }
         OBJECT, ARRAY -> {

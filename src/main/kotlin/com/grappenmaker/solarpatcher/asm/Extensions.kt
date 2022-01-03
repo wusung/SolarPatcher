@@ -3,6 +3,7 @@ package com.grappenmaker.solarpatcher.asm
 import org.objectweb.asm.Type
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.KClass
 
 // Class naming
 // Returns the fully qualified name
@@ -15,6 +16,10 @@ val Class<*>.fullyQualifiedName: String
 
 // Returns the jvm internal name
 val Class<*>.internalName: String get() = fullyQualifiedName.replace('.', '/')
+
+// Implementations for kclass too
+val KClass<*>.fullyQualifiedName: String get() = java.fullyQualifiedName
+val KClass<*>.internalName: String get() = java.internalName
 
 // Gives the description of this method
 fun Method.asDescription() = MethodDescription(name, Type.getMethodDescriptor(this), declaringClass.internalName)
