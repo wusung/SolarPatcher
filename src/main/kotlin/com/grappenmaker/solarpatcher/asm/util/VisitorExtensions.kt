@@ -78,7 +78,7 @@ fun MethodVisitor.setField(field: Field) =
 // Arguments for the constructor are initialized with the given block
 inline fun MethodVisitor.construct(constructor: Constructor<*>, block: MethodVisitor.() -> Unit = {}) {
     visitTypeInsn(NEW, constructor.declaringClass.internalName)
-    visitInsn(DUP)
+    dup()
     block()
     visitMethodInsn(
         INVOKESPECIAL,
@@ -87,6 +87,13 @@ inline fun MethodVisitor.construct(constructor: Constructor<*>, block: MethodVis
         Type.getConstructorDescriptor(constructor),
         false
     )
+}
+
+inline fun MethodVisitor.construct(className: String, descriptor: String, block: MethodVisitor.() -> Unit = {}) {
+    visitTypeInsn(NEW, className)
+    dup()
+    block()
+    visitMethodInsn(INVOKESPECIAL, className, "<init>", descriptor, false)
 }
 
 // Makes a methodvisitor get the value of the stdout stream

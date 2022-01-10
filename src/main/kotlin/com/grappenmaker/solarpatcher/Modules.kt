@@ -18,9 +18,7 @@
 
 package com.grappenmaker.solarpatcher
 
-import com.grappenmaker.solarpatcher.asm.method.InvocationType
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import com.grappenmaker.solarpatcher.asm.method.internalName
+import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.*
@@ -51,7 +49,7 @@ sealed class TextTransformModule : Module() {
     abstract val from: String
     abstract val to: String
     abstract val method: MethodDescription
-    override fun asTransform() = ClassTransform(className, listOf(TextTransform(method, from, to)))
+    override fun asTransform() = ClassTransform(className, listOf(TextTransform(method.asMethodMatcher(), from, to)))
 }
 
 @Serializable
@@ -59,14 +57,17 @@ sealed class RemoveInvokeModule : Module() {
     abstract val method: MethodDescription
     abstract val toRemove: MethodDescription
     abstract val popCount: Int
-    override fun asTransform() = ClassTransform(className, listOf(RemoveInvokeTransform(method, toRemove, popCount)))
+    override fun asTransform() = ClassTransform(
+        className,
+        listOf(RemoveInvokeTransform(method.asMethodMatcher(), toRemove.asMethodMatcher(), popCount))
+    )
 }
 
 @Serializable
 data class Nickhider(
     override val from: String = defaultNickhiderName,
     override val to: String = "BESTWW",
-    override val method: MethodDescription = MethodDescription("IIIlIlIlIIIllIlIIllllllIl", "(Z)Ljava/lang/String;"),
+    override val method: MethodDescription = MethodDescription("IIIlIlIlIIIllIlIIllllllIl", "(Z)L${getInternalName<String>()};"),
     override val className: String = "lunar/bF/lllIlIIllllIllIIIlIlIIIll",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
@@ -75,7 +76,7 @@ data class Nickhider(
 data class FPS(
     override val from: String = defaultFPSText,
     override val to: String = "FPM",
-    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
+    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
@@ -84,7 +85,7 @@ data class FPS(
 data class CPS(
     override val from: String = "CPS",
     override val to: String = "CPM",
-    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
+    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bk/llIlIIIllIlllllIllIIIIIlI",
 ) : TextTransformModule()
@@ -186,11 +187,11 @@ data class MantleIntegration(
 @Serializable
 data class WindowName(
     val to: String = "SolarTweaks",
-    val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/lang/String;"),
+    val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
-    override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method) {
+    override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method.asMethodMatcher()) {
         visitLdcInsn(to)
         returnMethod(ARETURN)
     }))
@@ -222,13 +223,13 @@ data class NoHitDelay(
 @Serializable
 data class FPSSpoof(
     val multiplier: Double = 2.0,
-    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
+    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
     override fun asTransform() = ClassTransform(className, listOf(InvokeAdviceTransform(
-        method,
-        MethodDescription("bridge\$getDebugFPS", "()I"),
+        method.asMethodMatcher(),
+        MethodDescription("bridge\$getDebugFPS", "()I").asMethodMatcher(),
         afterAdvice = { spoof(multiplier) }
     )))
 }
@@ -249,8 +250,8 @@ data class CPSSpoof(
 
     override fun asTransform(): ClassTransform {
         return ClassTransform(className, listOf(InvokeAdviceTransform(
-            method,
-            MethodDescription("add", "(Ljava/lang/Object;)Z"),
+            method.asMethodMatcher(),
+            MethodDescription("add", "(Ljava/lang/Object;)Z").asMethodMatcher(),
             afterAdvice = {
                 // Init label
                 val label = Label()
@@ -327,7 +328,8 @@ data class CustomCommands(
     companion object {
         // Instance of this class, initialized at runtime
         @JvmStatic
-        lateinit var INSTANCE: CustomCommands
+        lateinit var instance: CustomCommands
+            private set
 
         // Function that will return our listener (at runtime),
         // so that we don't have to implement it with bytecode
@@ -339,7 +341,7 @@ data class CustomCommands(
             if (!text.startsWith("/")) return@Consumer
 
             val components = text.split(" ")
-            INSTANCE.commands[components.first().substring(1)]?.let {
+            instance.commands[components.first().substring(1)]?.let {
                 // Change text sent
                 textField[event] = it.prefix + components.drop(1).joinToString(" ") + it.suffix
             }
@@ -349,7 +351,7 @@ data class CustomCommands(
     override fun asTransform() = ClassTransform(className, visitors = listOf {
         AdviceClassVisitor(it, MethodDescription.CLINIT, exitAdvice = {
             // Set instance of customcommands
-            INSTANCE = this@CustomCommands
+            instance = this@CustomCommands
 
             // Get event bus instance
             visitFieldInsn(GETSTATIC, className, instanceName, "L$className;")
@@ -362,8 +364,8 @@ data class CustomCommands(
                 InvocationType.STATIC,
                 MethodDescription(
                     "handler",
-                    "()L${Consumer::class.java.internalName};",
-                    CustomCommands::class.java.internalName
+                    "()Ljava/util/function/Consumer;",
+                    getInternalName<CustomCommands>()
                 )
             )
 
@@ -409,14 +411,57 @@ data class WebsocketPrivacy(
 
 @Serializable
 data class UncapReach(
-    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()Ljava/lang/String;"),
+    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
     override fun asTransform() =
         ClassTransform(
             className,
-            listOf(RemoveInvokeTransform(method, MethodDescription("min", "(DD)D"))),
+            listOf(
+                RemoveInvokeTransform(
+                    method.asMethodMatcher(),
+                    MethodDescription("min", "(DD)D").asMethodMatcher()
+                )
+            ),
             listOf { parent: ClassVisitor -> replaceLdcs(parent, mapOf(3.0 to null)) }
         )
+}
+
+@Serializable
+data class RemoveFakeLevelhead(
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
+) : Module() {
+    override fun asTransform() = ClassTransform(
+        className,
+        listOf(
+            RemoveInvokeTransform(
+                MatchAny,
+                ThreadLocalRandom::current.javaMethod!!.asMethodMatcher()
+            ),
+            ReplaceCodeTransform(
+                MatchAny,
+                ThreadLocalRandom::class.java.getMethod("nextInt", Int::class.javaPrimitiveType).asMethodMatcher()
+            ) { _, _ ->
+                pop()
+                visitIntInsn(BIPUSH, -26) // Hacky bro
+            }
+        )
+    )
+}
+
+@Serializable
+data class RemoveHashing(
+    override val isEnabled: Boolean = false,
+    override val className: String = "WMMWMWMMWMWWMWMWWWWWWWMMM"
+) : Module() {
+    override fun asTransform() = ClassTransform(
+        className, listOf(ImplementTransform(
+            MethodDescription("WWWWWNNNNWMWWWMWWMMMWMMWM", "(L${getInternalName<String>()};[BZ)Z").asMethodMatcher()
+        ) {
+            visitInsn(ICONST_1)
+            returnMethod(IRETURN)
+        })
+    )
 }

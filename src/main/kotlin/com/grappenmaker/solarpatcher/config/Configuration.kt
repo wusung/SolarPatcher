@@ -20,6 +20,7 @@ package com.grappenmaker.solarpatcher.config
 
 import com.grappenmaker.solarpatcher.*
 import kotlinx.serialization.Serializable
+import kotlin.reflect.full.memberProperties
 
 @Serializable
 data class Configuration(
@@ -41,26 +42,11 @@ data class Configuration(
     val customCommands: CustomCommands = CustomCommands(),
     val rpcUpdate: RPCUpdate = RPCUpdate(),
     val websocketPrivacy: WebsocketPrivacy = WebsocketPrivacy(),
-    val uncapReach: UncapReach = UncapReach()
+    val uncapReach: UncapReach = UncapReach(),
+    val removeFakeLevelhead: RemoveFakeLevelhead = RemoveFakeLevelhead(),
+    val removeHashing: RemoveHashing = RemoveHashing()
 ) {
-    fun getModules() = arrayOf(
-        nickhider,
-        fps,
-        cps,
-        autoGG,
-        levelHead,
-        freelook,
-        pinnedServers,
-        blogPosts,
-        modpacketRemoval,
-        mantleIntegration,
-        windowName,
-        noHitDelay,
-        fpsSpoof,
-        cpsSpoof,
-        customCommands,
-        rpcUpdate,
-        websocketPrivacy,
-        uncapReach
-    )
+    fun getModules() = Configuration::class.memberProperties
+        .map { it.get(this) }
+        .filterIsInstance<Module>()
 }

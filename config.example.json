@@ -185,5 +185,13 @@
         },
         "isEnabled": false,
         "className": "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
+    },
+    "removeFakeLevelhead": {
+        "isEnabled": false,
+        "className": "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
+    },
+    "removeHashing": {
+        "isEnabled": false,
+        "className": "WMMWMWMMWMWWMWMWWWWWWWMMM"
     }
 }
