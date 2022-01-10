@@ -1,8 +1,28 @@
+/*
+ * Solar Patcher, a runtime patcher for Lunar Client
+ * Copyright (C) 2022 Solar Tweaks and respective contributors.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.grappenmaker.solarpatcher
 
-import com.grappenmaker.solarpatcher.asm.*
-import com.grappenmaker.solarpatcher.asm.util.AdviceClassVisitor
-import com.grappenmaker.solarpatcher.asm.util.replaceLdcs
+import com.grappenmaker.solarpatcher.asm.method.InvocationType
+import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import com.grappenmaker.solarpatcher.asm.method.internalName
+import com.grappenmaker.solarpatcher.asm.transform.*
+import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -11,6 +31,7 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
+import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
 import kotlin.math.floor
@@ -240,7 +261,7 @@ data class CPSSpoof(
                 // Load chance, get random double
                 visitLdcInsn(chance)
                 invokeMethod(ThreadLocalRandom::current.javaMethod!!)
-                invokeMethod(java.util.Random::class.java.getMethod("nextDouble"))
+                invokeMethod(Random::class.java.getMethod("nextDouble"))
 
                 // Check if chance is met, if so, add another
                 visitInsn(DCMPG)

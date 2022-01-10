@@ -16,15 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:JvmName("SaveDefaultConfig")
+package com.grappenmaker.solarpatcher.asm.method
 
-package com.grappenmaker.solarpatcher.config
+// Utility to match on methods
+interface MethodMatcher {
+    fun matches(other: MethodDescription): Boolean
+}
 
-import kotlinx.serialization.encodeToString
-import java.io.File
+object MatchAny : MethodMatcher {
+    override fun matches(other: MethodDescription) = true
+}
 
-fun main(args: Array<String>) {
-    val filename = args.firstOrNull() ?: "config.json"
-    println("Saving default config to $filename")
-    File(filename).writeText(json.encodeToString(Configuration()))
+class MatchDescription(private val desc: MethodDescription) : MethodMatcher {
+    override fun matches(other: MethodDescription) = desc.match(other)
 }
