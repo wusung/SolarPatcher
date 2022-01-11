@@ -50,8 +50,6 @@ class FileTransformer(
         val writer = LoaderClassWriter(actualLoader, reader, ClassWriter.COMPUTE_FRAMES)
 
         try {
-//            val parent = if (debug) TraceClassVisitor(writer, PrintWriter(System.out)) else writer
-//            val visitor = classTransform.visitors.toVisitor(parent)
             val visitor = classTransform.visitors.toVisitor(writer)
             val options = (if (removeDebugInfo) ClassReader.SKIP_DEBUG else 0) or
                     if (classTransform.shouldExpand) ClassReader.EXPAND_FRAMES else 0
@@ -65,7 +63,8 @@ class FileTransformer(
 
         return writer.toByteArray().also {
             if (debug) {
-                println("Result of transforming $className (applying ${classTransform.methodTransforms.size} transforms)")
+                val count = classTransform.methodTransforms.size
+                println("Result of transforming $className (applying $count transforms)")
                 println()
                 ClassReader(it).accept(TraceClassVisitor(PrintWriter(System.out)), 0)
             }

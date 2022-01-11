@@ -21,7 +21,13 @@ package com.grappenmaker.solarpatcher
 import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.config.*
+import com.grappenmaker.solarpatcher.config.Constants.defaultAutoGGText
+import com.grappenmaker.solarpatcher.config.Constants.defaultCapesServer
+import com.grappenmaker.solarpatcher.config.Constants.defaultFPSText
+import com.grappenmaker.solarpatcher.config.Constants.defaultLevelHeadText
+import com.grappenmaker.solarpatcher.config.Constants.defaultNickhiderName
+import com.grappenmaker.solarpatcher.config.Constants.packetClassname
+import com.grappenmaker.solarpatcher.config.Constants.runMethodDescription
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.ClassVisitor
@@ -36,6 +42,7 @@ import kotlin.math.floor
 import kotlin.reflect.jvm.javaMethod
 
 private const val metadataClass = "lunar/et/llIllIIllIlIlIIIIlIlIllll"
+private const val hypixelModsClass = "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
 
 @Serializable
 sealed class Module {
@@ -67,7 +74,10 @@ sealed class RemoveInvokeModule : Module() {
 data class Nickhider(
     override val from: String = defaultNickhiderName,
     override val to: String = "BESTWW",
-    override val method: MethodDescription = MethodDescription("IIIlIlIlIIIllIlIIllllllIl", "(Z)L${getInternalName<String>()};"),
+    override val method: MethodDescription = MethodDescription(
+        "IIIlIlIlIIIllIlIIllllllIl",
+        "(Z)L${getInternalName<String>()};"
+    ),
     override val className: String = "lunar/bF/lllIlIIllllIllIIIlIlIIIll",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
@@ -76,7 +86,10 @@ data class Nickhider(
 data class FPS(
     override val from: String = defaultFPSText,
     override val to: String = "FPM",
-    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
+    override val method: MethodDescription = MethodDescription(
+        "llllllIlIlIIIIIllIIIIIIlI",
+        "()L${getInternalName<String>()};"
+    ),
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
@@ -85,7 +98,10 @@ data class FPS(
 data class CPS(
     override val from: String = "CPS",
     override val to: String = "CPM",
-    override val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
+    override val method: MethodDescription = MethodDescription(
+        "llllllIlIlIIIIIllIIIIIIlI",
+        "()L${getInternalName<String>()};"
+    ),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bk/llIlIIIllIlllllIllIIIIIlI",
 ) : TextTransformModule()
@@ -98,7 +114,7 @@ data class AutoGG(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
     ),
-    override val className: String = "lunar/bv/llIIIllIIllIIIllIIlIllIIl",
+    override val className: String = hypixelModsClass,
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
@@ -110,7 +126,7 @@ data class LevelHead(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
     ),
-    override val className: String = "lunar/bv/llIIIllIIllIIIllIIlIllIIl",
+    override val className: String = hypixelModsClass,
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
@@ -431,7 +447,7 @@ data class UncapReach(
 @Serializable
 data class RemoveFakeLevelhead(
     override val isEnabled: Boolean = false,
-    override val className: String = "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
+    override val className: String = hypixelModsClass
 ) : Module() {
     override fun asTransform() = ClassTransform(
         className,

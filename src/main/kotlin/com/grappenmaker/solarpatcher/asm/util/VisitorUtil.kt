@@ -18,7 +18,7 @@
 
 package com.grappenmaker.solarpatcher.asm.util
 
-import com.grappenmaker.solarpatcher.config.API
+import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.*
 
 // Visitor wrappers, used for chaining visitors before we actually have the visitors

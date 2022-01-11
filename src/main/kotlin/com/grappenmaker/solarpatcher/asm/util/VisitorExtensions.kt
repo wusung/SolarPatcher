@@ -136,7 +136,7 @@ fun MethodVisitor.dup(n: Int = 1) {
 // Utility to return the method
 // Return type must be valid
 fun MethodVisitor.returnMethod(opcode: Int = RETURN) {
-    require(opcode in (172..177)) { "Must be valid return" }
+    require(opcode in (IRETURN..RETURN)) { "Must be valid return" }
     visitInsn(opcode)
 }
 

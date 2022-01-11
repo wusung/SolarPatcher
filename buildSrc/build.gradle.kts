@@ -16,26 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.grappenmaker.solarpatcher.config
-
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import kotlinx.serialization.json.Json
-import org.objectweb.asm.Opcodes
-
-// Default json object
-val json = Json {
-    encodeDefaults = true
-    prettyPrint = true
-    ignoreUnknownKeys = true
+// Buildscript for buildSrc, containing constants
+plugins {
+    `kotlin-dsl`
 }
 
-object Constants {
-    const val API = Opcodes.ASM7
-    const val packetClassname = "com/lunarclient/bukkitapi/nethandler/LCPacket"
-    const val defaultCapesServer = "s.optifine.net"
-    const val defaultLevelHeadText = "Level: "
-    const val defaultAutoGGText = "/achat gg"
-    const val defaultNickhiderName = "You"
-    const val defaultFPSText = "FPS"
-    val runMethodDescription = MethodDescription("run", "()V")
+repositories {
+    mavenCentral()
 }

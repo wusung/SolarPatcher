@@ -16,19 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.grappenmaker.solarpatcher.asm
-
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-
-// Utility to match on methods
-interface MethodMatcher {
-    fun matches(other: MethodDescription): Boolean
+// Constant values
+object Constants {
+    const val premainClass = "com.grappenmaker.solarpatcher.AgentMain"
+    const val saveConfigClass = "com.grappenmaker.solarpatcher.config.SaveDefaultConfig"
+    const val defaultConfig = "config.example.json"
 }
 
-object MatchAny : MethodMatcher {
-    override fun matches(other: MethodDescription) = true
-}
-
-class MatchDescription(private val desc: MethodDescription) : MethodMatcher {
-    override fun matches(other: MethodDescription) = desc.match(other)
+// Versions of dependencies
+object Versions {
+    const val kotlin = "1.6.10"
+    const val serializationJSON = "1.3.2"
+    const val asm = "9.2"
+    const val detekt = "1.19.0"
 }

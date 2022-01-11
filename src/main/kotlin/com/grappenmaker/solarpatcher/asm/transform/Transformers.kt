@@ -23,7 +23,7 @@ import com.grappenmaker.solarpatcher.asm.util.ClassVisitorWrapper
 import com.grappenmaker.solarpatcher.asm.util.MethodVisitorWrapper
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.asm.util.pop
-import com.grappenmaker.solarpatcher.config.API
+import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle
 import org.objectweb.asm.MethodVisitor
@@ -91,8 +91,12 @@ class TextTransform(
             handle: Handle,
             vararg args: Any
         ) {
-            val newArgs = args.map { if (it is String) it.replace(from, to) else it }.toTypedArray()
-            super.visitInvokeDynamicInsn(name, descriptor, handle, *newArgs)
+            super.visitInvokeDynamicInsn(
+                name,
+                descriptor,
+                handle,
+                *args.map { if (it is String) it.replace(from, to) else it }.toTypedArray()
+            )
         }
     }
 }

@@ -19,46 +19,72 @@
 import java.net.URLClassLoader
 
 plugins {
-    val kotlinVersion = "1.6.0"
-    kotlin("jvm") version kotlinVersion
-    kotlin("plugin.serialization") version kotlinVersion
+    // Setup kotlin
+    kotlin("jvm") version Versions.kotlin
+
+    // Setup serialization
+    kotlin("plugin.serialization") version Versions.kotlin
+
+    // Setup static analysis with detekt
+    id("io.gitlab.arturbosch.detekt") version Versions.detekt
 }
 
+// Set metadata
 group = "com.grappenmaker"
 version = "1.2"
 
+// Enable mavenCentral
 repositories {
     mavenCentral()
 }
 
+// Declare dependencies
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
-    implementation("org.ow2.asm:asm:9.2")
-    implementation("org.ow2.asm:asm-commons:9.2")
-    implementation("org.ow2.asm:asm-util:9.2")
+    // Kotlin dependencies
+    implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serializationJSON}")
+
+    // ASM
+    implementation("org.ow2.asm:asm:${Versions.asm}")
+    implementation("org.ow2.asm:asm-commons:${Versions.asm}")
+    implementation("org.ow2.asm:asm-util:${Versions.asm}")
 }
 
-tasks.jar {
+// Add dependencies and manifest to jar task
+tasks.withType<Jar>().configureEach {
     manifest {
-        attributes("Premain-Class" to "com.grappenmaker.solarpatcher.AgentMain")
+        attributes("Premain-Class" to Constants.premainClass)
     }
 
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// Create task to save the default configuration
+// Useful before pushing
 tasks.create("saveDefaultConfig") {
     dependsOn("classes")
     doLast {
+        // Sets up classloader and classpath
         val classes = sourceSets.main.get().output.classesDirs.map { it.toURI().toURL() }
         val classLoader = URLClassLoader(
             (classes + configurations.runtimeClasspath.get().map { it.toURI().toURL() }).toTypedArray(),
             ClassLoader.getSystemClassLoader()
         )
 
-        val args = arrayOf("config.example.json")
-        Class.forName("com.grappenmaker.solarpatcher.config.SaveDefaultConfig", true, classLoader)
+        // Calls the main method with the default config file
+        val args = arrayOf(Constants.defaultConfig)
+        Class.forName(Constants.saveConfigClass, true, classLoader)
             .getMethod("main", args::class.java)(null, args)
     }
+}
+// Detekt configuration
+detekt {
+    buildUponDefaultConfig = true
+    config = files("detekt.yml")
+}
+
+// Shortcut to run detekt
+tasks.create("lint") {
+    dependsOn("detekt")
 }

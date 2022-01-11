@@ -1,0 +1,23 @@
+# Detect config file, for static analysis
+build:
+  maxIssues: -1 # Disable failure
+
+complexity:
+  TooManyFunctions:
+    active: false
+
+exceptions:
+  PrintStackTrace:
+    active: false
+
+naming:
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Za-z][_A-Za-z0-9]*'
+
+style:
+  NewLineAtEndOfFile:
+    active: false
+  MagicNumber:
+    excludes: ['**/Modules.kt'] # Modules can use magic numbers
+  WildcardImport:
+    active: false
