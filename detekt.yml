@@ -4,11 +4,11 @@ build:
 
 complexity:
   TooManyFunctions:
-    active: false
+    active: false # Why?
 
 exceptions:
   PrintStackTrace:
-    active: false
+    active: false # Can't use logger, and if I could why would I?
 
 naming:
   TopLevelPropertyNaming:
@@ -16,8 +16,10 @@ naming:
 
 style:
   NewLineAtEndOfFile:
-    active: false
+    active: false # Why?
   MagicNumber:
     excludes: ['**/Modules.kt'] # Modules can use magic numbers
   WildcardImport:
-    active: false
+    active: false # Sometimes it is better right?
+  ReturnCount:
+    active: false # Why?

@@ -21,6 +21,7 @@ object Constants {
     const val premainClass = "com.grappenmaker.solarpatcher.AgentMain"
     const val saveConfigClass = "com.grappenmaker.solarpatcher.config.SaveDefaultConfig"
     const val defaultConfig = "config.example.json"
+    const val updaterConfig = "updater.json"
 }
 
 // Versions of dependencies

@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Buildscript for buildSrc, containing constants
+// Buildscript for buildSrc, containing constants and adds
+// updater.json generator
 plugins {
     `kotlin-dsl`
 }

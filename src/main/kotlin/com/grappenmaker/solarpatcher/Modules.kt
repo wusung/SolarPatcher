@@ -469,13 +469,15 @@ data class RemoveFakeLevelhead(
 
 @Serializable
 data class RemoveHashing(
+    val method: MethodDescription = MethodDescription(
+        "WWWWWNNNNWMWWWMWWMMMWMMWM",
+        "(L${getInternalName<String>()};[BZ)Z"
+    ),
     override val isEnabled: Boolean = false,
     override val className: String = "WMMWMWMMWMWWMWMWWWWWWWMMM"
 ) : Module() {
     override fun asTransform() = ClassTransform(
-        className, listOf(ImplementTransform(
-            MethodDescription("WWWWWNNNNWMWWWMWWMMMWMMWM", "(L${getInternalName<String>()};[BZ)Z").asMethodMatcher()
-        ) {
+        className, listOf(ImplementTransform(method.asMethodMatcher()) {
             visitInsn(ICONST_1)
             returnMethod(IRETURN)
         })

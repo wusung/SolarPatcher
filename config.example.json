@@ -191,6 +191,10 @@
         "className": "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
     },
     "removeHashing": {
+        "method": {
+            "name": "WWWWWNNNNWMWWWMWWMMMWMMWM",
+            "descriptor": "(Ljava/lang/String;[BZ)Z"
+        },
         "isEnabled": false,
         "className": "WMMWMWMMWMWWMWMWWWWWWWMMM"
     }

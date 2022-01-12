@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import java.net.URLClassLoader
-
 plugins {
     // Setup kotlin
     kotlin("jvm") version Versions.kotlin
@@ -60,24 +58,6 @@ tasks.withType<Jar>().configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-// Create task to save the default configuration
-// Useful before pushing
-tasks.create("saveDefaultConfig") {
-    dependsOn("classes")
-    doLast {
-        // Sets up classloader and classpath
-        val classes = sourceSets.main.get().output.classesDirs.map { it.toURI().toURL() }
-        val classLoader = URLClassLoader(
-            (classes + configurations.runtimeClasspath.get().map { it.toURI().toURL() }).toTypedArray(),
-            ClassLoader.getSystemClassLoader()
-        )
-
-        // Calls the main method with the default config file
-        val args = arrayOf(Constants.defaultConfig)
-        Class.forName(Constants.saveConfigClass, true, classLoader)
-            .getMethod("main", args::class.java)(null, args)
-    }
-}
 // Detekt configuration
 detekt {
     buildUponDefaultConfig = true
@@ -88,3 +68,13 @@ detekt {
 tasks.create("lint") {
     dependsOn("detekt")
 }
+
+// Configure detekt to always run (not cache)
+tasks.detekt {
+    outputs.upToDateWhen { false }
+}
+
+// Custom tasks to make life easier
+// See docs of individual tasks
+addSaveDefaultConfigTask()
+addUpdaterTask()
