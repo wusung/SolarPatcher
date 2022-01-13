@@ -37,5 +37,6 @@ object Constants {
     const val defaultAutoGGText = "/achat gg"
     const val defaultNickhiderName = "You"
     const val defaultFPSText = "FPS"
+    const val defaultCPSText = "CPS"
     val runMethodDescription = MethodDescription("run", "()V")
 }

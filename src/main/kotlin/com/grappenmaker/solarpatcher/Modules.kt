@@ -24,6 +24,7 @@ import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants.defaultAutoGGText
 import com.grappenmaker.solarpatcher.config.Constants.defaultCapesServer
 import com.grappenmaker.solarpatcher.config.Constants.defaultFPSText
+import com.grappenmaker.solarpatcher.config.Constants.defaultCPSText
 import com.grappenmaker.solarpatcher.config.Constants.defaultLevelHeadText
 import com.grappenmaker.solarpatcher.config.Constants.defaultNickhiderName
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
@@ -73,7 +74,7 @@ sealed class RemoveInvokeModule : Module() {
 @Serializable
 data class Nickhider(
     override val from: String = defaultNickhiderName,
-    override val to: String = "BESTWW",
+    override val to: String = defaultNickhiderName,
     override val method: MethodDescription = MethodDescription(
         "IIIlIlIlIIIllIlIIllllllIl",
         "(Z)L${getInternalName<String>()};"
@@ -85,7 +86,7 @@ data class Nickhider(
 @Serializable
 data class FPS(
     override val from: String = defaultFPSText,
-    override val to: String = "FPM",
+    override val to: String = defaultFPSText,
     override val method: MethodDescription = MethodDescription(
         "llllllIlIlIIIIIllIIIIIIlI",
         "()L${getInternalName<String>()};"
@@ -96,8 +97,8 @@ data class FPS(
 
 @Serializable
 data class CPS(
-    override val from: String = "CPS",
-    override val to: String = "CPM",
+    override val from: String = defaultCPSText,
+    override val to: String = defaultCPSText,
     override val method: MethodDescription = MethodDescription(
         "llllllIlIlIIIIIllIIIIIIlI",
         "()L${getInternalName<String>()};"
@@ -109,7 +110,7 @@ data class CPS(
 @Serializable
 data class AutoGG(
     override val from: String = defaultAutoGGText,
-    override val to: String = "/ac Good game",
+    override val to: String = defaultAutoGGText,
     override val method: MethodDescription = MethodDescription(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
@@ -121,7 +122,7 @@ data class AutoGG(
 @Serializable
 data class LevelHead(
     override val from: String = defaultLevelHeadText,
-    override val to: String = "IQ: ",
+    override val to: String = defaultLevelHeadText,
     override val method: MethodDescription = MethodDescription(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
@@ -202,7 +203,7 @@ data class MantleIntegration(
 
 @Serializable
 data class WindowName(
-    val to: String = "SolarTweaks",
+    val to: String = "Lunar Client (Modded by Solar Tweaks)",
     val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
