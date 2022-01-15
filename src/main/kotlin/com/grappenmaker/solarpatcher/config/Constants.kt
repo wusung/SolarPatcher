@@ -18,7 +18,7 @@
 
 package com.grappenmaker.solarpatcher.config
 
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import com.grappenmaker.solarpatcher.asm.method.MatcherData
 import kotlinx.serialization.json.Json
 import org.objectweb.asm.Opcodes
 
@@ -38,5 +38,5 @@ object Constants {
     const val defaultNickhiderName = "You"
     const val defaultFPSText = "FPS"
     const val defaultCPSText = "CPS"
-    val runMethodDescription = MethodDescription("run", "()V")
+    val runMatcherData = MatcherData("run", "()V")
 }

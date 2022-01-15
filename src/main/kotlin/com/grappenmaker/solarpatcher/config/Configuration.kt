@@ -24,7 +24,7 @@ import kotlin.reflect.full.memberProperties
 
 @Serializable
 data class Configuration(
-    val enableAll: Boolean = false,
+    val enableAll: Boolean = true,
     val nickhider: Nickhider = Nickhider(),
     val fps: FPS = FPS(),
     val cps: CPS = CPS(),

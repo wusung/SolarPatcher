@@ -44,8 +44,10 @@ inline fun <reified T> getFullName() = T::class.fullyQualifiedName
 inline fun <reified T> getInternalName() = T::class.internalName
 
 // Gives the description of this method
-fun Method.asDescription() = MethodDescription(name, Type.getMethodDescriptor(this), declaringClass.internalName)
-fun Method.asMethodMatcher() = asDescription().asMethodMatcher()
+fun Method.asDescription() =
+    MethodDescription(name, Type.getMethodDescriptor(this), declaringClass.internalName, modifiers)
+
+fun Method.asMatcher(): MethodMatcher = matchDescription(asDescription())
 
 // Give the invocation type that should be used to invoke this method
 val Method.invocationType

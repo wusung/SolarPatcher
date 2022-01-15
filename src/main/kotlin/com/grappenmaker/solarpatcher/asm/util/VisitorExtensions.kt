@@ -45,13 +45,13 @@ fun MethodVisitor.invokeMethod(method: Method) = visitMethodInsn(
     method.declaringClass.isInterface
 )
 
-fun MethodVisitor.invokeMethod(invocationType: InvocationType, methodDescription: MethodDescription) = visitMethodInsn(
-    invocationType.opcode,
-    methodDescription.owner,
-    methodDescription.name,
-    methodDescription.descriptor,
-    invocationType == InvocationType.INTERFACE
-)
+fun MethodVisitor.invokeMethod(invocationType: InvocationType, name: String, descriptor: String, owner: String) =
+    visitMethodInsn(invocationType.opcode, owner, name, descriptor, invocationType == InvocationType.INTERFACE)
+
+fun MethodVisitor.invokeMethod(invocationType: InvocationType, desc: MethodDescription) {
+    val (name, descriptor, owner) = desc
+    invokeMethod(invocationType, name, descriptor, owner)
+}
 
 // Makes a methodvisitor get the value of a field, and store it on the operand stack
 // Caller is responsible for providing a target, if applicable

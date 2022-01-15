@@ -1,51 +1,61 @@
 {
-    "enableAll": false,
+    "enableAll": true,
     "nickhider": {
         "from": "You",
-        "to": "BESTWW",
+        "to": "You",
         "method": {
             "name": "IIIlIlIlIIIllIlIIllllllIl",
-            "descriptor": "(Z)Ljava/lang/String;"
+            "descriptor": "(Z)Ljava/lang/String;",
+            "owner": null,
+            "access": null
         },
         "className": "lunar/bF/lllIlIIllllIllIIIlIlIIIll",
         "isEnabled": false
     },
     "fps": {
         "from": "FPS",
-        "to": "FPM",
+        "to": "FPS",
         "method": {
             "name": "llllllIlIlIIIIIllIIIIIIlI",
-            "descriptor": "()Ljava/lang/String;"
+            "descriptor": "()Ljava/lang/String;",
+            "owner": null,
+            "access": null
         },
         "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
         "isEnabled": false
     },
     "cps": {
         "from": "CPS",
-        "to": "CPM",
+        "to": "CPS",
         "method": {
             "name": "llllllIlIlIIIIIllIIIIIIlI",
-            "descriptor": "()Ljava/lang/String;"
+            "descriptor": "()Ljava/lang/String;",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/bk/llIlIIIllIlllllIllIIIIIlI"
     },
     "autoGG": {
         "from": "/achat gg",
-        "to": "/ac Good game",
+        "to": "/achat gg",
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
+            "descriptor": "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V",
+            "owner": null,
+            "access": null
         },
         "className": "lunar/bv/llIIIllIIllIIIllIIlIllIIl",
         "isEnabled": false
     },
     "levelHead": {
         "from": "Level: ",
-        "to": "IQ: ",
+        "to": "Level: ",
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
+            "descriptor": "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V",
+            "owner": null,
+            "access": null
         },
         "className": "lunar/bv/llIIIllIIllIIIllIIlIllIIl",
         "isEnabled": false
@@ -53,37 +63,49 @@
     "freelook": {
         "method": {
             "name": "run",
-            "descriptor": "()V"
+            "descriptor": "()V",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/et/llIllIIllIlIlIIIIlIlIllll",
         "toRemove": {
             "name": "llIllIIllIlIlIIIIlIlIllll",
-            "descriptor": "(Lcom/google/gson/JsonArray;)V"
+            "descriptor": "(Lcom/google/gson/JsonArray;)V",
+            "owner": null,
+            "access": null
         }
     },
     "pinnedServers": {
         "method": {
             "name": "run",
-            "descriptor": "()V"
+            "descriptor": "()V",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/et/llIllIIllIlIlIIIIlIlIllll",
         "toRemove": {
             "name": "llIIIllIIllIIIllIIlIllIIl",
-            "descriptor": "(Lcom/google/gson/JsonArray;)V"
+            "descriptor": "(Lcom/google/gson/JsonArray;)V",
+            "owner": null,
+            "access": null
         }
     },
     "blogPosts": {
         "method": {
             "name": "run",
-            "descriptor": "()V"
+            "descriptor": "()V",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/et/llIllIIllIlIlIIIIlIlIllll",
         "toRemove": {
             "name": "forEach",
-            "descriptor": "(Ljava/util/function/Consumer;)V"
+            "descriptor": "(Ljava/util/function/Consumer;)V",
+            "owner": null,
+            "access": null
         }
     },
     "modpacketRemoval": {
@@ -97,14 +119,18 @@
         "className": "lunar/a/llIllIIllIlIlIIIIlIlIllll",
         "method": {
             "name": "<clinit>",
-            "descriptor": "()V"
+            "descriptor": "()V",
+            "owner": null,
+            "access": 8
         }
     },
     "windowName": {
-        "to": "SolarTweaks",
+        "to": "Lunar Client (Modded by Solar Tweaks)",
         "method": {
             "name": "llIIIllIIllIIIllIIlIllIIl",
-            "descriptor": "()Ljava/lang/String;"
+            "descriptor": "()Ljava/lang/String;",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/as/llIllIIllIlIlIIIIlIlIllll"
@@ -112,7 +138,9 @@
     "noHitDelay": {
         "method": {
             "name": "llIIIllIIllIIIllIIlIllIIl",
-            "descriptor": "()Ljava/util/Map;"
+            "descriptor": "()Ljava/util/Map;",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/es/llIllIIllIlIlIIIIlIlIllll"
@@ -121,7 +149,9 @@
         "multiplier": 2.0,
         "method": {
             "name": "llllllIlIlIIIIIllIIIIIIlI",
-            "descriptor": "()Ljava/lang/String;"
+            "descriptor": "()Ljava/lang/String;",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
@@ -130,7 +160,9 @@
         "chance": 0.1,
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V"
+            "descriptor": "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/dp/llIlIIIllIlllllIllIIIIIlI"
@@ -159,7 +191,9 @@
         "instanceName": "llIllIIllIlIlIIIIlIlIllll",
         "registerMethod": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z"
+            "descriptor": "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z",
+            "owner": "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
+            "access": 1
         },
         "chatEventClass": "lunar/aH/llIlIIIllIlllllIllIIIIIlI"
     },
@@ -173,7 +207,9 @@
     "websocketPrivacy": {
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V"
+            "descriptor": "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/av/lllIIIllllllIlIIIIIlIIlII"
@@ -181,7 +217,9 @@
     "uncapReach": {
         "method": {
             "name": "llllllIlIlIIIIIllIIIIIIlI",
-            "descriptor": "()Ljava/lang/String;"
+            "descriptor": "()Ljava/lang/String;",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
@@ -193,7 +231,9 @@
     "removeHashing": {
         "method": {
             "name": "WWWWWNNNNWMWWWMWWMMMWMMWM",
-            "descriptor": "(Ljava/lang/String;[BZ)Z"
+            "descriptor": "(Ljava/lang/String;[BZ)Z",
+            "owner": null,
+            "access": null
         },
         "isEnabled": false,
         "className": "WMMWMWMMWMWWMWMWWWWWWWMMM"

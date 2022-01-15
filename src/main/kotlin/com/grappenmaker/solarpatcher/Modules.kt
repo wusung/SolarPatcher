@@ -22,13 +22,13 @@ import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants.defaultAutoGGText
+import com.grappenmaker.solarpatcher.config.Constants.defaultCPSText
 import com.grappenmaker.solarpatcher.config.Constants.defaultCapesServer
 import com.grappenmaker.solarpatcher.config.Constants.defaultFPSText
-import com.grappenmaker.solarpatcher.config.Constants.defaultCPSText
 import com.grappenmaker.solarpatcher.config.Constants.defaultLevelHeadText
 import com.grappenmaker.solarpatcher.config.Constants.defaultNickhiderName
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
-import com.grappenmaker.solarpatcher.config.Constants.runMethodDescription
+import com.grappenmaker.solarpatcher.config.Constants.runMatcherData
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.ClassVisitor
@@ -56,18 +56,18 @@ sealed class Module {
 sealed class TextTransformModule : Module() {
     abstract val from: String
     abstract val to: String
-    abstract val method: MethodDescription
-    override fun asTransform() = ClassTransform(className, listOf(TextTransform(method.asMethodMatcher(), from, to)))
+    abstract val method: MatcherData
+    override fun asTransform() = ClassTransform(className, listOf(TextTransform(method.asMatcher(), from, to)))
 }
 
 @Serializable
 sealed class RemoveInvokeModule : Module() {
-    abstract val method: MethodDescription
-    abstract val toRemove: MethodDescription
+    abstract val method: MatcherData
+    abstract val toRemove: MatcherData
     abstract val popCount: Int
     override fun asTransform() = ClassTransform(
         className,
-        listOf(RemoveInvokeTransform(method.asMethodMatcher(), toRemove.asMethodMatcher(), popCount))
+        listOf(RemoveInvokeTransform(method.asMatcher(), toRemove.asMatcher(), popCount))
     )
 }
 
@@ -75,7 +75,7 @@ sealed class RemoveInvokeModule : Module() {
 data class Nickhider(
     override val from: String = defaultNickhiderName,
     override val to: String = defaultNickhiderName,
-    override val method: MethodDescription = MethodDescription(
+    override val method: MatcherData = MatcherData(
         "IIIlIlIlIIIllIlIIllllllIl",
         "(Z)L${getInternalName<String>()};"
     ),
@@ -87,7 +87,7 @@ data class Nickhider(
 data class FPS(
     override val from: String = defaultFPSText,
     override val to: String = defaultFPSText,
-    override val method: MethodDescription = MethodDescription(
+    override val method: MatcherData = MatcherData(
         "llllllIlIlIIIIIllIIIIIIlI",
         "()L${getInternalName<String>()};"
     ),
@@ -99,7 +99,7 @@ data class FPS(
 data class CPS(
     override val from: String = defaultCPSText,
     override val to: String = defaultCPSText,
-    override val method: MethodDescription = MethodDescription(
+    override val method: MatcherData = MatcherData(
         "llllllIlIlIIIIIllIIIIIIlI",
         "()L${getInternalName<String>()};"
     ),
@@ -111,7 +111,7 @@ data class CPS(
 data class AutoGG(
     override val from: String = defaultAutoGGText,
     override val to: String = defaultAutoGGText,
-    override val method: MethodDescription = MethodDescription(
+    override val method: MatcherData = MatcherData(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aH/llIllIIllIlIlIIIIlIlIllll;)V"
     ),
@@ -123,7 +123,7 @@ data class AutoGG(
 data class LevelHead(
     override val from: String = defaultLevelHeadText,
     override val to: String = defaultLevelHeadText,
-    override val method: MethodDescription = MethodDescription(
+    override val method: MatcherData = MatcherData(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aM/lllllIIlIlIIIIllIllIlllII;)V"
     ),
@@ -133,10 +133,10 @@ data class LevelHead(
 
 @Serializable
 data class Freelook(
-    override val method: MethodDescription = runMethodDescription,
+    override val method: MatcherData = runMatcherData,
     override val isEnabled: Boolean = false,
     override val className: String = metadataClass,
-    override val toRemove: MethodDescription = MethodDescription(
+    override val toRemove: MatcherData = MatcherData(
         "llIllIIllIlIlIIIIlIlIllll",
         "(Lcom/google/gson/JsonArray;)V"
     )
@@ -147,10 +147,10 @@ data class Freelook(
 
 @Serializable
 data class PinnedServers(
-    override val method: MethodDescription = runMethodDescription,
+    override val method: MatcherData = runMatcherData,
     override val isEnabled: Boolean = false,
     override val className: String = metadataClass,
-    override val toRemove: MethodDescription = MethodDescription(
+    override val toRemove: MatcherData = MatcherData(
         "llIIIllIIllIIIllIIlIllIIl",
         "(Lcom/google/gson/JsonArray;)V"
     )
@@ -161,10 +161,10 @@ data class PinnedServers(
 
 @Serializable
 data class BlogPosts(
-    override val method: MethodDescription = runMethodDescription,
+    override val method: MatcherData = runMatcherData,
     override val isEnabled: Boolean = false,
     override val className: String = metadataClass,
-    override val toRemove: MethodDescription = MethodDescription("forEach", "(Ljava/util/function/Consumer;)V")
+    override val toRemove: MatcherData = MatcherData("forEach", "(Ljava/util/function/Consumer;)V")
 ) : RemoveInvokeModule() {
     @Transient
     override val popCount = 2
@@ -178,7 +178,7 @@ data class ModpacketRemoval(
     override fun asTransform() = ClassTransform(className, visitors = listOf { parent: ClassVisitor ->
         AdviceClassVisitor(
             parent,
-            MethodDescription("addPacket", "(ILjava/lang/Class;)V"),
+            matchName("addPacket") + matchDescriptor("(ILjava/lang/Class;)V"),
             enterAdvice = {
                 loadVariable(0)
                 visitIntInsn(BIPUSH, 31)
@@ -198,17 +198,17 @@ data class MantleIntegration(
     override val to: String = "capes.mantle.gg",
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/a/llIllIIllIlIlIIIIlIlIllll",
-    override val method: MethodDescription = MethodDescription.CLINIT
+    override val method: MatcherData = MatcherData.CLINIT
 ) : TextTransformModule()
 
 @Serializable
 data class WindowName(
     val to: String = "Lunar Client (Modded by Solar Tweaks)",
-    val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()L${getInternalName<String>()};"),
+    val method: MatcherData = MatcherData("llIIIllIIllIIIllIIlIllIIl", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
-    override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method.asMethodMatcher()) {
+    override fun asTransform() = ClassTransform(className, listOf(ImplementTransform(method.asMatcher()) {
         visitLdcInsn(to)
         returnMethod(ARETURN)
     }))
@@ -218,12 +218,12 @@ private const val serverRuleClass = "com/lunarclient/bukkitapi/nethandler/client
 
 @Serializable
 data class NoHitDelay(
-    val method: MethodDescription = MethodDescription("llIIIllIIllIIIllIIlIllIIl", "()Ljava/util/Map;"),
+    val method: MatcherData = MatcherData("llIIIllIIllIIIllIIlIllIIl", "()Ljava/util/Map;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/es/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
     override fun asTransform() = ClassTransform(className, visitors = listOf {
-        AdviceClassVisitor(it, method, exitAdvice = { opcode: Int ->
+        AdviceClassVisitor(it, method.asMatcher(), exitAdvice = { opcode: Int ->
             if (opcode == ARETURN) {
                 // No, this is not a redundant dup-pop
                 dup()
@@ -240,13 +240,13 @@ data class NoHitDelay(
 @Serializable
 data class FPSSpoof(
     val multiplier: Double = 2.0,
-    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
+    val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
     override fun asTransform() = ClassTransform(className, listOf(InvokeAdviceTransform(
-        method.asMethodMatcher(),
-        MethodDescription("bridge\$getDebugFPS", "()I").asMethodMatcher(),
+        method.asMatcher(),
+        MatcherData("bridge\$getDebugFPS", "()I").asMatcher(),
         afterAdvice = { spoof(multiplier) }
     )))
 }
@@ -254,7 +254,7 @@ data class FPSSpoof(
 @Serializable
 data class CPSSpoof(
     val chance: Double = .1,
-    val method: MethodDescription = MethodDescription(
+    val method: MatcherData = MatcherData(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V"
     ),
@@ -267,8 +267,8 @@ data class CPSSpoof(
 
     override fun asTransform(): ClassTransform {
         return ClassTransform(className, listOf(InvokeAdviceTransform(
-            method.asMethodMatcher(),
-            MethodDescription("add", "(Ljava/lang/Object;)Z").asMethodMatcher(),
+            method.asMatcher(),
+            MatcherData("add", "(Ljava/lang/Object;)Z").asMatcher(),
             afterAdvice = {
                 // Init label
                 val label = Label()
@@ -338,7 +338,8 @@ data class CustomCommands(
     val registerMethod: MethodDescription = MethodDescription(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z",
-        className
+        className,
+        ACC_PUBLIC
     ),
     val chatEventClass: String = "lunar/aH/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
@@ -366,7 +367,7 @@ data class CustomCommands(
     }
 
     override fun asTransform() = ClassTransform(className, visitors = listOf {
-        AdviceClassVisitor(it, MethodDescription.CLINIT, exitAdvice = {
+        AdviceClassVisitor(it, matchClinit(), exitAdvice = {
             // Set instance of customcommands
             instance = this@CustomCommands
 
@@ -379,11 +380,9 @@ data class CustomCommands(
             // Load consumer onto the stack
             invokeMethod(
                 InvocationType.STATIC,
-                MethodDescription(
-                    "handler",
-                    "()Ljava/util/function/Consumer;",
-                    getInternalName<CustomCommands>()
-                )
+                "handler",
+                "()Ljava/util/function/Consumer;",
+                getInternalName<CustomCommands>()
             )
 
             // Register custom listener
@@ -416,7 +415,7 @@ data class RPCUpdate(
 
 @Serializable
 data class WebsocketPrivacy(
-    val method: MethodDescription = MethodDescription(
+    val method: MatcherData = MatcherData(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V"
     ),
@@ -428,7 +427,7 @@ data class WebsocketPrivacy(
 
 @Serializable
 data class UncapReach(
-    val method: MethodDescription = MethodDescription("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
+    val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
@@ -437,8 +436,8 @@ data class UncapReach(
             className,
             listOf(
                 RemoveInvokeTransform(
-                    method.asMethodMatcher(),
-                    MethodDescription("min", "(DD)D").asMethodMatcher()
+                    method.asMatcher(),
+                    MatcherData("min", "(DD)D").asMatcher()
                 )
             ),
             listOf { parent: ClassVisitor -> replaceLdcs(parent, mapOf(3.0 to null)) }
@@ -454,12 +453,12 @@ data class RemoveFakeLevelhead(
         className,
         listOf(
             RemoveInvokeTransform(
-                MatchAny,
-                ThreadLocalRandom::current.javaMethod!!.asMethodMatcher()
+                matchAny(),
+                ThreadLocalRandom::current.javaMethod!!.asMatcher()
             ),
             ReplaceCodeTransform(
-                MatchAny,
-                ThreadLocalRandom::class.java.getMethod("nextInt", Int::class.javaPrimitiveType).asMethodMatcher()
+                matchAny(),
+                ThreadLocalRandom::class.java.getMethod("nextInt", Int::class.javaPrimitiveType).asMatcher()
             ) { _, _ ->
                 pop()
                 visitIntInsn(BIPUSH, -26) // Hacky bro
@@ -470,7 +469,7 @@ data class RemoveFakeLevelhead(
 
 @Serializable
 data class RemoveHashing(
-    val method: MethodDescription = MethodDescription(
+    val method: MatcherData = MatcherData(
         "WWWWWNNNNWMWWWMWWMMMWMMWM",
         "(L${getInternalName<String>()};[BZ)Z"
     ),
@@ -478,7 +477,7 @@ data class RemoveHashing(
     override val className: String = "WMMWMWMMWMWWMWMWWWWWWWMMM"
 ) : Module() {
     override fun asTransform() = ClassTransform(
-        className, listOf(ImplementTransform(method.asMethodMatcher()) {
+        className, listOf(ImplementTransform(method.asMatcher()) {
             visitInsn(ICONST_1)
             returnMethod(IRETURN)
         })

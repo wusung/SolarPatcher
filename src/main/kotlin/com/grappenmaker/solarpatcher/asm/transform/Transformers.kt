@@ -57,7 +57,7 @@ class TransformVisitor(private val transforms: List<MethodTransform>, parent: Cl
         exceptions: Array<out String>?
     ): MethodVisitor {
         val parent = super.visitMethod(access, name, descriptor, signature, exceptions)
-        return transforms.filter { it.matcher.matches(MethodDescription(name, descriptor, owner, access)) }
+        return transforms.filter { it.matcher(MethodDescription(name, descriptor, owner, access)) }
             .fold(parent) { acc, cur -> cur.asVisitor(acc) }
     }
 }
@@ -116,8 +116,8 @@ abstract class InvokeTransform(
             descriptor: String,
             isInterface: Boolean
         ) {
-            val calledMethod = MethodDescription(name, descriptor, owner)
-            if (transformedMatcher.matches(calledMethod)) {
+            val calledMethod = MethodDescription(name, descriptor, owner, -1)
+            if (transformedMatcher(calledMethod)) {
                 replacement(parent, opcode, calledMethod)
                 return
             }
@@ -215,8 +215,8 @@ open class ImplementTransform(
 }
 
 // Transfomer to replace the method with a stub method
-class StubMethodTransform(desc: MethodDescription) : ImplementTransform(desc.asMethodMatcher(), {
-    val returnType = getMethodType(desc.descriptor).returnType
+class StubMethodTransform(data: MatcherData) : ImplementTransform(matchData(data), {
+    val returnType = getMethodType(data.descriptor ?: error("data must contain descriptor")).returnType
     when (returnType.sort) {
         VOID -> visitInsn(RETURN)
         BOOLEAN, BYTE, SHORT, CHAR, INT -> {

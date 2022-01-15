@@ -18,7 +18,7 @@
 
 package com.grappenmaker.solarpatcher.asm.util
 
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
@@ -46,7 +46,7 @@ fun createAdvice(
 // exitAdvice: the code to run, when the end of the method is being visited
 class AdviceClassVisitor(
     parent: ClassVisitor,
-    private val desc: MethodDescription,
+    private val matcher: MethodMatcher,
     private val enterAdvice: MethodVisitor.() -> Unit = {},
     private val exitAdvice: MethodVisitor.(Int) -> Unit = {}
 ) : ClassVisitor(API, parent) {
@@ -74,6 +74,6 @@ class AdviceClassVisitor(
         val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
         val thisMethod = MethodDescription(name, descriptor, owner, access)
 
-        return if (desc.match(thisMethod)) createAdvice(thisMethod, mv, enterAdvice, exitAdvice) else mv
+        return if (matcher(thisMethod)) createAdvice(thisMethod, mv, enterAdvice, exitAdvice) else mv
     }
 }

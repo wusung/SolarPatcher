@@ -19,39 +19,24 @@
 package com.grappenmaker.solarpatcher.asm.method
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.*
 
 // Description of a method (simple)
 @Serializable
 data class MethodDescription(
     val name: String,
     val descriptor: String,
-    @Transient
-    val owner: String = "", // empty string means -> don't check for owner
-    @Transient
-    val access: Int = -1 // -1 means -> don't check for access
-) {
-    fun match(other: MethodDescription) =
-        other.name == name
-                && other.descriptor == descriptor
-                && (other.owner == owner || owner.isEmpty())
-                && (other.access == access || access == -1 || other.access == -1) // Not a bug, intentional
-
-    fun asMethodMatcher() = MatchDescription(this)
-
-    companion object {
-        val CLINIT = MethodDescription("<clinit>", "()V")
-    }
-}
+    val owner: String,
+    val access: Int // -1 can mean that access is not available
+)
 
 // Invocation types (see JVMS)
 enum class InvocationType(val opcode: Int) {
-    SPECIAL(Opcodes.INVOKESPECIAL),
-    DYNAMIC(Opcodes.INVOKEDYNAMIC),
-    VIRTUAL(Opcodes.INVOKEVIRTUAL),
-    INTERFACE(Opcodes.INVOKEINTERFACE),
-    STATIC(Opcodes.INVOKESTATIC);
+    SPECIAL(INVOKESPECIAL),
+    DYNAMIC(INVOKEDYNAMIC),
+    VIRTUAL(INVOKEVIRTUAL),
+    INTERFACE(INVOKEINTERFACE),
+    STATIC(INVOKESTATIC);
 
     companion object {
         fun getFromOpcode(opcode: Int) = enumValues<InvocationType>().find { it.opcode == opcode }
