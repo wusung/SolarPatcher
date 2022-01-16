@@ -19,10 +19,7 @@
 package com.grappenmaker.solarpatcher.asm.transform
 
 import com.grappenmaker.solarpatcher.asm.method.*
-import com.grappenmaker.solarpatcher.asm.util.ClassVisitorWrapper
-import com.grappenmaker.solarpatcher.asm.util.MethodVisitorWrapper
-import com.grappenmaker.solarpatcher.asm.util.invokeMethod
-import com.grappenmaker.solarpatcher.asm.util.pop
+import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle
@@ -76,10 +73,12 @@ abstract class MethodTransform(val matcher: MethodMatcher) {
 }
 
 // Transformer to search-and-replace text in a given method
+// And no, the strings do not have to match exactly
+// Use replaceMethodConstants for that
 class TextTransform(
     matcher: MethodMatcher,
-    val from: String,
-    val to: String
+    private val from: String,
+    private val to: String
 ) : MethodTransform(matcher) {
     override fun asVisitor(parent: MethodVisitor) = object : MethodVisitor(API, parent) {
         override fun visitLdcInsn(value: Any?) =
@@ -104,7 +103,7 @@ class TextTransform(
 // Transformer used to transform method invocations
 abstract class InvokeTransform(
     matcher: MethodMatcher,
-    val transformedMatcher: MethodMatcher
+    private val transformedMatcher: MethodMatcher
 ) : MethodTransform(matcher) {
     abstract val replacement: MethodVisitor.(opcode: Int, description: MethodDescription) -> Unit
 
@@ -181,8 +180,8 @@ class RemoveInvokeTransform(
 class InvokeAdviceTransform(
     matcher: MethodMatcher,
     invokedMatcher: MethodMatcher,
-    val beforeAdvice: MethodVisitor.() -> Unit = {},
-    val afterAdvice: MethodVisitor.() -> Unit = {}
+    private val beforeAdvice: MethodVisitor.() -> Unit = {},
+    private val afterAdvice: MethodVisitor.() -> Unit = {}
 ) : InvokeTransform(matcher, invokedMatcher) {
     override val replacement: MethodVisitor.(Int, MethodDescription) -> Unit = { opcode, call ->
         beforeAdvice()
@@ -197,7 +196,7 @@ class InvokeAdviceTransform(
 // Parameters (and other meta) should also be declared manually (again)
 open class ImplementTransform(
     matcher: MethodMatcher,
-    val implementation: MethodVisitor.() -> Unit
+    private val implementation: MethodVisitor.() -> Unit
 ) : MethodTransform(matcher) {
     // Ignoring parent, won't delegate
     override fun asVisitor(parent: MethodVisitor) = object : MethodVisitor(API, null) {
@@ -245,7 +244,7 @@ class StubMethodTransform(data: MatcherData) : ImplementTransform(matchData(data
 // Utility to wrap a methodvisitor into a transform
 class VisitorTransform(
     matcher: MethodMatcher,
-    val visitor: MethodVisitorWrapper
+    private val visitor: MethodVisitorWrapper
 ) : MethodTransform(matcher) {
     override fun asVisitor(parent: MethodVisitor) = visitor(parent)
 }

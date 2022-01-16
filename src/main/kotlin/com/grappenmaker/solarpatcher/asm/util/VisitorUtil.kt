@@ -20,6 +20,8 @@ package com.grappenmaker.solarpatcher.asm.util
 
 import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.*
+import org.objectweb.asm.Opcodes.BIPUSH
+import org.objectweb.asm.Opcodes.SIPUSH
 
 // Visitor wrappers, used for chaining visitors before we actually have the visitors
 typealias ClassVisitorWrapper = (parent: ClassVisitor) -> ClassVisitor
@@ -39,22 +41,46 @@ fun Collection<FieldVisitorWrapper>.toVisitor(parent: FieldVisitor) = foldWrappe
 fun Collection<MethodVisitorWrapper>.toVisitor(parent: MethodVisitor) = foldWrappers(parent)
 
 // Utility to remap ldc instructions
-fun replaceLdcs(parent: ClassVisitor, map: Map<Any, Any?>) = object : ClassVisitor(API, parent) {
+fun replaceClassConstants(parent: ClassVisitor, map: Map<Any, Any?>) = object : ClassVisitor(API, parent) {
     override fun visitMethod(
         access: Int,
         name: String,
         descriptor: String,
         signature: String?,
         exceptions: Array<out String>?
-    ) = object : MethodVisitor(API, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-        override fun visitLdcInsn(value: Any?) {
-            when (value) {
-                in map -> {
-                    val replace = map.getValue(value!!)
-                    if (replace != null) super.visitLdcInsn(replace)
-                }
-                else -> super.visitLdcInsn(value)
+    ) = replaceMethodConstants(super.visitMethod(access, name, descriptor, signature, exceptions), map)
+}
+
+fun replaceMethodConstants(parent: MethodVisitor, map: Map<Any, Any?>) = object : MethodVisitor(API, parent) {
+    override fun visitLdcInsn(value: Any?) {
+        when (value) {
+            in map -> {
+                val replace = map.getValue(value!!)
+                if (replace != null) super.visitLdcInsn(replace)
             }
+            else -> super.visitLdcInsn(value)
         }
+    }
+
+    override fun visitIntInsn(opcode: Int, operand: Int) {
+        if (opcode == BIPUSH || opcode == SIPUSH) {
+            val value = map[operand] ?: operand
+            if (value !is Int) {
+                throw IllegalArgumentException("Replacement for an integer should be an integer")
+            }
+
+            super.visitIntInsn(opcode, value)
+        } else {
+            super.visitIntInsn(opcode, operand)
+        }
+    }
+
+    override fun visitInvokeDynamicInsn(
+        name: String,
+        desc: String,
+        handle: Handle,
+        vararg args: Any
+    ) {
+        super.visitInvokeDynamicInsn(name, desc, handle, *args.map { map[it] ?: it }.toTypedArray())
     }
 }

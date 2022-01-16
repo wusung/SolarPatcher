@@ -403,7 +403,7 @@ data class RPCUpdate(
     override val className: String = "lunar/et/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
     override fun asTransform() = ClassTransform(className, visitors = listOf {
-        replaceLdcs(
+        replaceClassConstants(
             it, mapOf(
                 562286213059444737L to clientID,
                 "icon_07_11_2020" to icon,
@@ -440,7 +440,7 @@ data class UncapReach(
                     MatcherData("min", "(DD)D").asMatcher()
                 )
             ),
-            listOf { parent: ClassVisitor -> replaceLdcs(parent, mapOf(3.0 to null)) }
+            listOf { parent: ClassVisitor -> replaceClassConstants(parent, mapOf(3.0 to null)) }
         )
 }
 
