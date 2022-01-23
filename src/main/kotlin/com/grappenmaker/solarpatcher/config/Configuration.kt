@@ -24,6 +24,7 @@ import kotlin.reflect.full.memberProperties
 
 @Serializable
 data class Configuration(
+    val debug: Boolean = false,
     val enableAll: Boolean = false,
     val nickhider: Nickhider = Nickhider(),
     val fps: FPS = FPS(),
@@ -41,10 +42,16 @@ data class Configuration(
     val cpsSpoof: CPSSpoof = CPSSpoof(),
     val customCommands: CustomCommands = CustomCommands(),
     val rpcUpdate: RPCUpdate = RPCUpdate(),
-    val websocketPrivacy: WebsocketPrivacy = WebsocketPrivacy(),
+    val tasklistPrivacy: TasklistPrivacy = TasklistPrivacy(),
+    val hostslistPrivacy: HostslistPrivacy = HostslistPrivacy(),
     val uncapReach: UncapReach = UncapReach(),
     val removeFakeLevelhead: RemoveFakeLevelhead = RemoveFakeLevelhead(),
-    val removeHashing: RemoveHashing = RemoveHashing()
+    val removeHashing: RemoveHashing = RemoveHashing(),
+    val debugPackets: DebugPackets = DebugPackets(),
+    val keystrokesCPS: KeystrokesCPS = KeystrokesCPS(),
+    val toggleSprintText: ToggleSprintText = ToggleSprintText(),
+    val reachText: ReachText = ReachText(),
+    val handleNotifs: HandleNotifs = HandleNotifs()
 ) {
     fun getModules() = Configuration::class.memberProperties
         .map { it.get(this) }

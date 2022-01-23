@@ -38,5 +38,24 @@ object Constants {
     const val defaultNickhiderName = "You"
     const val defaultFPSText = "FPS"
     const val defaultCPSText = "CPS"
+    const val defaultReachText = "blocks"
+    const val lcPacketClassname = "com/lunarclient/bukkitapi/nethandler/LCPacket"
     val runMatcherData = MatcherData("run", "()V")
+
+    object ToggleSprint {
+        const val defaultFlyingText = "flying"
+        const val defaultRidingText = "riding"
+        const val defaultDescendingText = "descending"
+        const val defaultDismountingText = "dismounting"
+        const val defaultSneakingText = "sneaking"
+        const val defaultSprintingText = "sprinting"
+        val defaultConfig = listOf(
+            defaultFlyingText,
+            defaultRidingText,
+            defaultDescendingText,
+            defaultDismountingText,
+            defaultSneakingText,
+            defaultSprintingText
+        ).associateWith { it }
+    }
 }

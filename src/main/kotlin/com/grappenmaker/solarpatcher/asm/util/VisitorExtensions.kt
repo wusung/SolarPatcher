@@ -18,22 +18,34 @@
 
 package com.grappenmaker.solarpatcher.asm.util
 
-import com.grappenmaker.solarpatcher.asm.method.InvocationType
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import com.grappenmaker.solarpatcher.asm.method.internalName
-import com.grappenmaker.solarpatcher.asm.method.invocationType
+import com.grappenmaker.solarpatcher.asm.method.*
+import org.objectweb.asm.Handle
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import java.io.PrintStream
+import java.lang.invoke.StringConcatFactory
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.KFunction
+import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaMethod
 
 val outField: Field by lazy { System::class.java.getField("out") }
 val printlnMethod: Method by lazy { PrintStream::class.java.getMethod("println", String::class.java) }
 val printMethod: Method by lazy { PrintStream::class.java.getMethod("print", String::class.java) }
+val concatHandle: Handle by lazy {
+    val method = StringConcatFactory::makeConcatWithConstants.javaMethod!!
+    Handle(
+        H_INVOKESTATIC,
+        getInternalName<StringConcatFactory>(),
+        method.name,
+        Type.getMethodDescriptor(method),
+        false
+    )
+}
 
 // Makes a methodvisitor invoke a given method
 // Caller is responsible for providing arguments and a target, if applicable
@@ -44,6 +56,9 @@ fun MethodVisitor.invokeMethod(method: Method) = visitMethodInsn(
     Type.getMethodDescriptor(method),
     method.declaringClass.isInterface
 )
+
+fun <R> MethodVisitor.invokeMethod(func: KFunction<R>) =
+    invokeMethod(func.javaMethod ?: error("Not a valid java method available"))
 
 fun MethodVisitor.invokeMethod(invocationType: InvocationType, name: String, descriptor: String, owner: String) =
     visitMethodInsn(invocationType.opcode, owner, name, descriptor, invocationType == InvocationType.INTERFACE)
@@ -88,6 +103,9 @@ inline fun MethodVisitor.construct(constructor: Constructor<*>, block: MethodVis
         false
     )
 }
+
+inline fun MethodVisitor.construct(func: KFunction<Unit>, block: MethodVisitor.() -> Unit = {}) =
+    construct(func.javaConstructor!!, block)
 
 inline fun MethodVisitor.construct(className: String, descriptor: String, block: MethodVisitor.() -> Unit = {}) {
     visitTypeInsn(NEW, className)
@@ -141,4 +159,27 @@ fun MethodVisitor.returnMethod(opcode: Int = RETURN) {
 }
 
 // Utililty to load a local variable or parameter
-fun MethodVisitor.loadVariable(num: Int, opcode: Int = ALOAD) = visitVarInsn(opcode, num)
+fun MethodVisitor.loadVariable(num: Int, opcode: Int = ALOAD) {
+    require(opcode in (ILOAD..ALOAD)) { "Must be valid load operation" }
+    visitVarInsn(opcode, num)
+}
+
+// Utililty to store a local variable or parameter
+fun MethodVisitor.storeVariable(num: Int, opcode: Int = ASTORE) {
+    require(opcode in (ISTORE..ASTORE)) { "Must be valid store operation" }
+    visitVarInsn(opcode, num)
+}
+
+// Utility to concat something with constants
+fun MethodVisitor.concat(desc: String, template: String) =
+    visitInvokeDynamicInsn(concatHandle.name, desc, concatHandle, template)
+
+// Utility to convert integer on operand stack to string
+fun MethodVisitor.intToString() =
+    invokeMethod(java.lang.Integer::class.java.getMethod("toString", Int::class.javaPrimitiveType))
+
+// Utility to box an integer on operand stack
+fun MethodVisitor.boxInt() =
+    invokeMethod(java.lang.Integer::class.java.getMethod("valueOf", Int::class.javaPrimitiveType))
+
+// Utility to call a super or this constructor

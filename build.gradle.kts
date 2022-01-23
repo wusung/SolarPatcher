@@ -29,7 +29,7 @@ plugins {
 
 // Set metadata
 group = "com.grappenmaker"
-version = "1.2"
+version = "1.3"
 
 // Enable mavenCentral
 repositories {

@@ -21,21 +21,23 @@ package com.grappenmaker.solarpatcher
 import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
+import com.grappenmaker.solarpatcher.config.Constants
+import com.grappenmaker.solarpatcher.config.Constants.API
 import com.grappenmaker.solarpatcher.config.Constants.defaultAutoGGText
 import com.grappenmaker.solarpatcher.config.Constants.defaultCPSText
 import com.grappenmaker.solarpatcher.config.Constants.defaultCapesServer
 import com.grappenmaker.solarpatcher.config.Constants.defaultFPSText
 import com.grappenmaker.solarpatcher.config.Constants.defaultLevelHeadText
 import com.grappenmaker.solarpatcher.config.Constants.defaultNickhiderName
+import com.grappenmaker.solarpatcher.config.Constants.defaultReachText
+import com.grappenmaker.solarpatcher.config.Constants.lcPacketClassname
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
 import com.grappenmaker.solarpatcher.config.Constants.runMatcherData
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.Label
-import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.Type
+import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
@@ -44,6 +46,7 @@ import kotlin.reflect.jvm.javaMethod
 
 private const val metadataClass = "lunar/et/llIllIIllIlIlIIIIlIlIllll"
 private const val hypixelModsClass = "lunar/bv/llIIIllIIllIIIllIIlIllIIl"
+val internalString = getInternalName<String>()
 
 @Serializable
 sealed class Module {
@@ -77,7 +80,7 @@ data class Nickhider(
     override val to: String = defaultNickhiderName,
     override val method: MatcherData = MatcherData(
         "IIIlIlIlIIIllIlIIllllllIl",
-        "(Z)L${getInternalName<String>()};"
+        "(Z)L$internalString;"
     ),
     override val className: String = "lunar/bF/lllIlIIllllIllIIIlIlIIIll",
     override val isEnabled: Boolean = false
@@ -89,7 +92,7 @@ data class FPS(
     override val to: String = defaultFPSText,
     override val method: MatcherData = MatcherData(
         "llllllIlIlIIIIIllIIIIIIlI",
-        "()L${getInternalName<String>()};"
+        "()L$internalString;"
     ),
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI",
     override val isEnabled: Boolean = false
@@ -101,7 +104,7 @@ data class CPS(
     override val to: String = defaultCPSText,
     override val method: MatcherData = MatcherData(
         "llllllIlIlIIIIIllIIIIIIlI",
-        "()L${getInternalName<String>()};"
+        "()L$internalString;"
     ),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bk/llIlIIIllIlllllIllIIIIIlI",
@@ -172,7 +175,7 @@ data class BlogPosts(
 
 @Serializable
 data class ModpacketRemoval(
-    override val isEnabled: Boolean = true,
+    override val isEnabled: Boolean = false,
     override val className: String = packetClassname
 ) : Module() {
     override fun asTransform() = ClassTransform(className, visitors = listOf { parent: ClassVisitor ->
@@ -180,7 +183,7 @@ data class ModpacketRemoval(
             parent,
             matchName("addPacket") + matchDescriptor("(ILjava/lang/Class;)V"),
             enterAdvice = {
-                loadVariable(0)
+                loadVariable(0, ILOAD)
                 visitIntInsn(BIPUSH, 31)
 
                 val jumpLabel = Label()
@@ -204,7 +207,7 @@ data class MantleIntegration(
 @Serializable
 data class WindowName(
     val to: String = "Lunar Client (Modded by Solar Tweaks)",
-    val method: MatcherData = MatcherData("llIIIllIIllIIIllIIlIllIIl", "()L${getInternalName<String>()};"),
+    val method: MatcherData = MatcherData("llIIIllIIllIIIllIIlIllIIl", "()L$internalString;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
 ) : Module() {
@@ -240,7 +243,7 @@ data class NoHitDelay(
 @Serializable
 data class FPSSpoof(
     val multiplier: Double = 2.0,
-    val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
+    val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L$internalString;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bp/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
@@ -278,7 +281,7 @@ data class CPSSpoof(
 
                 // Load chance, get random double
                 visitLdcInsn(chance)
-                invokeMethod(ThreadLocalRandom::current.javaMethod!!)
+                invokeMethod(ThreadLocalRandom::current)
                 invokeMethod(Random::class.java.getMethod("nextDouble"))
 
                 // Check if chance is met, if so, add another
@@ -399,7 +402,7 @@ data class RPCUpdate(
     val clientID: Long = 920998351430901790,
     val icon: String = "logo",
     val iconText: String = "Solar Tweaks",
-    override val isEnabled: Boolean = true,
+    override val isEnabled: Boolean = false,
     override val className: String = "lunar/et/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
     override fun asTransform() = ClassTransform(className, visitors = listOf {
@@ -414,7 +417,7 @@ data class RPCUpdate(
 }
 
 @Serializable
-data class WebsocketPrivacy(
+data class TasklistPrivacy(
     val method: MatcherData = MatcherData(
         "llIlIIIllIlllllIllIIIIIlI",
         "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V"
@@ -426,8 +429,20 @@ data class WebsocketPrivacy(
 }
 
 @Serializable
+data class HostslistPrivacy(
+    val method: MatcherData = MatcherData(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V"
+    ),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/av/lllIlIlIlIllIllIIIIlllIII"
+) : Module() {
+    override fun asTransform() = ClassTransform(className, listOf(StubMethodTransform(method)))
+}
+
+@Serializable
 data class UncapReach(
-    val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L${getInternalName<String>()};"),
+    val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L$internalString;"),
     override val isEnabled: Boolean = false,
     override val className: String = "lunar/bO/llIlIIIllIlllllIllIIIIIlI"
 ) : Module() {
@@ -471,7 +486,7 @@ data class RemoveFakeLevelhead(
 data class RemoveHashing(
     val method: MatcherData = MatcherData(
         "WWWWWNNNNWMWWWMWWMMMWMMWM",
-        "(L${getInternalName<String>()};[BZ)Z"
+        "(L$internalString;[BZ)Z"
     ),
     override val isEnabled: Boolean = false,
     override val className: String = "WMMWMWMMWMWWMWMWWWWWWWMMM"
@@ -482,4 +497,184 @@ data class RemoveHashing(
             returnMethod(IRETURN)
         })
     )
+}
+
+@Serializable
+data class DebugPackets(
+    val method: MatcherData = MatcherData(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(Llunar/aN/llIllIIllIlIlIIIIlIlIllll;)V"
+    ),
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/dG/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    override fun asTransform() = ClassTransform(
+        className, listOf(InvokeAdviceTransform(
+            method.asMatcher(),
+            matchName("process") + matchOwner(lcPacketClassname),
+            afterAdvice = {
+                visitPrintln {
+                    loadVariable(2)
+                    invokeMethod(java.lang.Object::class.java.getMethod("getClass"))
+                    invokeMethod(Class<*>::getName)
+
+                    val stringName = internalString
+                    concat(
+                        "(L$stringName;)L$stringName;",
+                        "Received/processed packet type \u0001"
+                    )
+                }
+            }
+        ))
+    )
+}
+
+@Serializable
+data class KeystrokesCPS(
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bz/llIlIIIllIlllllIllIIIIIlI",
+    override val from: String = defaultCPSText,
+    override val to: String = defaultCPSText,
+    override val method: MatcherData = MatcherData(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(Llunar/r/lllllIIlIlIIIIllIllIlllII;FFLlunar/dH/lllIlIIllllIllIIIlIlIIIll;Llunar/dH/lllIlIIllllIllIIIlIlIIIll;Llunar/dH/lllIlIIllllIllIIIlIlIIIll;Llunar/dH/lllIlIIllllIllIIIlIlIIIll;Z)V"
+    )
+) : TextTransformModule()
+
+@Serializable
+data class ToggleSprintText(
+    val replacements: Map<String, String> = Constants.ToggleSprint.defaultConfig,
+    val method: MatcherData = MatcherData.CLINIT,
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/cn/llIlIIIllIlllllIllIIIIIlI\$llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    override fun asTransform(): ClassTransform =
+        ClassTransform(className, replacements.map { (from, to) -> TextTransform(method.asMatcher(), from, to) })
+}
+
+@Serializable
+data class ReachText(
+    override val isEnabled: Boolean = false,
+    override val className: String = "lunar/bO/llIlIIIllIlllllIllIIIIIlI",
+    override val from: String = defaultReachText,
+    override val to: String = defaultReachText,
+    override val method: MatcherData = MatcherData("llllllIlIlIIIIIllIIIIIIlI", "()L$internalString;")
+) : TextTransformModule()
+
+const val lunarMainClassname = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
+const val popupManagerClassname = "lunar/dg/IllIIlIIlIlIllllIIllllIll"
+const val notifPacketClassname = "com/lunarclient/bukkitapi/nethandler/client/LCPacketNotification"
+const val bridgeClassname = "lunar/eN/IlIIlIllIIllIIIIllIIlIlII"
+const val clientBridgeClassname = "lunar/i/llIIIllIIllIIIllIIlIllIIl"
+const val serverDataBridgeClassname = "lunar/n/llIIIllIIllIIIllIIlIllIIl"
+
+@Serializable
+data class HandleNotifs(
+    val getLunarmainMethod: MethodDescription = MethodDescription(
+        "IIIIIlIIlIllIlIIlllIlIIIl",
+        "()L$lunarMainClassname;",
+        lunarMainClassname
+    ),
+    val getBridgeMethod: MethodDescription = MethodDescription(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "()L$clientBridgeClassname;",
+        bridgeClassname
+    ),
+    val getServerdataMethod: MethodDescription = MethodDescription(
+        "bridge\$getCurrentServerData",
+        "()L$serverDataBridgeClassname;",
+        clientBridgeClassname
+    ),
+    val getServerIPMethod: MethodDescription = MethodDescription(
+        "bridge\$serverIP",
+        "()L$internalString;",
+        serverDataBridgeClassname
+    ),
+    val getPopupManagerMethod: MethodDescription = MethodDescription(
+        "lIIlllIlIllIIIIlIIlIlIIll",
+        "()L$popupManagerClassname;",
+        lunarMainClassname
+    ),
+    val levelEnum: String = "lunar/dg/IIlllllIllllIlIIllllIlIlI",
+    val sendPopupMethod: MethodDescription = MethodDescription(
+        "llIlIIIllIlllllIllIIIIIlI",
+        "(L$levelEnum;L$internalString;L$internalString;)Llunar/dg/IIIlIlIlIIIllIlIIllllllIl;",
+        popupManagerClassname
+    ),
+    val levelmap: Map<String, String> = mapOf(
+        "info" to "llIlIIIllIlllllIllIIIIIlI",
+        "success" to "llIllIIllIlIlIIIIlIlIllll",
+        "warning" to "llIIIllIIllIIIllIIlIllIIl",
+        "error" to "lllIlIIllllIllIIIlIlIIIll"
+    ),
+    override val className: String = "lunar/dG/llIlIIIllIlllllIllIIIIIlI"
+) : Module() {
+    @Transient
+    override val isEnabled = true
+    fun getLevel(clazz: Class<*>, name: String): Any? = clazz.getField(levelmap[name] ?: "info")[null]
+
+    companion object {
+        @JvmStatic
+        lateinit var instance: HandleNotifs
+    }
+
+    override fun asTransform() = ClassTransform(className, listOf(
+        VisitorTransform(matchName("handleNotification")) { parent ->
+            object : MethodVisitor(API, parent) {
+                init {
+                    instance = this@HandleNotifs
+                }
+
+                override fun visitCode() {
+                    super.visitCode()
+
+                    // Actually implement this garbage
+                    // Get "popup manager"
+                    invokeMethod(InvocationType.STATIC, getLunarmainMethod)
+                    invokeMethod(InvocationType.VIRTUAL, getPopupManagerMethod)
+
+                    // Load level map onto the stack
+                    invokeMethod(HandleNotifs::class.java.getMethod("getInstance"))
+
+                    // Load class object onto stack
+                    visitLdcInsn(Type.getObjectType(levelEnum))
+
+                    // Load packet level onto the stack
+                    loadVariable(1)
+                    invokeMethod(
+                        InvocationType.VIRTUAL,
+                        "getLevel",
+                        "()L$internalString;",
+                        notifPacketClassname
+                    )
+                    invokeMethod(java.lang.String::class.java.getMethod("toLowerCase"))
+
+                    // Get level enum constant
+                    invokeMethod(HandleNotifs::getLevel)
+                    visitTypeInsn(CHECKCAST, levelEnum)
+
+                    // Get current server name
+                    invokeMethod(InvocationType.STATIC, getBridgeMethod)
+                    invokeMethod(InvocationType.INTERFACE, getServerdataMethod)
+                    invokeMethod(InvocationType.INTERFACE, getServerIPMethod)
+
+                    // Load title onto stack
+                    concat("(L$internalString;)L$internalString;", "§lNotification - \u0001")
+
+                    // Load message onto operand stack
+                    loadVariable(1)
+                    invokeMethod(
+                        InvocationType.VIRTUAL,
+                        "getMessage",
+                        "()L$internalString;",
+                        notifPacketClassname
+                    )
+
+                    // Send message
+                    invokeMethod(InvocationType.VIRTUAL, sendPopupMethod)
+                    pop()
+                }
+            }
+        }
+    ))
 }

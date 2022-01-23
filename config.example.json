@@ -1,5 +1,6 @@
 {
-    "enableAll": true,
+    "debug": false,
+    "enableAll": false,
     "nickhider": {
         "from": "You",
         "to": "You",
@@ -109,7 +110,7 @@
         }
     },
     "modpacketRemoval": {
-        "isEnabled": true,
+        "isEnabled": false,
         "className": "com/lunarclient/bukkitapi/nethandler/LCPacket"
     },
     "mantleIntegration": {
@@ -201,10 +202,10 @@
         "clientID": 920998351430901790,
         "icon": "logo",
         "iconText": "Solar Tweaks",
-        "isEnabled": true,
+        "isEnabled": false,
         "className": "lunar/et/llIlIIIllIlllllIllIIIIIlI"
     },
-    "websocketPrivacy": {
+    "tasklistPrivacy": {
         "method": {
             "name": "llIlIIIllIlllllIllIIIIIlI",
             "descriptor": "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V",
@@ -213,6 +214,16 @@
         },
         "isEnabled": false,
         "className": "lunar/av/lllIIIllllllIlIIIIIlIIlII"
+    },
+    "hostslistPrivacy": {
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/au/llIlIIIllIlllllIllIIIIIlI;)V",
+            "owner": null,
+            "access": null
+        },
+        "isEnabled": false,
+        "className": "lunar/av/lllIlIlIlIllIllIIIIlllIII"
     },
     "uncapReach": {
         "method": {
@@ -237,5 +248,103 @@
         },
         "isEnabled": false,
         "className": "WMMWMWMMWMWWMWMWWWWWWWMMM"
+    },
+    "debugPackets": {
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/aN/llIllIIllIlIlIIIIlIlIllll;)V",
+            "owner": null,
+            "access": null
+        },
+        "isEnabled": false,
+        "className": "lunar/dG/llIlIIIllIlllllIllIIIIIlI"
+    },
+    "keystrokesCPS": {
+        "isEnabled": false,
+        "className": "lunar/bz/llIlIIIllIlllllIllIIIIIlI",
+        "from": "CPS",
+        "to": "CPS",
+        "method": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/r/lllllIIlIlIIIIllIllIlllII;FFLlunar/dH/lllIlIIllllIllIIIlIlIIIll;Llunar/dH/lllIlIIllllIllIIIlIlIIIll;Llunar/dH/lllIlIIllllIllIIIlIlIIIll;Llunar/dH/lllIlIIllllIllIIIlIlIIIll;Z)V",
+            "owner": null,
+            "access": null
+        }
+    },
+    "toggleSprintText": {
+        "replacements": {
+            "flying": "flying",
+            "riding": "riding",
+            "descending": "descending",
+            "dismounting": "dismounting",
+            "sneaking": "sneaking",
+            "sprinting": "sprinting"
+        },
+        "method": {
+            "name": "<clinit>",
+            "descriptor": "()V",
+            "owner": null,
+            "access": 8
+        },
+        "isEnabled": false,
+        "className": "lunar/cn/llIlIIIllIlllllIllIIIIIlI$llIlIIIllIlllllIllIIIIIlI"
+    },
+    "reachText": {
+        "isEnabled": false,
+        "className": "lunar/bO/llIlIIIllIlllllIllIIIIIlI",
+        "from": "blocks",
+        "to": "blocks",
+        "method": {
+            "name": "llllllIlIlIIIIIllIIIIIIlI",
+            "descriptor": "()Ljava/lang/String;",
+            "owner": null,
+            "access": null
+        }
+    },
+    "handleNotifs": {
+        "getLunarmainMethod": {
+            "name": "IIIIIlIIlIllIlIIlllIlIIIl",
+            "descriptor": "()Llunar/as/llIllIIllIlIlIIIIlIlIllll;",
+            "owner": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
+            "access": -1
+        },
+        "getBridgeMethod": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "()Llunar/i/llIIIllIIllIIIllIIlIllIIl;",
+            "owner": "lunar/eN/IlIIlIllIIllIIIIllIIlIlII",
+            "access": -1
+        },
+        "getServerdataMethod": {
+            "name": "bridge$getCurrentServerData",
+            "descriptor": "()Llunar/n/llIIIllIIllIIIllIIlIllIIl;",
+            "owner": "lunar/i/llIIIllIIllIIIllIIlIllIIl",
+            "access": -1
+        },
+        "getServerIPMethod": {
+            "name": "bridge$serverIP",
+            "descriptor": "()Ljava/lang/String;",
+            "owner": "lunar/n/llIIIllIIllIIIllIIlIllIIl",
+            "access": -1
+        },
+        "getPopupManagerMethod": {
+            "name": "lIIlllIlIllIIIIlIIlIlIIll",
+            "descriptor": "()Llunar/dg/IllIIlIIlIlIllllIIllllIll;",
+            "owner": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
+            "access": -1
+        },
+        "levelEnum": "lunar/dg/IIlllllIllllIlIIllllIlIlI",
+        "sendPopupMethod": {
+            "name": "llIlIIIllIlllllIllIIIIIlI",
+            "descriptor": "(Llunar/dg/IIlllllIllllIlIIllllIlIlI;Ljava/lang/String;Ljava/lang/String;)Llunar/dg/IIIlIlIlIIIllIlIIllllllIl;",
+            "owner": "lunar/dg/IllIIlIIlIlIllllIIllllIll",
+            "access": -1
+        },
+        "levelmap": {
+            "info": "llIlIIIllIlllllIllIIIIIlI",
+            "success": "llIllIIllIlIlIIIIlIlIllll",
+            "warning": "llIIIllIIllIIIllIIlIllIIl",
+            "error": "lllIlIIllllIllIIIlIlIIIll"
+        },
+        "className": "lunar/dG/llIlIIIllIlllllIllIIIIIlI"
     }
 }

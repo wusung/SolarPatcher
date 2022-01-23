@@ -54,5 +54,5 @@ fun premain(arg: String?, inst: Instrumentation) {
         .map { it.asTransform() }
 
     // Add them to the instrumentation backend implementation of the jvm
-    inst.addTransformer(FileTransformer(transforms, debug = true))
+    inst.addTransformer(FileTransformer(transforms, debug = config.debug))
 }

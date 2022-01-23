@@ -27,7 +27,7 @@ data class MethodDescription(
     val name: String,
     val descriptor: String,
     val owner: String,
-    val access: Int // -1 can mean that access is not available
+    val access: Int = -1 // -1 can mean that access is not available
 )
 
 // Invocation types (see JVMS)
