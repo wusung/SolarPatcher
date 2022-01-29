@@ -8,3 +8,10 @@
  */
 
 rootProject.name = "solar-patcher"
+
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}

@@ -18,7 +18,7 @@
 
 package com.grappenmaker.solarpatcher.config
 
-import com.grappenmaker.solarpatcher.asm.method.MatcherData
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatcherData
 import kotlinx.serialization.json.Json
 import org.objectweb.asm.Opcodes
 
@@ -39,8 +39,7 @@ object Constants {
     const val defaultFPSText = "FPS"
     const val defaultCPSText = "CPS"
     const val defaultReachText = "blocks"
-    const val lcPacketClassname = "com/lunarclient/bukkitapi/nethandler/LCPacket"
-    val runMatcherData = MatcherData("run", "()V")
+    val runMatcherData = MethodMatcherData("run", "()V")
 
     object ToggleSprint {
         const val defaultFlyingText = "flying"

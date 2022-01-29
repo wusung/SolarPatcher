@@ -16,18 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Constant values
-object Constants {
-    const val premainClass = "com.grappenmaker.solarpatcher.AgentMain"
-    const val saveConfigClass = "com.grappenmaker.solarpatcher.config.SaveDefaultConfig"
-    const val defaultConfig = "config.example.json"
-    const val updaterConfig = "updater.json"
-}
+package com.grappenmaker.solarpatcher.asm
 
-// Versions of dependencies
-object Versions {
-    const val kotlin = "1.6.255-SNAPSHOT"
-    const val serializationJSON = "1.3.2"
-    const val asm = "9.2"
-    const val detekt = "1.19.0"
-}
+import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
+import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.MethodNode
+
+val ClassNode.constants: List<Any>
+    get() = methods.flatMap { m -> m.constants }
+
+val MethodNode.constants: List<Any>
+    get() = instructions.filterIsInstance<LdcInsnNode>().map { it.cst } +
+            instructions.filterIsInstance<InvokeDynamicInsnNode>().flatMap { it.bsmArgs.asIterable() }
+
+fun MethodNode.asDescription(owner: ClassNode) =
+    MethodDescription(name, desc, owner.name, access)

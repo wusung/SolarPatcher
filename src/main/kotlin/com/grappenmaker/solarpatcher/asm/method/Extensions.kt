@@ -18,30 +18,12 @@
 
 package com.grappenmaker.solarpatcher.asm.method
 
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatcher
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescription
+import com.grappenmaker.solarpatcher.asm.util.internalName
 import org.objectweb.asm.Type
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import kotlin.reflect.KClass
-
-// Class naming
-// Returns the fully qualified name
-val Class<*>.fullyQualifiedName: String
-    get() = when {
-        isLocalClass -> "${enclosingClass.fullyQualifiedName}$${enclosingClass.declaredClasses.indexOf(this)}"
-        isMemberClass -> "${enclosingClass.fullyQualifiedName}$$simpleName"
-        else -> canonicalName
-    }
-
-// Returns the jvm internal name
-val Class<*>.internalName: String get() = fullyQualifiedName.replace('.', '/')
-
-// Implementations for kclass too
-val KClass<*>.fullyQualifiedName: String get() = java.fullyQualifiedName
-val KClass<*>.internalName: String get() = java.internalName
-
-// Get names with reified generic
-inline fun <reified T> getFullName() = T::class.fullyQualifiedName
-inline fun <reified T> getInternalName() = T::class.internalName
 
 // Gives the description of this method
 fun Method.asDescription() =

@@ -18,18 +18,21 @@
 
 package com.grappenmaker.solarpatcher.asm.transform
 
+import com.grappenmaker.solarpatcher.Module
+import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.util.LoaderClassWriter
 import com.grappenmaker.solarpatcher.asm.util.toVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
 import java.lang.instrument.ClassFileTransformer
 import java.security.ProtectionDomain
 
-// A ClassFileTransformer that applies ClassTransforms
+// A ClassFileTransformer that applies Transform generators
 class FileTransformer(
-    private val transforms: List<ClassTransform> = listOf(),
+    private val transforms: List<TransformGenerator> = listOf(),
     private val debug: Boolean = false,
     private val removeDebugInfo: Boolean = !debug
 ) : ClassFileTransformer {
@@ -40,15 +43,26 @@ class FileTransformer(
         domain: ProtectionDomain,
         classFile: ByteArray
     ): ByteArray? {
-        val classTransform = transforms.getFromName(className) ?: return null
+        // Load the classfile as node
+        val reader = ClassReader(classFile)
+        val node = ClassNode().also { reader.accept(it, 0) }
+
+        val classTransform = try {
+            transforms.getFromNode(node) ?: return null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+
+        if (debug) {
+            println("${classTransform.methodTransforms.size} found for $className")
+        }
 
         // Not interested to transform if there are no transforms or visitors
         if (classTransform.methodTransforms.isEmpty() && classTransform.visitors.isEmpty()) return null
         val actualLoader = loader ?: return null // Not interested in transforming classes from bootstrap loader
 
-        val reader = ClassReader(classFile)
         val writer = LoaderClassWriter(actualLoader, reader, ClassWriter.COMPUTE_FRAMES)
-
         try {
             val visitor = classTransform.visitors.toVisitor(writer)
             val options = (if (removeDebugInfo) ClassReader.SKIP_DEBUG else 0) or
@@ -73,12 +87,22 @@ class FileTransformer(
 }
 
 // Utility to get a class transform based on the name
-private fun Collection<ClassTransform>.getFromName(className: String) =
-    filter { it.className == className }.reduceOrNull { acc, cur ->
+private fun Collection<TransformGenerator>.getFromNode(node: ClassNode) =
+    mapNotNull { it.generate(node) }.reduceOrNull { acc, cur ->
         ClassTransform(
-            className,
             acc.methodTransforms + cur.methodTransforms,
             acc.visitors + cur.visitors,
             acc.shouldExpand || cur.shouldExpand
         )
     }
+
+// Transform generator type
+interface TransformGenerator {
+    // Returns null if the generator is not interested in transforming
+    fun generate(node: ClassNode): ClassTransform?
+}
+
+// Utility method to create a transform generator based on a matcher
+fun matcherGenerator(transform: ClassTransform, matcher: ClassMatcher) = object : TransformGenerator {
+    override fun generate(node: ClassNode) = if (matcher(node)) transform else null
+}

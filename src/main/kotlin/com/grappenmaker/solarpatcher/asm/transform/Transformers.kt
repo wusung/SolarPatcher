@@ -18,6 +18,8 @@
 
 package com.grappenmaker.solarpatcher.asm.transform
 
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatcher
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescription
 import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants.API
@@ -61,11 +63,12 @@ class TransformVisitor(private val transforms: List<MethodTransform>, parent: Cl
 
 // A class transformer
 class ClassTransform(
-    val className: String,
     val methodTransforms: List<MethodTransform> = listOf(),
     val visitors: List<ClassVisitorWrapper> = listOf(),
     val shouldExpand: Boolean = false
-)
+) {
+    constructor(transform: MethodTransform) : this(listOf(transform))
+}
 
 // A method transformer
 abstract class MethodTransform(val matcher: MethodMatcher) {
@@ -77,8 +80,8 @@ abstract class MethodTransform(val matcher: MethodMatcher) {
 // Use replaceMethodConstants for that
 class TextTransform(
     matcher: MethodMatcher,
-    private val from: String,
-    private val to: String
+    val from: String,
+    val to: String
 ) : MethodTransform(matcher) {
     override fun asVisitor(parent: MethodVisitor) = object : MethodVisitor(API, parent) {
         override fun visitLdcInsn(value: Any?) =
@@ -213,9 +216,69 @@ open class ImplementTransform(
     }
 }
 
+// Utility to give a method a constant value
+// Warning: because of optimizations, this code is huge
+class ConstantValueTransform(
+    matcher: MethodMatcher,
+    value: Any?
+) : ImplementTransform(matcher, {
+    when (value) {
+        true -> visitInsn(ICONST_1)
+        false -> visitInsn(ICONST_0)
+        is Byte -> visitIntInsn(BIPUSH, value.toInt())
+        is Int -> when (value) {
+            -1 -> visitInsn(ICONST_M1)
+            0 -> visitInsn(ICONST_0)
+            1 -> visitInsn(ICONST_1)
+            2 -> visitInsn(ICONST_2)
+            3 -> visitInsn(ICONST_3)
+            4 -> visitInsn(ICONST_4)
+            5 -> visitInsn(ICONST_5)
+            in 0..Byte.MAX_VALUE -> visitIntInsn(BIPUSH, value)
+            else -> visitLdcInsn(value)
+        }
+        is Float -> when (value) {
+            0f -> visitInsn(FCONST_0)
+            1f -> visitInsn(FCONST_1)
+            2f -> visitInsn(FCONST_2)
+            else -> visitLdcInsn(value)
+        }
+        is Double -> when (value) {
+            0.0 -> visitInsn(DCONST_0)
+            1.0 -> visitInsn(DCONST_1)
+            else -> visitLdcInsn(value)
+        }
+        is Long -> when (value) {
+            0L -> visitInsn(LCONST_0)
+            1L -> visitInsn(LCONST_1)
+            in 0..Byte.MAX_VALUE -> {
+                visitIntInsn(BIPUSH, value.toInt())
+                visitInsn(I2L)
+            }
+            else -> visitLdcInsn(value)
+        }
+        is Char -> {
+            visitIntInsn(BIPUSH, value.code)
+            visitInsn(I2C)
+        }
+        is Short -> visitIntInsn(SIPUSH, value.toInt())
+        is String -> visitLdcInsn(value)
+        else -> error("Constant value ($value) is not a valid JVM constant!")
+    }
+
+    when (value) {
+        is Boolean, Byte, Short, Char, Int -> returnMethod(IRETURN)
+        is Long -> returnMethod(LRETURN)
+        is Float -> returnMethod(FRETURN)
+        is Double -> returnMethod(DRETURN)
+        else -> returnMethod(ARETURN)
+    }
+})
+
 // Transfomer to replace the method with a stub method
-class StubMethodTransform(data: MatcherData) : ImplementTransform(matchData(data), {
-    val returnType = getMethodType(data.descriptor ?: error("data must contain descriptor")).returnType
+@Suppress("RemoveRedundantQualifierName") // Can't be removed
+class StubMethodTransform(desc: MethodDescription) : ImplementTransform(matchDescription(desc), {
+    val returnType = getMethodType(desc.descriptor).returnType
     when (returnType.sort) {
         VOID -> visitInsn(RETURN)
         BOOLEAN, BYTE, SHORT, CHAR, INT -> {

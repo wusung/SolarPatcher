@@ -18,7 +18,11 @@
 
 package com.grappenmaker.solarpatcher.asm.util
 
-import com.grappenmaker.solarpatcher.asm.method.*
+import com.grappenmaker.solarpatcher.asm.FieldDescription
+import com.grappenmaker.solarpatcher.asm.isStatic
+import com.grappenmaker.solarpatcher.asm.method.InvocationType
+import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import com.grappenmaker.solarpatcher.asm.method.invocationType
 import org.objectweb.asm.Handle
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
@@ -30,7 +34,9 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.reflect.KFunction
+import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaMethod
 
 val outField: Field by lazy { System::class.java.getField("out") }
@@ -58,7 +64,7 @@ fun MethodVisitor.invokeMethod(method: Method) = visitMethodInsn(
 )
 
 fun <R> MethodVisitor.invokeMethod(func: KFunction<R>) =
-    invokeMethod(func.javaMethod ?: error("Not a valid java method available"))
+    invokeMethod(func.javaMethod ?: error("No valid java method available"))
 
 fun MethodVisitor.invokeMethod(invocationType: InvocationType, name: String, descriptor: String, owner: String) =
     visitMethodInsn(invocationType.opcode, owner, name, descriptor, invocationType == InvocationType.INTERFACE)
@@ -72,11 +78,17 @@ fun MethodVisitor.invokeMethod(invocationType: InvocationType, desc: MethodDescr
 // Caller is responsible for providing a target, if applicable
 fun MethodVisitor.getField(field: Field) =
     visitFieldInsn(
-        if (Modifier.isStatic(field.modifiers)) GETSTATIC else GETFIELD,
+        if (field.isStatic) GETSTATIC else GETFIELD,
         field.declaringClass.internalName,
         field.name,
         Type.getDescriptor(field.type)
     )
+
+fun MethodVisitor.getField(prop: KProperty<*>) =
+    getField(prop.javaField ?: error("No valid java field available"))
+
+fun MethodVisitor.getField(desc: FieldDescription, static: Boolean = desc.access and ACC_STATIC == ACC_STATIC) =
+    visitFieldInsn(if (static) GETSTATIC else GETFIELD, desc.owner, desc.name, desc.descriptor)
 
 // Makes a methodvisitor get set value of a field
 // Caller is responsible for providing a value and target
@@ -87,6 +99,9 @@ fun MethodVisitor.setField(field: Field) =
         field.name,
         Type.getDescriptor(field.type)
     )
+
+fun MethodVisitor.setField(desc: FieldDescription, static: Boolean = desc.access and ACC_STATIC == ACC_STATIC) =
+    visitFieldInsn(if (static) PUTSTATIC else PUTFIELD, desc.owner, desc.name, desc.descriptor)
 
 // Makes a methodvisitor construct a class with a given constructor.
 // New instance will be pushed onto the stack
@@ -181,5 +196,3 @@ fun MethodVisitor.intToString() =
 // Utility to box an integer on operand stack
 fun MethodVisitor.boxInt() =
     invokeMethod(java.lang.Integer::class.java.getMethod("valueOf", Int::class.javaPrimitiveType))
-
-// Utility to call a super or this constructor

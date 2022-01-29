@@ -16,18 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Constant values
-object Constants {
-    const val premainClass = "com.grappenmaker.solarpatcher.AgentMain"
-    const val saveConfigClass = "com.grappenmaker.solarpatcher.config.SaveDefaultConfig"
-    const val defaultConfig = "config.example.json"
-    const val updaterConfig = "updater.json"
-}
+package com.grappenmaker.solarpatcher.asm
 
-// Versions of dependencies
-object Versions {
-    const val kotlin = "1.6.255-SNAPSHOT"
-    const val serializationJSON = "1.3.2"
-    const val asm = "9.2"
-    const val detekt = "1.19.0"
-}
+import kotlinx.serialization.Serializable
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+
+// Description of a field (simple)
+@Serializable
+data class FieldDescription(
+    val name: String,
+    val descriptor: String,
+    val owner: String,
+    val access: Int = -1 // -1 can mean that access is not available
+)
+
+// Accessors for fields
+val Field.isPublic get() = Modifier.isPublic(modifiers)
+val Field.isPrivate get() = Modifier.isPrivate(modifiers)
+val Field.isProtected get() = Modifier.isProtected(modifiers)
+val Field.isStatic get() = Modifier.isStatic(modifiers)
+val Field.isFinal get() = Modifier.isFinal(modifiers)

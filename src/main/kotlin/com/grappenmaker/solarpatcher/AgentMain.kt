@@ -28,12 +28,17 @@ import kotlinx.serialization.decodeFromString
 import java.io.File
 import java.io.IOException
 import java.lang.instrument.Instrumentation
+import java.util.*
 
 @Suppress("unused")
 fun premain(arg: String?, inst: Instrumentation) {
+    println("Solar Patcher v${Versioning.version}")
+    println("Built ${Date(Versioning.buildTimestamp)}")
+
     // Get the config based on the args
     val filename = arg ?: "config.json"
     val config = try {
+        println("Attempting to read configuration from $filename")
         json.decodeFromString(File(filename).readText())
     } catch (e: SerializationException) {
         e.printStackTrace()
@@ -51,7 +56,9 @@ fun premain(arg: String?, inst: Instrumentation) {
     val transforms = config.getModules()
         .filter { it.isEnabled || config.enableAll }
         .also { println("Using modules ${it.joinToString { m -> m::class.simpleName ?: "Unnamed" }}") }
-        .map { it.asTransform() }
+
+    println("Launching Lunar Client")
+    println()
 
     // Add them to the instrumentation backend implementation of the jvm
     inst.addTransformer(FileTransformer(transforms, debug = config.debug))

@@ -34,6 +34,7 @@ fun Project.addUpdaterTask() {
 
 // Internally create the updater task
 private fun Project.createUpdaterTask() = tasks.create("saveUpdaterConfig") {
+    dependsOn("jar")
     onlyIf { !getJarTask().state.upToDate }
 
     doLast {

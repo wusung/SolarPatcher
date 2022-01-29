@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.daemon.common.isDaemonEnabled
+
 /*
  * Solar Patcher, a runtime patcher for Lunar Client
  * Copyright (C) 2022 Solar Tweaks and respective contributors.
@@ -33,6 +35,7 @@ version = "1.3"
 
 // Enable mavenCentral
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -58,6 +61,13 @@ tasks.withType<Jar>().configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// Custom tasks to make life easier
+// See docs of individual tasks
+val resourcesDir = sourceSets.main.get().output.resourcesDir
+addVersioningTask(resourcesDir ?: error("No resources output dir found"))
+addSaveDefaultConfigTask()
+addUpdaterTask()
+
 // Detekt configuration
 detekt {
     buildUponDefaultConfig = true
@@ -73,8 +83,3 @@ tasks.create("lint") {
 tasks.detekt {
     outputs.upToDateWhen { false }
 }
-
-// Custom tasks to make life easier
-// See docs of individual tasks
-addSaveDefaultConfigTask()
-addUpdaterTask()
