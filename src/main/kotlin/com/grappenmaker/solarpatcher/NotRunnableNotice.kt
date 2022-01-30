@@ -16,21 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import org.gradle.api.Project
-import java.io.File
-import java.nio.file.Files
+@file:JvmName("NotRunnableNotice")
 
-fun Project.addVersioningTask(resourcesDir: File) = tasks.create("versioning") {
-    doLast {
-        if (!resourcesDir.exists()) Files.createDirectories(resourcesDir.toPath())
+package com.grappenmaker.solarpatcher
 
-        val properties = mapOf(
-            "version" to version,
-            "buildTimestamp" to System.currentTimeMillis(),
-            "devBuild" to !properties.containsKey("prod")
-        )
-
-        File(resourcesDir, "versions.txt").writeText(properties.map { (key, value) -> "$key=$value" }
-            .joinToString(System.lineSeparator()))
-    }
-}.also { tasks.named("classes").get().dependsOn(it.path) }
+fun main() {
+    println("""
+        |Thanks for using Solar Patcher!
+        |
+        |Because this is a runtime patcher, just running this will not work.
+        |Try downloading Solar Tweaks, or launch Lunar Client with a custom launcher
+        |
+        |Add the following argument: "-javaagent:solar-patcher-${Versioning.version}.jar=/path/to/config.json",
+        |where you replace the path with the path of a configuration file.
+        |
+        |For more information, go to https://github.com/Solar-Tweaks/SolarPatcher 
+    """.trimMargin())
+}

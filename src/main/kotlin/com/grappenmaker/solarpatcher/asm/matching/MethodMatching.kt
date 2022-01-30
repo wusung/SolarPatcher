@@ -19,12 +19,7 @@
 package com.grappenmaker.solarpatcher.asm.matching
 
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.modules.SerializersModule
 import org.objectweb.asm.Opcodes
 
 // Utility to match on methods

@@ -9,6 +9,8 @@ complexity:
 exceptions:
   PrintStackTrace:
     active: false # Can't use logger, and if I could why would I?
+  TooGenericExceptionCaught:
+    excludes: ['**/FileTransformer.kt']
 
 naming:
   TopLevelPropertyNaming:

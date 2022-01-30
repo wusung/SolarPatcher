@@ -1,4 +1,5 @@
 {
+    "patcherVersion": "1.3",
     "debug": false,
     "enableAll": false,
     "modName": {
@@ -38,28 +39,15 @@
     },
     "metadata": {
         "removeCalls": [
-            {
-                "metadataName": "serverIntegration",
-                "isEnabled": true
-            },
-            {
-                "metadataName": "pinnedServers",
-                "isEnabled": true
-            },
-            {
-                "metadataName": "modSettings",
-                "isEnabled": true
-            },
-            {
-                "metadataName": "clientSettings",
-                "isEnabled": true
-            },
-            {
-                "metadataName": "featureFlag",
-                "isEnabled": true
-            }
+            "serverIntegration",
+            "pinnedServers",
+            "modSettings",
+            "clientSettings"
         ],
-        "isEnabled": true
+        "isEnabled": false
+    },
+    "blogPosts": {
+        "isEnabled": false
     },
     "modpacketRemoval": {
         "isEnabled": false
@@ -111,15 +99,7 @@
                 "suffix": ""
             }
         },
-        "className": "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
-        "instanceName": "llIllIIllIlIlIIIIlIlIllll",
-        "registerMethod": {
-            "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z",
-            "owner": "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
-            "access": 1
-        },
-        "chatEventClass": "lunar/aH/llIlIIIllIlllllIllIIIIIlI",
+        "chatEventClass": "lunar/aH/llIllIlllIlIlIIlIllllIIIl",
         "isEnabled": false
     },
     "rpcUpdate": {

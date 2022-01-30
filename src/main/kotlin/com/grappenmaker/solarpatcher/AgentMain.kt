@@ -34,6 +34,11 @@ import java.util.*
 fun premain(arg: String?, inst: Instrumentation) {
     println("Solar Patcher v${Versioning.version}")
     println("Built ${Date(Versioning.buildTimestamp)}")
+    if (Versioning.devBuild) {
+        println("Note: this build is a development build")
+        println("This means that you most likely WON'T be granted ANY support")
+        println("Use at your own discretion")
+    }
 
     // Get the config based on the args
     val filename = arg ?: "config.json"
@@ -50,7 +55,7 @@ fun premain(arg: String?, inst: Instrumentation) {
         println("An IO error occured when loading the config, error is above")
         println("Falling back to default config")
         Configuration()
-    }
+    }.modulesClone() // TODO: remove, see modulesClone function
 
     // Define transforms and visitors
     val transforms = config.getModules()

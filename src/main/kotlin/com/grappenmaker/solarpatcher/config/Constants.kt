@@ -18,7 +18,6 @@
 
 package com.grappenmaker.solarpatcher.config
 
-import com.grappenmaker.solarpatcher.asm.matching.MethodMatcherData
 import kotlinx.serialization.json.Json
 import org.objectweb.asm.Opcodes
 
@@ -39,15 +38,14 @@ object Constants {
     const val defaultFPSText = "FPS"
     const val defaultCPSText = "CPS"
     const val defaultReachText = "blocks"
-    val runMatcherData = MethodMatcherData("run", "()V")
 
     object ToggleSprint {
-        const val defaultFlyingText = "flying"
-        const val defaultRidingText = "riding"
-        const val defaultDescendingText = "descending"
-        const val defaultDismountingText = "dismounting"
-        const val defaultSneakingText = "sneaking"
-        const val defaultSprintingText = "sprinting"
+        private const val defaultFlyingText = "flying"
+        private const val defaultRidingText = "riding"
+        private const val defaultDescendingText = "descending"
+        private const val defaultDismountingText = "dismounting"
+        private const val defaultSneakingText = "sneaking"
+        private const val defaultSprintingText = "sprinting"
         val defaultConfig = listOf(
             defaultFlyingText,
             defaultRidingText,

@@ -24,11 +24,14 @@ import java.net.URLClassLoader
 
 // Create task to save the default configuration
 // Useful before pushing
-fun Project.addSaveDefaultConfigTask() = tasks.create("saveDefaultConfig") {
+fun Project.addSaveDefaultConfigTask() = tasks.create("defaultConfig") {
     dependsOn("classes")
     doLast {
         // Sets up classloader and classpath
-        val classes = getSourceSets().main.get().output.classesDirs.map { it.toURI().toURL() }
+        val output = getSourceSets().main.get().output
+        val classes = output.classesDirs.map { it.toURI().toURL() } +
+                output.resourcesDir!!.toURI().toURL()
+
         val classLoader = URLClassLoader(
             (classes + getRuntimeClassPath().map { it.toURI().toURL() }).toTypedArray(),
             ClassLoader.getSystemClassLoader()

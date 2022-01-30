@@ -20,10 +20,15 @@ package com.grappenmaker.solarpatcher.config
 
 import com.grappenmaker.solarpatcher.*
 import kotlinx.serialization.Serializable
+import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.functions
+import kotlin.reflect.full.instanceParameter
 import kotlin.reflect.full.memberProperties
 
 @Serializable
 data class Configuration(
+    val patcherVersion: String = Versioning.version,
     val debug: Boolean = false,
     val enableAll: Boolean = false,
     val modName: ModName = ModName(),
@@ -33,9 +38,7 @@ data class Configuration(
     val autoGG: AutoGG = AutoGG(),
     val levelHead: LevelHead = LevelHead(),
     val metadata: Metadata = Metadata(),
-//    val freelook: Freelook = Freelook(),
-//    val pinnedServers: PinnedServers = PinnedServers(),
-//    val blogPosts: BlogPosts = BlogPosts(),
+    val blogPosts: BlogPosts = BlogPosts(),
     val modpacketRemoval: ModpacketRemoval = ModpacketRemoval(),
     val mantleIntegration: MantleIntegration = MantleIntegration(),
     val windowName: WindowName = WindowName(),
@@ -56,6 +59,24 @@ data class Configuration(
     val handleNotifs: HandleNotifs = HandleNotifs()
 ) {
     fun getModules() = Configuration::class.memberProperties
-        .map { it.get(this) }
+        .map { it(this) }
         .filterIsInstance<Module>()
+
+    // TODO: remove when kotlinx.serialization gets fixed
+    // See https://github.com/JetBrains/kotlin/pull/4727
+    fun modulesClone(): Configuration {
+        val cloneFun = this::copy
+        return cloneFun.callBy(cloneFun.parameters.filter {
+            it.typeClass?.java?.let { c -> Module::class.java.isAssignableFrom(c) } == true
+        }.associateWith { param ->
+            val clazz = param.typeClass!!
+            val func = clazz.functions.find { f -> f.name == "copy" } ?: error("No copy for $clazz?")
+            val instance = Configuration::class.memberProperties
+                .find { it.name == param.name }!!.get(this)
+
+            func.callBy(mapOf(func.instanceParameter!! to instance))
+        })
+    }
 }
+
+private val KParameter.typeClass get() = type.classifier as? KClass<*>

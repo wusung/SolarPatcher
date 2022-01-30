@@ -18,7 +18,6 @@
 
 package com.grappenmaker.solarpatcher.asm.transform
 
-import com.grappenmaker.solarpatcher.Module
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.util.LoaderClassWriter
 import com.grappenmaker.solarpatcher.asm.util.toVisitor
@@ -50,12 +49,9 @@ class FileTransformer(
         val classTransform = try {
             transforms.getFromNode(node) ?: return null
         } catch (e: Exception) {
+            println("Error while generating transforms: $e")
             e.printStackTrace()
             return null
-        }
-
-        if (debug) {
-            println("${classTransform.methodTransforms.size} found for $className")
         }
 
         // Not interested to transform if there are no transforms or visitors
@@ -106,3 +102,6 @@ interface TransformGenerator {
 fun matcherGenerator(transform: ClassTransform, matcher: ClassMatcher) = object : TransformGenerator {
     override fun generate(node: ClassNode) = if (matcher(node)) transform else null
 }
+
+// Utility method to match on lunar client classes only
+fun matchLunar(): ClassMatcher = { it.name.startsWith("lunar/") }

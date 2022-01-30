@@ -20,14 +20,15 @@ package com.grappenmaker.solarpatcher
 
 import java.util.*
 
+// Lazyily initialized object to keep track of the version,
+// build timestamp and whether or not this is a dev build.
 object Versioning {
     private val properties by lazy {
-        val stream = ClassLoader.getSystemClassLoader()
-            .getResourceAsStream("versions.txt")
-
+        val stream = javaClass.classLoader.getResourceAsStream("versions.txt")
         Properties().also { props -> stream?.let { props.load(it) } }
     }
 
     val version: String by lazy { properties.getProperty("version") ?: "unknown" }
     val buildTimestamp: Long by lazy { properties.getProperty("buildTimestamp")?.toLong() ?: 0 }
+    val devBuild: Boolean by lazy { properties.getProperty("devBuild").toBoolean() }
 }

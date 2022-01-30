@@ -23,10 +23,8 @@ import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.constants
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
-import com.grappenmaker.solarpatcher.asm.matching.ClassMatching.match
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching.plus
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatcherData
-import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.match
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchAny
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchClinit
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescriptor
@@ -51,10 +49,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.*
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
@@ -86,27 +81,6 @@ sealed class TextTransformModule : Module() {
     override fun generate(node: ClassNode) = generator.generate(node)
 }
 
-//@Serializable
-//sealed class RemoveInvokeModule : Module() {
-//    abstract val method: MethodMatcherData
-//    abstract val toRemove: MethodMatcherData
-//    abstract val popCount: Int
-//    abstract val matcher: ClassMatcher
-//
-//    override val generator: TransformGenerator
-//        get() {
-//            val removeMatcher = toRemove.asMatcher()
-//            return matcherGenerator(
-//                ClassTransform(RemoveInvokeTransform(method.asMatcher(), removeMatcher, popCount)),
-//                matcher + {
-//                    it.methods
-//                        .flatMap { m -> m.instructions }
-//                        .filterIsInstance<MethodInsnNode>()
-//                        .any { node -> removeMatcher.match(MethodDescription(node.name, node.desc, node.owner)) }
-//                })
-//        }
-//}
-
 @Serializable
 data class Nickhider(
     override val from: String = defaultNickhiderName,
@@ -122,7 +96,10 @@ data class FPS(
     override val from: String = defaultFPSText,
     override val to: String = defaultFPSText,
     override val isEnabled: Boolean = false
-) : TextTransformModule()
+) : TextTransformModule() {
+    @Transient
+    override val matcher: ClassMatcher = matchLunar()
+}
 
 @Serializable
 data class CPS(
@@ -145,109 +122,61 @@ data class LevelHead(
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
-val metadataMatcher: ClassMatcher = { node ->
-    val matchStrings = listOf("versions", "name")
-    node.interfaces.contains(getInternalName<Runnable>())
-            && node.constants.containsAll(matchStrings)
+private val metadataMatcher: ClassMatcher = {
+    val isRunnable = it.interfaces.contains(getInternalName<Runnable>())
+    val isMetadata = it.constants.containsAll(listOf("versions", "name"))
+    isRunnable && isMetadata
 }
+private val runMatcher = matchName("run") + matchDescriptor("()V")
 
 @Serializable
 data class Metadata(
-    val removeCalls: List<RemoveConfig> = listOf(
-        RemoveConfig("serverIntegration"),
-        RemoveConfig("pinnedServers"),
-        RemoveConfig("modSettings"),
-        RemoveConfig("clientSettings"),
-        RemoveConfig("featureFlag")
+    val removeCalls: List<String> = listOf(
+        "serverIntegration",
+        "pinnedServers",
+        "modSettings",
+        "clientSettings"
     ),
-    override val isEnabled: Boolean = true
-) : Module() {
-    @Serializable
-    data class RemoveConfig(
-        val metadataName: String,
-        val isEnabled: Boolean = true
+    override val isEnabled: Boolean = false
+) : Module(),
+    TransformGenerator by matcherGenerator(ClassTransform(VisitorTransform(runMatcher) { parent ->
+        object : MethodVisitor(API, parent) {
+            private var lastMetadata: String? = null
+            private var lastCall: MethodDescription? = null
+            private val matcher = matchName("has") + matchDescriptor("(L$internalString;)Z")
+
+            override fun visitLdcInsn(value: Any?) {
+                super.visitLdcInsn(value)
+                if (value is String) lastMetadata = value
+            }
+
+            override fun visitMethodInsn(
+                opcode: Int,
+                owner: String,
+                name: String,
+                descriptor: String,
+                isInterface: Boolean
+            ) {
+                super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+                lastCall = MethodDescription(name, descriptor, owner, opcode)
+            }
+
+            override fun visitJumpInsn(opcode: Int, label: Label) {
+                val finalCall = lastCall ?: return super.visitJumpInsn(opcode, label)
+                if (opcode == IFEQ && matcher(finalCall) && lastMetadata in removeCalls) {
+                    pop()
+                    super.visitJumpInsn(GOTO, label)
+                } else super.visitJumpInsn(opcode, label)
+            }
+        }
+    }), matcher = metadataMatcher)
+
+@Serializable
+data class BlogPosts(override val isEnabled: Boolean = false) : Module(),
+    TransformGenerator by matcherGenerator(
+        ClassTransform(RemoveInvokeTransform(runMatcher, matchName("forEach"), 2)),
+        matcher = metadataMatcher
     )
-
-    override fun generate(node: ClassNode): ClassTransform? {
-        if (!metadataMatcher.match(node)) return null
-
-        val runMatcher = Runnable::run.javaMethod!!.asMatcher()
-        val runMethod =
-            node.methods.find { runMatcher.match(it.asDescription(node)) } ?: return null
-
-        val usedCalls = removeCalls.filter { it.isEnabled }
-
-        val unconditionalJumps = runMethod.instructions
-            .filterIsInstance<MethodInsnNode>()
-            .filter { it.name == "has" }
-            .mapNotNull { call ->
-                val previous = call.previous
-                if (previous !is LdcInsnNode) return@mapNotNull null
-                if (!usedCalls.any { previous.cst == it.metadataName }) return@mapNotNull null
-
-                call.next as? JumpInsnNode
-            }
-
-        return ClassTransform(
-            VisitorTransform(runMatcher) { parent ->
-                object : MethodVisitor(API, parent) {
-                    override fun visitJumpInsn(opcode: Int, label: Label) {
-                        if (unconditionalJumps.any { it.label.label.offset == label.offset }) {
-                            super.visitJumpInsn(GOTO, label)
-                        } else {
-                            super.visitJumpInsn(opcode, label)
-                        }
-                    }
-                }
-            }
-        )
-    }
-}
-
-//@Serializable
-//data class Freelook(
-//    override val method: MethodMatcherData = runMatcherData,
-//    override val isEnabled: Boolean = false,
-//    override val toRemove: MethodMatcherData = MethodMatcherData(
-//        "llIllIIllIlIlIIIIlIlIllll",
-//        "(Lcom/google/gson/JsonArray;)V"
-//    )
-//) : RemoveInvokeModule() {
-//    @Transient
-//    override val matcher = metadataMatcher
-//
-//    @Transient
-//    override val popCount = 2
-//}
-//
-//@Serializable
-//data class PinnedServers(
-//    override val method: MethodMatcherData = runMatcherData,
-//    override val isEnabled: Boolean = false,
-//    override val toRemove: MethodMatcherData = MethodMatcherData(
-//        "llIIIllIIllIIIllIIlIllIIl",
-//        "(Lcom/google/gson/JsonArray;)V"
-//    )
-//) : RemoveInvokeModule() {
-//    @Transient
-//    override val matcher = metadataMatcher
-//
-//    @Transient
-//    override val popCount = 2
-//}
-//
-//@Serializable
-//data class BlogPosts(
-//    override val method: MethodMatcherData = runMatcherData,
-//    override val isEnabled: Boolean = false,
-//    override val toRemove: MethodMatcherData = MethodMatcherData("forEach", "(Ljava/util/function/Consumer;)V")
-//) : RemoveInvokeModule() {
-//    @Transient
-//    override val matcher = metadataMatcher
-//
-//    @Transient
-//    override val popCount = 2
-//}
 
 @Serializable
 data class ModpacketRemoval(
@@ -291,12 +220,7 @@ private const val serverRuleClass = "com/lunarclient/bukkitapi/nethandler/client
 private const val logDetection = "No default value for Server Rule [\u0001] found!"
 
 @Serializable
-data class NoHitDelay(
-//    val method: MethodMatcherData = MethodMatcherData("lIlllllIIIIlIIlllIlIlIIIl", "()Ljava/util/Map;"),
-//    val className: String = "lunar/es/IIIIIIIlIlIllIlIIIIIlIlll",
-    override val isEnabled: Boolean = false
-) : Module() {
-
+data class NoHitDelay(override val isEnabled: Boolean = false) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val method = node.methods.find { it.constants.contains(logDetection) } ?: return null
         return ClassTransform(visitors = listOf {
@@ -314,19 +238,6 @@ data class NoHitDelay(
         }, shouldExpand = true)
     }
 }
-//) : Module(), TransformGenerator by matcherGenerator(ClassTransform(visitors = listOf {
-//    AdviceClassVisitor(it, method.asMatcher(), exitAdvice = { opcode: Int ->
-//        if (opcode == ARETURN) {
-//            // No, this is not a redundant dup-pop
-//            dup()
-//            visitFieldInsn(GETSTATIC, serverRuleClass, "LEGACY_COMBAT", "L$serverRuleClass;")
-//            visitInsn(ICONST_1)
-//            invokeMethod(java.lang.Boolean::class.java.getMethod("valueOf", Boolean::class.javaPrimitiveType))
-//            invokeMethod(Map::class.java.getMethod("put", Object::class.java, Object::class.java))
-//            pop()
-//        }
-//    })
-//}, shouldExpand = true), matcher = ClassMatching.matchName(className))
 
 @Serializable
 data class FPSSpoof(
@@ -415,17 +326,15 @@ data class CustomCommands(
         "db" to Command("/duel ", " bridge"),
         "bwp" to Command("/play bedwars_practice")
     ),
-    val className: String = "lunar/aE/llIllIIllIlIlIIIIlIlIllll",
-    val instanceName: String = "llIllIIllIlIlIIIIlIlIllll",
-    val registerMethod: MethodDescription = MethodDescription(
-        "llIlIIIllIlllllIllIIIIIlI",
-        "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z",
-        className,
-        ACC_PUBLIC
-    ),
-    val chatEventClass: String = "lunar/aH/llIlIIIllIlllllIllIIIIIlI",
+    val chatEventClass: String = "lunar/aH/llIllIlllIlIlIIlIllllIIIl",
     override val isEnabled: Boolean = false
 ) : Module() {
+    init {
+        // Yep this is a fake singleton
+        // Might want to work on a better "storage" system
+        instance = this
+    }
+
     companion object {
         // Instance of this class, initialized at runtime
         @JvmStatic
@@ -449,14 +358,20 @@ data class CustomCommands(
         }
     }
 
-    private val generator
-        get() = matcherGenerator(ClassTransform(visitors = listOf {
-            AdviceClassVisitor(it, matchClinit(), exitAdvice = {
-                // Set instance of customcommands
-                instance = this@CustomCommands
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.constants.contains("EventBus [\u0001]: \u0001")) return null
 
+        val className = node.name
+        val instanceField = node.fields.find { it.desc.equals("L$className;") } ?: return null
+        val registerMethod = node.methods.find {
+            it.desc == "(Ljava/lang/Class;Ljava/util/function/Consumer;)Z"
+                    && it.instructions.any { insn -> insn is MethodInsnNode && insn.name == "computeIfAbsent" }
+        } ?: return null
+
+        return ClassTransform(visitors = listOf {
+            AdviceClassVisitor(it, matchClinit(), exitAdvice = {
                 // Get event bus instance
-                visitFieldInsn(GETSTATIC, className, instanceName, "L$className;")
+                visitFieldInsn(GETSTATIC, className, instanceField.name, instanceField.desc)
 
                 // Load chat event class onto the stack
                 visitLdcInsn(Type.getObjectType(chatEventClass))
@@ -470,11 +385,10 @@ data class CustomCommands(
                 )
 
                 // Register custom listener
-                invokeMethod(InvocationType.VIRTUAL, registerMethod)
+                invokeMethod(InvocationType.VIRTUAL, registerMethod.name, registerMethod.desc, className)
             })
-        }), matcher = ClassMatching.matchName(className))
-
-    override fun generate(node: ClassNode) = generator.generate(node)
+        })
+    }
 }
 
 @Serializable
@@ -523,7 +437,7 @@ data class UncapReach(override val isEnabled: Boolean = false) : Module(), Trans
             )
         ),
         listOf { parent: ClassVisitor -> replaceClassConstants(parent, mapOf(3.0 to null)) }),
-    matcher = { it.constants.containsAll(listOf(" blocks", "range")) }
+    matcher = { it.constants.containsAll(setOf(" blocks", "range")) }
 )
 
 @Serializable

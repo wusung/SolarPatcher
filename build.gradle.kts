@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.daemon.common.isDaemonEnabled
-
 /*
  * Solar Patcher, a runtime patcher for Lunar Client
  * Copyright (C) 2022 Solar Tweaks and respective contributors.
@@ -54,7 +52,10 @@ dependencies {
 // Add dependencies and manifest to jar task
 tasks.withType<Jar>().configureEach {
     manifest {
-        attributes("Premain-Class" to Constants.premainClass)
+        attributes(
+            "Main-Class" to "com.grappenmaker.solarpatcher.NotRunnableNotice",
+            "Premain-Class" to Constants.premainClass
+        )
     }
 
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
