@@ -33,6 +33,7 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaConstructor
@@ -196,3 +197,6 @@ fun MethodVisitor.intToString() =
 // Utility to box an integer on operand stack
 fun MethodVisitor.boxInt() =
     invokeMethod(java.lang.Integer::class.java.getMethod("valueOf", Int::class.javaPrimitiveType))
+
+// Utility to get an object instance
+fun MethodVisitor.getObject(kClass: KClass<*>) = getField(kClass.java.getField("INSTANCE"))

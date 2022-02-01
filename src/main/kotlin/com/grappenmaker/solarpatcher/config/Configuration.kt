@@ -38,13 +38,11 @@ data class Configuration(
     val autoGG: AutoGG = AutoGG(),
     val levelHead: LevelHead = LevelHead(),
     val metadata: Metadata = Metadata(),
-    val blogPosts: BlogPosts = BlogPosts(),
     val modpacketRemoval: ModpacketRemoval = ModpacketRemoval(),
     val mantleIntegration: MantleIntegration = MantleIntegration(),
     val windowName: WindowName = WindowName(),
     val noHitDelay: NoHitDelay = NoHitDelay(),
     val fpsSpoof: FPSSpoof = FPSSpoof(),
-    val cpsSpoof: CPSSpoof = CPSSpoof(),
     val customCommands: CustomCommands = CustomCommands(),
     val rpcUpdate: RPCUpdate = RPCUpdate(),
     val tasklistPrivacy: TasklistPrivacy = TasklistPrivacy(),
@@ -60,7 +58,7 @@ data class Configuration(
 ) {
     fun getModules() = Configuration::class.memberProperties
         .map { it(this) }
-        .filterIsInstance<Module>()
+        .filterIsInstance<Module>() + RuntimeData
 
     // TODO: remove when kotlinx.serialization gets fixed
     // See https://github.com/JetBrains/kotlin/pull/4727

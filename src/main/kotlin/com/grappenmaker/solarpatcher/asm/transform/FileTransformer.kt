@@ -76,6 +76,7 @@ class FileTransformer(
                 val count = classTransform.methodTransforms.size
                 println("Result of transforming $className (applying $count transforms)")
                 println()
+
                 ClassReader(it).accept(TraceClassVisitor(PrintWriter(System.out)), 0)
             }
         }

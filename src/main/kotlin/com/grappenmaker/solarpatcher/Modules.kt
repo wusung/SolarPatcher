@@ -18,13 +18,13 @@
 
 package com.grappenmaker.solarpatcher
 
-import com.grappenmaker.solarpatcher.asm.FieldDescription
 import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.constants
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching.plus
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatcherData
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.match
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchAny
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchClinit
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescriptor
@@ -66,14 +66,17 @@ sealed class Module : TransformGenerator {
 @Serializable
 sealed class TextTransformModule : Module() {
     @Transient
-    open val matcher: ClassMatcher = ClassMatching.matchAny()
+    open val matcher: ClassMatcher = matchLunar()
+
+    @Transient
+    open val prefix: String = ""
 
     abstract val from: String
     abstract val to: String
 
     private val generator: TransformGenerator
         get() = matcherGenerator(
-            ClassTransform(listOf(TextTransform(matchAny(), from, to))),
+            ClassTransform(listOf(TextTransform(matchAny(), prefix + from, prefix + to))),
             matcher = matcher + {
                 it.constants.filterIsInstance<String>().any { s -> s.contains(from) }
             })
@@ -87,19 +90,17 @@ data class Nickhider(
     override val to: String = defaultNickhiderName,
     override val isEnabled: Boolean = false
 ) : TextTransformModule() {
-    @Transient
-    override val matcher: ClassMatcher = { it.constants.contains("lastKnownHypixelNick") }
+    override val matcher: ClassMatcher
+        get() = matchLunar() + { it.constants.contains("lastKnownHypixelNick") }
 }
 
 @Serializable
 data class FPS(
+    override val prefix: String = "\u0001 ",
     override val from: String = defaultFPSText,
     override val to: String = defaultFPSText,
     override val isEnabled: Boolean = false
-) : TextTransformModule() {
-    @Transient
-    override val matcher: ClassMatcher = matchLunar()
-}
+) : TextTransformModule()
 
 @Serializable
 data class CPS(
@@ -122,12 +123,23 @@ data class LevelHead(
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
-private val metadataMatcher: ClassMatcher = {
-    val isRunnable = it.interfaces.contains(getInternalName<Runnable>())
-    val isMetadata = it.constants.containsAll(listOf("versions", "name"))
-    isRunnable && isMetadata
+const val initMethodName = "init"
+
+private val metadataMatcher: ClassMatcher = { node ->
+    val metaTypes = listOf(
+        "blogPosts",
+        "modSettings",
+        "clientSettings",
+        "pinnedServers",
+        "serverIntegration",
+        "featureFlag",
+        "knownServersHash",
+        "store"
+    )
+
+    node.methods.find { it.name == initMethodName }
+        ?.constants?.containsAll(metaTypes) == true
 }
-private val runMatcher = matchName("run") + matchDescriptor("()V")
 
 @Serializable
 data class Metadata(
@@ -135,47 +147,35 @@ data class Metadata(
         "serverIntegration",
         "pinnedServers",
         "modSettings",
-        "clientSettings"
+        "clientSettings",
+        "blogPosts"
     ),
     override val isEnabled: Boolean = false
 ) : Module(),
-    TransformGenerator by matcherGenerator(ClassTransform(VisitorTransform(runMatcher) { parent ->
-        object : MethodVisitor(API, parent) {
-            private var lastMetadata: String? = null
-            private var lastCall: MethodDescription? = null
-            private val matcher = matchName("has") + matchDescriptor("(L$internalString;)Z")
-
-            override fun visitLdcInsn(value: Any?) {
-                super.visitLdcInsn(value)
-                if (value is String) lastMetadata = value
-            }
-
-            override fun visitMethodInsn(
-                opcode: Int,
-                owner: String,
-                name: String,
-                descriptor: String,
-                isInterface: Boolean
-            ) {
-                super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-                lastCall = MethodDescription(name, descriptor, owner, opcode)
-            }
-
-            override fun visitJumpInsn(opcode: Int, label: Label) {
-                val finalCall = lastCall ?: return super.visitJumpInsn(opcode, label)
-                if (opcode == IFEQ && matcher(finalCall) && lastMetadata in removeCalls) {
-                    pop()
-                    super.visitJumpInsn(GOTO, label)
-                } else super.visitJumpInsn(opcode, label)
-            }
-        }
-    }), matcher = metadataMatcher)
-
-@Serializable
-data class BlogPosts(override val isEnabled: Boolean = false) : Module(),
     TransformGenerator by matcherGenerator(
-        ClassTransform(RemoveInvokeTransform(runMatcher, matchName("forEach"), 2)),
-        matcher = metadataMatcher
+        ClassTransform(
+            VisitorTransform(matchName(initMethodName)) { parent ->
+                object : MethodVisitor(API, parent) {
+                    private var lastMetadata: String? = null
+
+                    override fun visitLdcInsn(value: Any?) {
+                        super.visitLdcInsn(value)
+                        if (value is String) lastMetadata = value
+                    }
+
+                    override fun visitMethodInsn(
+                        opcode: Int,
+                        owner: String,
+                        name: String,
+                        descriptor: String,
+                        isInterface: Boolean
+                    ) {
+                        if (descriptor != "(L$internalString;Ljava/util/function/Consumer;)V" || lastMetadata !in removeCalls) {
+                            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+                        }
+                    }
+                }
+            }), matcher = metadataMatcher
     )
 
 @Serializable
@@ -246,77 +246,28 @@ data class FPSSpoof(
 ) : Module(), TransformGenerator by matcherGenerator(ClassTransform(InvokeAdviceTransform(
     matchAny(),
     MethodMatcherData("bridge\$getDebugFPS", "()I").asMatcher(),
-    afterAdvice = { spoof(multiplier) }
-)), matcher = { it.constants.contains("[1466 FPS]") })
-
-@Serializable
-data class CPSSpoof(
-    val chance: Double = .1,
-    val className: String = "lunar/dp/llIlIIIllIlllllIllIIIIIlI",
-    val method: MethodMatcherData = MethodMatcherData(
-        "llIlIIIllIlllllIllIIIIIlI",
-        "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V"
-    ),
-    override val isEnabled: Boolean = false
-) : Module(), TransformGenerator by matcherGenerator(ClassTransform(InvokeAdviceTransform(
-    method.asMatcher(),
-    MethodMatcherData("add", "(Ljava/lang/Object;)Z").asMatcher(),
     afterAdvice = {
-        // Init label
-        val label = Label()
+        if (floor(multiplier) == multiplier && multiplier <= 0xFF) {
+            // Whole number, can load as byte integer
+            visitIntInsn(BIPUSH, multiplier.toInt())
 
-        // Boolean from add
-        pop()
+            // Can immediately multiply
+            visitInsn(IMUL)
+        } else {
+            // Can't immediately multiply, should first convert fps/cps to double
+            visitInsn(I2D)
 
-        // Load chance, get random double
-        visitLdcInsn(chance)
-        invokeMethod(ThreadLocalRandom::current)
-        invokeMethod(Random::class.java.getMethod("nextDouble"))
+            // Should use ldc instruction
+            visitLdcInsn(multiplier)
 
-        // Check if chance is met, if so, add another
-        visitInsn(DCMPG)
-        visitJumpInsn(IFLE, label)
+            // Multiply now
+            visitInsn(DMUL)
 
-        // Call ourselves. Yep, hacky, but idk what else to do
-        // because if i were to visit another add method, that would get advice too...
-        loadVariable(0)
-        loadVariable(1)
-        visitMethodInsn(INVOKEVIRTUAL, className, method.name, method.descriptor, false)
-
-        // Done, let's add back a fake boolean, because otherwise
-        // the stack height doesn't match
-        visitLabel(label)
-        visitInsn(ICONST_1)
+            // Convert back to int
+            visitInsn(D2I)
+        }
     }
-)), matcher = ClassMatching.matchName(className)) {
-    init {
-        require(chance > 0 && chance < 1) { "chance must be >0 and <1" }
-    }
-}
-
-// Util to multiply by arbitrary double value
-// Used for spoofing cps/fps values
-private fun MethodVisitor.spoof(multiplier: Double) {
-    if (floor(multiplier) == multiplier && multiplier <= 0xFF) {
-        // Whole number, can load as byte integer
-        visitIntInsn(BIPUSH, multiplier.toInt())
-
-        // Can immediately multiply
-        visitInsn(IMUL)
-    } else {
-        // Can't immediately multiply, should first convert fps/cps to double
-        visitInsn(I2D)
-
-        // Should use ldc instruction
-        visitLdcInsn(multiplier)
-
-        // Multiply now
-        visitInsn(DMUL)
-
-        // Convert back to int
-        visitInsn(D2I)
-    }
-}
+)), matcher = { it.constants.contains("[1466 FPS]") })
 
 @Serializable
 data class CustomCommands(
@@ -326,7 +277,7 @@ data class CustomCommands(
         "db" to Command("/duel ", " bridge"),
         "bwp" to Command("/play bedwars_practice")
     ),
-    val chatEventClass: String = "lunar/aH/llIllIlllIlIlIIlIllllIIIl",
+    val chatEventClass: String = "lunar/aI/IIIlIlllIIlIIIlIllIIlIlll",
     override val isEnabled: Boolean = false
 ) : Module() {
     init {
@@ -370,6 +321,14 @@ data class CustomCommands(
 
         return ClassTransform(visitors = listOf {
             AdviceClassVisitor(it, matchClinit(), exitAdvice = {
+                // Let's register a try catch block, for the case the mappings aren't up to date
+                val start = Label()
+                val end = Label()
+                visitTryCatchBlock(start, end, end, "java/lang/Throwable")
+
+                // try-start
+                visitLabel(start)
+
                 // Get event bus instance
                 visitFieldInsn(GETSTATIC, className, instanceField.name, instanceField.desc)
 
@@ -386,6 +345,17 @@ data class CustomCommands(
 
                 // Register custom listener
                 invokeMethod(InvocationType.VIRTUAL, registerMethod.name, registerMethod.desc, className)
+
+                // try-end
+                visitLabel(end)
+
+                // try-handler
+                visitPrintln(
+                    """
+                    |Couldn't find outgoing chat packet event!
+                    |Try updating your mappings!
+                    """.trimMargin()
+                )
             })
         })
     }
@@ -520,8 +490,8 @@ data class ReachText(
     override val to: String = defaultReachText,
     override val isEnabled: Boolean = false
 ) : TextTransformModule() {
-    @Transient
-    override val matcher: ClassMatcher = { it.constants.contains("[1.3 blocks]") }
+    override val matcher: ClassMatcher
+        get() = matchLunar() + { it.constants.contains("[1.3 blocks]") }
 }
 
 const val lunarMainClassname = "lunar/as/llIllIIllIlIlIIIIlIlIllll"
@@ -626,26 +596,27 @@ data class HandleNotifs(
 @Serializable
 data class ModName(
     val modName: String = "SolarTweaks",
-    val shortHashField: FieldDescription = FieldDescription(
-        "lIlllllIIIIlIIlllIlIlIIIl",
-        "L$internalString;",
-        "lunar/ax/llIllIlllIlIlIIlIllllIIIl",
-        ACC_STATIC
-    ),
     val className: String = "net/minecraft/client/ClientBrandRetriever"
 ) : Module(), TransformGenerator by matcherGenerator(ClassTransform(ImplementTransform(matchName("getClientModName")) {
     val solarVersion = "$modName v${Versioning.version}"
 
+    // Add a try catch block, because class access might fail
     val start = Label()
     val end = Label()
     visitTryCatchBlock(start, end, end, "java/lang/Throwable")
 
+    // try-start
     visitLabel(start)
-    getField(shortHashField, static = true)
+
+    getObject(RuntimeData::class)
+    invokeMethod(RuntimeData::version.getter)
     concat("(L$internalString;)L$internalString;", "Lunar Client \u0001/$solarVersion")
     returnMethod(ARETURN)
 
+    // try-end
     visitLabel(end)
+
+    // try-handler
     dup()
     invokeMethod(Throwable::class.java.getMethod("printStackTrace"))
     visitLdcInsn(solarVersion)
@@ -653,4 +624,36 @@ data class ModName(
 }), matcher = ClassMatching.matchName(className)) {
     @Transient
     override val isEnabled: Boolean = true
+}
+
+// Utility "module" to get runtime data
+object RuntimeData : Module() {
+    override val isEnabled = true
+    private val knownData = mutableMapOf<String, Any?>()
+
+    val version by runtimeValue("version", "unknown")
+    val os by runtimeValue("os", "unknown")
+    val arch by runtimeValue("arch", "unknown")
+
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.constants.contains("Starting Lunar client...")) return null
+        println("Loading runtime values")
+
+        val clinit = node.methods.find { matchClinit().match(it.asDescription(node)) } ?: return null
+        val assignments = clinit.instructions
+            .filterIsInstance<FieldInsnNode>()
+            .filter { it.opcode == PUTSTATIC }
+            .associate { it.name to (it.previous as? LdcInsnNode)?.cst }
+
+        knownData += node.fields
+            .associate { it.name to (it.value ?: assignments[it.name]) }
+
+        // Debuy log information
+        println("Runtime information: ${knownData.toList()}")
+
+        return null // Don't perform transformation
+    }
+
+    private inline fun <reified T> runtimeValue(field: String, default: T) =
+        lazy { (knownData[field] ?: default) as? T ?: error("Wrong type in runtime data!") }
 }
