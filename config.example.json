@@ -1,15 +1,9 @@
 {
-    "patcherVersion": "1.3",
+    "patcherVersion": "1.4",
     "debug": false,
     "enableAll": false,
     "modName": {
         "modName": "SolarTweaks",
-        "shortHashField": {
-            "name": "lIlllllIIIIlIIlllIlIlIIIl",
-            "descriptor": "Ljava/lang/String;",
-            "owner": "lunar/ax/llIllIlllIlIlIIlIllllIIIl",
-            "access": 8
-        },
         "className": "net/minecraft/client/ClientBrandRetriever"
     },
     "nickhider": {
@@ -18,6 +12,7 @@
         "isEnabled": false
     },
     "fps": {
+        "prefix": "\u0001 ",
         "from": "FPS",
         "to": "FPS",
         "isEnabled": false
@@ -42,11 +37,9 @@
             "serverIntegration",
             "pinnedServers",
             "modSettings",
-            "clientSettings"
+            "clientSettings",
+            "blogPosts"
         ],
-        "isEnabled": false
-    },
-    "blogPosts": {
         "isEnabled": false
     },
     "modpacketRemoval": {
@@ -69,17 +62,6 @@
         "multiplier": 2.0,
         "isEnabled": false
     },
-    "cpsSpoof": {
-        "chance": 0.1,
-        "className": "lunar/dp/llIlIIIllIlllllIllIIIIIlI",
-        "method": {
-            "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Llunar/aK/llIllIIllIlIlIIIIlIlIllll;)V",
-            "owner": null,
-            "access": null
-        },
-        "isEnabled": false
-    },
     "customCommands": {
         "commands": {
             "qb": {
@@ -99,7 +81,7 @@
                 "suffix": ""
             }
         },
-        "chatEventClass": "lunar/aH/llIllIlllIlIlIIlIllllIIIl",
+        "chatEventClass": "lunar/aI/IIIlIlllIIlIIIlIllIIlIlll",
         "isEnabled": false
     },
     "rpcUpdate": {
@@ -161,12 +143,6 @@
         "isEnabled": false
     },
     "handleNotifs": {
-        "getLunarmainMethod": {
-            "name": "IIIIIlIIlIllIlIIlllIlIIIl",
-            "descriptor": "()Llunar/as/llIllIIllIlIlIIIIlIlIllll;",
-            "owner": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
-            "access": -1
-        },
         "getPopupManagerMethod": {
             "name": "lIIlllIlIllIIIIlIIlIlIIll",
             "descriptor": "()Llunar/dg/IllIIlIIlIlIllllIIllllIll;",

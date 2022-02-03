@@ -50,6 +50,7 @@ import kotlinx.serialization.Transient
 import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.tree.*
+import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
@@ -78,7 +79,7 @@ sealed class TextTransformModule : Module() {
         get() = matcherGenerator(
             ClassTransform(listOf(TextTransform(matchAny(), prefix + from, prefix + to))),
             matcher = matcher + {
-                it.constants.filterIsInstance<String>().any { s -> s.contains(from) }
+                from != to && it.constants.filterIsInstance<String>().any { s -> s.contains(from) }
             })
 
     override fun generate(node: ClassNode) = generator.generate(node)
@@ -500,11 +501,6 @@ const val notifPacketClassname = "com/lunarclient/bukkitapi/nethandler/client/LC
 
 @Serializable
 data class HandleNotifs(
-    val getLunarmainMethod: MethodDescription = MethodDescription(
-        "IIIIIlIIlIllIlIIlllIlIIIl",
-        "()L$lunarMainClassname;",
-        lunarMainClassname
-    ),
     val getPopupManagerMethod: MethodDescription = MethodDescription(
         "lIIlllIlIllIIIIlIIlIlIIll",
         "()L$popupManagerClassname;",
@@ -548,7 +544,7 @@ data class HandleNotifs(
 
                         // Actually implement this garbage
                         // Get "popup manager"
-                        invokeMethod(InvocationType.STATIC, getLunarmainMethod)
+                        invokeMethod(InvocationType.STATIC, RuntimeData.getLunarmainMethod)
                         invokeMethod(InvocationType.VIRTUAL, getPopupManagerMethod)
 
                         // Load level map onto the stack
@@ -631,6 +627,9 @@ object RuntimeData : Module() {
     override val isEnabled = true
     private val knownData = mutableMapOf<String, Any?>()
 
+    lateinit var lunarClientClass: String
+    lateinit var getLunarmainMethod: MethodDescription
+
     val version by runtimeValue("version", "unknown")
     val os by runtimeValue("os", "unknown")
     val arch by runtimeValue("arch", "unknown")
@@ -638,6 +637,11 @@ object RuntimeData : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         if (!node.constants.contains("Starting Lunar client...")) return null
         println("Loading runtime values")
+
+        lunarClientClass = node.name
+        getLunarmainMethod =
+            node.methods.find { Type.getReturnType(it.desc).className == node.name && Modifier.isStatic(it.access) }
+                ?.asDescription(node) ?: return null
 
         val clinit = node.methods.find { matchClinit().match(it.asDescription(node)) } ?: return null
         val assignments = clinit.instructions
