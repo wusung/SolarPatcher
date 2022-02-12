@@ -33,7 +33,6 @@ version = "1.4.1"
 
 // Enable mavenCentral
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -49,7 +48,7 @@ dependencies {
     implementation("org.ow2.asm:asm-util:${Versions.asm}")
 
     // Bungee chat (for creating chat message components)
-    implementation("net.md-5:bungeecord-chat:1.8-SNAPSHOT")
+    implementation("net.md-5:bungeecord-chat:1.16-R0.4")
 }
 
 // Add dependencies and manifest to jar task
