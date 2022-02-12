@@ -4,7 +4,7 @@
 ![Maintenance](https://img.shields.io/maintenance/yes/2022?style=for-the-badge)
 
 Runtime agent to patch Lunar Client, easier and faster.
-This is intended to be used by/with [Solar Tweaks](https://github.com/Solar-Tweaks/Solar-Tweaks),
+This is intended to be used by/with [Solar Tweaks](https://github.com/Solar-Tweaks/),
 however you can use it by yourself using the `-javaagent` [flag](https://docs.oracle.com/javase/7/docs/api/java/lang/instrument/package-summary.html).
 
 # Downloading
@@ -47,7 +47,7 @@ Just add the `-javaagent:/path/to/solar-patcher.jar=/path/to/config.json` at the
 Replace the paths with the locations of your Solar Patcher artifact and the configuration file, respectively.
 
 # Building from source
-In order to build the project from source, you must have JDK 8 or higher installed.
+In order to build the project from source, you must have JDK 9 or higher installed.
 If you don’t, we recommend downloading one from [OpenJDK](https://jdk.java.net/17/).
 To build, clone this repository first using
 ```shell
@@ -73,4 +73,5 @@ These are tasks that can be run with the `gradlew` command. Useful for developme
 - `clean`: Delete all compilation data/artifacts from disk.  
 
 # Contributing
-Since most work for patching efficiently has already been done, you can fork and add modules to the Modules.kt file. PRs are welcome.
+Since most work for patching efficiently has already been done,
+you can fork and add modules to the Modules.kt and TextModules.kt files. PRs are welcome.

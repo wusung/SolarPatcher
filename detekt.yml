@@ -20,7 +20,7 @@ style:
   NewLineAtEndOfFile:
     active: false # Why?
   MagicNumber:
-    excludes: ['**/Modules.kt', '**/Transformers.kt'] # Modules can use magic numbers
+    excludes: ['**/Modules.kt', '**/Transformers.kt', '**VisitorExtensions.kt']
   WildcardImport:
     active: false # Sometimes it is better right?
   ReturnCount:

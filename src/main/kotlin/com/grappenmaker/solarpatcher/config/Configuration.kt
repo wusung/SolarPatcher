@@ -19,6 +19,7 @@
 package com.grappenmaker.solarpatcher.config
 
 import com.grappenmaker.solarpatcher.*
+import com.grappenmaker.solarpatcher.modules.*
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -53,12 +54,11 @@ data class Configuration(
     val debugPackets: DebugPackets = DebugPackets(),
     val keystrokesCPS: KeystrokesCPS = KeystrokesCPS(),
     val toggleSprintText: ToggleSprintText = ToggleSprintText(),
-    val reachText: ReachText = ReachText(),
-    val handleNotifs: HandleNotifs = HandleNotifs()
+    val reachText: ReachText = ReachText()
 ) {
     fun getModules() = Configuration::class.memberProperties
         .map { it(this) }
-        .filterIsInstance<Module>() + RuntimeData
+        .filterIsInstance<Module>() + RuntimeData + HandleNotifications
 
     // TODO: remove when kotlinx.serialization gets fixed
     // See https://github.com/JetBrains/kotlin/pull/4727

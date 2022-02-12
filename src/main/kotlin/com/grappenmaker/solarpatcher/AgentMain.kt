@@ -23,6 +23,7 @@ package com.grappenmaker.solarpatcher
 import com.grappenmaker.solarpatcher.asm.transform.FileTransformer
 import com.grappenmaker.solarpatcher.config.Configuration
 import com.grappenmaker.solarpatcher.config.json
+import com.grappenmaker.solarpatcher.util.LunarClassLoader
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import java.io.File
@@ -34,6 +35,7 @@ import java.util.*
 fun premain(arg: String?, inst: Instrumentation) {
     println("Solar Patcher v${Versioning.version}")
     println("Built ${Date(Versioning.buildTimestamp)}")
+
     if (Versioning.devBuild) {
         println("Note: this build is a development build")
         println("This means that you most likely WON'T be granted ANY support")
@@ -67,4 +69,7 @@ fun premain(arg: String?, inst: Instrumentation) {
 
     // Add them to the instrumentation backend implementation of the jvm
     inst.addTransformer(FileTransformer(transforms, debug = config.debug))
+
+    // Utility to store lunar client's class loader
+    inst.addTransformer(LunarClassLoader)
 }

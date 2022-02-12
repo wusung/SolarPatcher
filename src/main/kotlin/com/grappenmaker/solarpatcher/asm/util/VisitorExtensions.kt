@@ -200,3 +200,49 @@ fun MethodVisitor.boxInt() =
 
 // Utility to get an object instance
 fun MethodVisitor.getObject(kClass: KClass<*>) = getField(kClass.java.getField("INSTANCE"))
+
+// Utility to load a given value as constant onto the stack
+fun MethodVisitor.loadConstant(value: Any?) = when (value) {
+    null -> visitInsn(ACONST_NULL)
+    true -> visitInsn(ICONST_1)
+    false -> visitInsn(ICONST_0)
+    is Byte -> visitIntInsn(BIPUSH, value.toInt())
+    is Int -> when (value) {
+        -1 -> visitInsn(ICONST_M1)
+        0 -> visitInsn(ICONST_0)
+        1 -> visitInsn(ICONST_1)
+        2 -> visitInsn(ICONST_2)
+        3 -> visitInsn(ICONST_3)
+        4 -> visitInsn(ICONST_4)
+        5 -> visitInsn(ICONST_5)
+        in 0..Byte.MAX_VALUE -> visitIntInsn(BIPUSH, value)
+        else -> visitLdcInsn(value)
+    }
+    is Float -> when (value) {
+        0f -> visitInsn(FCONST_0)
+        1f -> visitInsn(FCONST_1)
+        2f -> visitInsn(FCONST_2)
+        else -> visitLdcInsn(value)
+    }
+    is Double -> when (value) {
+        0.0 -> visitInsn(DCONST_0)
+        1.0 -> visitInsn(DCONST_1)
+        else -> visitLdcInsn(value)
+    }
+    is Long -> when (value) {
+        0L -> visitInsn(LCONST_0)
+        1L -> visitInsn(LCONST_1)
+        in 0..Byte.MAX_VALUE -> {
+            visitIntInsn(BIPUSH, value.toInt())
+            visitInsn(I2L)
+        }
+        else -> visitLdcInsn(value)
+    }
+    is Char -> {
+        visitIntInsn(BIPUSH, value.code)
+        visitInsn(I2C)
+    }
+    is Short -> visitIntInsn(SIPUSH, value.toInt())
+    is String -> visitLdcInsn(value)
+    else -> error("Constant value ($value) is not a valid JVM constant!")
+}

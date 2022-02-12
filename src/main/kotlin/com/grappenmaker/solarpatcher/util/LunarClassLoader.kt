@@ -16,23 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.grappenmaker.solarpatcher.asm
+package com.grappenmaker.solarpatcher.util
 
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import org.objectweb.asm.tree.*
+import java.lang.instrument.ClassFileTransformer
+import java.net.URLClassLoader
+import java.security.ProtectionDomain
 
-val ClassNode.constants: List<Any>
-    get() = methods.flatMap { m -> m.constants }
+// Utility to get the lunar client main classloader
+// on runtime
+object LunarClassLoader : ClassFileTransformer {
+    lateinit var loader: ClassLoader
 
-val MethodNode.constants: List<Any>
-    get() = instructions.filterIsInstance<LdcInsnNode>().map { it.cst } +
-            instructions.filterIsInstance<InvokeDynamicInsnNode>().flatMap { it.bsmArgs.asIterable() }
+    override fun transform(
+        loader: ClassLoader?,
+        className: String,
+        classBeingRedefined: Class<*>?,
+        protectionDomain: ProtectionDomain,
+        classfileBuffer: ByteArray
+    ): ByteArray? {
+        if (loader != null && loader::class.java.superclass == URLClassLoader::class.java) {
+            this.loader = loader
+        }
 
-val MethodNode.calls: List<MethodInsnNode>
-    get() = instructions.filterIsInstance<MethodInsnNode>()
-
-fun MethodNode.asDescription(owner: ClassNode) =
-    MethodDescription(name, desc, owner.name, access)
-
-fun FieldNode.asDescription(owner: ClassNode) =
-    FieldDescription(name, desc, owner.name, access)
+        return null
+    }
+}

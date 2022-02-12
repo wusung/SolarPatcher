@@ -29,7 +29,7 @@ plugins {
 
 // Set metadata
 group = "com.grappenmaker"
-version = "1.4"
+version = "1.4.1"
 
 // Enable mavenCentral
 repositories {
@@ -47,6 +47,9 @@ dependencies {
     implementation("org.ow2.asm:asm:${Versions.asm}")
     implementation("org.ow2.asm:asm-commons:${Versions.asm}")
     implementation("org.ow2.asm:asm-util:${Versions.asm}")
+
+    // Bungee chat (for creating chat message components)
+    implementation("net.md-5:bungeecord-chat:1.8-SNAPSHOT")
 }
 
 // Add dependencies and manifest to jar task

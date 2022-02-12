@@ -81,7 +81,6 @@
                 "suffix": ""
             }
         },
-        "chatEventClass": "lunar/aI/IIIlIlllIIlIIIlIllIIlIlll",
         "isEnabled": false
     },
     "rpcUpdate": {
@@ -141,27 +140,5 @@
         "from": "blocks",
         "to": "blocks",
         "isEnabled": false
-    },
-    "handleNotifs": {
-        "getPopupManagerMethod": {
-            "name": "lIIlllIlIllIIIIlIIlIlIIll",
-            "descriptor": "()Llunar/dg/IllIIlIIlIlIllllIIllllIll;",
-            "owner": "lunar/as/llIllIIllIlIlIIIIlIlIllll",
-            "access": -1
-        },
-        "levelEnum": "lunar/dg/IIlllllIllllIlIIllllIlIlI",
-        "sendPopupMethod": {
-            "name": "llIlIIIllIlllllIllIIIIIlI",
-            "descriptor": "(Llunar/dg/IIlllllIllllIlIIllllIlIlI;Ljava/lang/String;Ljava/lang/String;)Llunar/dg/IIIlIlIlIIIllIlIIllllllIl;",
-            "owner": "lunar/dg/IllIIlIIlIlIllllIIllllIll",
-            "access": -1
-        },
-        "levelmap": {
-            "info": "llIlIIIllIlllllIllIIIIIlI",
-            "success": "llIllIIllIlIlIIIIlIlIllll",
-            "warning": "llIIIllIIllIIIllIIlIllIIl",
-            "error": "lllIlIIllllIllIIIlIlIIIll"
-        },
-        "className": "lunar/dG/llIlIIIllIlllllIllIIIIIlI"
     }
 }
