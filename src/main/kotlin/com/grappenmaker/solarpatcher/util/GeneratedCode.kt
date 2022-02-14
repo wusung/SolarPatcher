@@ -18,15 +18,17 @@
 
 package com.grappenmaker.solarpatcher.util
 
+import com.grappenmaker.solarpatcher.asm.asDescription
+import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import com.grappenmaker.solarpatcher.asm.util.getInternalName
-import com.grappenmaker.solarpatcher.asm.util.loadVariable
-import com.grappenmaker.solarpatcher.asm.util.returnMethod
-import net.md_5.bungee.api.chat.BaseComponent
-import net.md_5.bungee.chat.ComponentSerializer
+import com.grappenmaker.solarpatcher.asm.util.*
+import com.grappenmaker.solarpatcher.modules.ClassCacher
+import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
+import org.objectweb.asm.tree.ClassNode
 
 // Utility for generated classes on runtime.
 object GeneratedCode {
@@ -46,51 +48,66 @@ object GeneratedCode {
         writer.visitMethod(access, name, descriptor, null, null).also(::implementSendMessage)
         writer.visitEnd()
 
-        object : ClassLoader(LunarClassLoader.loader) {
+        object : ClassLoader(LunarClassLoader.loader!!) {
             fun createClass(name: String, file: ByteArray): Class<*> =
                 defineClass(name, file, 0, file.size).also { resolveClass(it) }
         }.createClass(utilityClassName, writer.toByteArray())
     }
 
-    // Generated with Recaf
+    // Internal lunar thing
+    private val patchHandler: Any by lazy {
+        val loader = LunarClassLoader.loader!!
+        val field = loader::class.java.getDeclaredField("WWWWWNNNNWMWWWMWWMMMWMMWM")
+            .also { it.isAccessible = true }
+        field[loader]
+    }
+
+    // Utility to get the class name map inside of lunar
+    private val classnameMap: Map<String, String> by lazy {
+        val field = patchHandler::class.java.getDeclaredField("MWMMWMMWNNNNMWMWNNNNWMWMM")
+            .also { it.isAccessible = true }
+
+        val map = field[patchHandler] as Map<*, *>
+
+        // Be aware: it inverts!
+        map.map { (key, value) -> value as String to key as String }.toMap()
+    }
+
     private fun implementSendMessage(mv: MethodVisitor) {
+        val minecraftMain = getNode("ave")
+        val unknownManager = getNode("avo")
+        val chatHandler = getNode("avt")
+
+        val managerField = minecraftMain.fields.find { it.desc.contains(unknownManager.name) } ?: fail()
+        val chatHandlerMethod =
+            unknownManager.methods.find { Type.getReturnType(it.desc).internalName == chatHandler.name }
+                ?: fail()
+
         mv.visitParameter(null, 0)
         mv.visitFieldInsn(
             GETSTATIC,
             "net/optifine/Config",
             "minecraft",
-            "Lnet/minecraft/v1_8/ahahseaaaseehhpahhhepppes;"
+            "L${minecraftMain.name};"
         )
-        mv.visitFieldInsn(
-            GETFIELD,
-            "net/minecraft/v1_8/ahahseaaaseehhpahhhepppes",
-            "phaaasapeahphshpsseesaees",
-            "Lnet/minecraft/v1_8/spahhphhhpepeehphasehsppa;"
-        )
-        mv.visitMethodInsn(
-            INVOKEVIRTUAL,
-            "net/minecraft/v1_8/spahhphhhpepeehphasehsppa",
-            "aaahespaphhaeehehssehhape",
-            "()Lnet/minecraft/v1_8/sapeaaeaeppaeehheahpphhpe;",
-            false
-        )
+        mv.getField(managerField.asDescription(minecraftMain), static = false)
+        mv.invokeMethod(InvocationType.VIRTUAL, chatHandlerMethod.asDescription(unknownManager))
 
         mv.loadVariable(0)
-        mv.visitMethodInsn(
-            INVOKESTATIC,
-            "net/minecraft/v1_8/hassheaeeeasssappsesaeppe\$espsppsaeashaehpesespeesa",
-            "sshphhaeesehshphaahsheahh",
-            "(Ljava/lang/String;)Lnet/minecraft/v1_8/hassheaeeeasssappsesaeppe;",
-            false
-        )
 
-        mv.visitMethodInsn(
-            INVOKEVIRTUAL,
-            "net/minecraft/v1_8/sapeaaeaeppaeehheahpphhpe",
-            "eaepeeaphhhaahspphespaehh",
-            "(Lnet/minecraft/v1_8/hassheaeeeasssappsesaeppe;)V",
-            false
-        )
+        val serializerNode = getNode("eu\$a")
+        val chatComponentName = remapName("eu") ?: fail()
+        val deserializeMethod = serializerNode.methods.find {
+            it.access and ACC_STATIC != 0
+                    && Type.getReturnType(it.desc).internalName == chatComponentName
+        } ?: fail()
+        mv.invokeMethod(InvocationType.STATIC, deserializeMethod.asDescription(serializerNode))
+
+        val displayMessageMethod =
+            chatHandler.methods.find { Type.getArgumentTypes(it.desc).firstOrNull()?.internalName == chatComponentName }
+                ?: fail()
+        mv.invokeMethod(InvocationType.VIRTUAL, displayMessageMethod.asDescription(chatHandler))
+
         mv.returnMethod()
         mv.visitMaxs(-1, -1)
         mv.visitEnd()
@@ -107,7 +124,21 @@ object GeneratedCode {
         }
     }
 
-    @JvmStatic // See other displayMessage function
-    fun displayMessage(component: BaseComponent) =
-        displayMessage(ComponentSerializer.toString(component))
+    // Internal utility to remap nms classes names
+    private fun remapName(className: String) =
+        classnameMap[className.replace('/', '.')]?.replace('.', '/')
+
+    // Cache
+    private val nodesCache = mutableMapOf<String, ClassNode>()
+
+    // Gets the classnode of a patched class
+    private fun getNode(className: String) = nodesCache.getOrPut(className) {
+        val classFile = ClassCacher.classCache[remapName(className) ?: className] ?: fail()
+        ClassNode().also { ClassReader(classFile).accept(it, ClassReader.SKIP_DEBUG) }
+    }
 }
+
+// Internal utility to fail generating code
+// Use only when something nullable is very unlikely to be null
+private fun fail(message: String = "Failed to generate code"): Nothing =
+    throw IllegalStateException(message)

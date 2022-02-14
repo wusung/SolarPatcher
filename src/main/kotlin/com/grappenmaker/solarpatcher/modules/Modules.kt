@@ -20,6 +20,7 @@ package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.Versioning
 import com.grappenmaker.solarpatcher.asm.asDescription
+import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.constants
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
@@ -138,6 +139,7 @@ private const val logDetection = "No default value for Server Rule [\u0001] foun
 data class NoHitDelay(override val isEnabled: Boolean = false) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val method = node.methods.find { it.constants.contains(logDetection) } ?: return null
+
         return ClassTransform(visitors = listOf {
             AdviceClassVisitor(it, method.asDescription(node).asMatcher(), exitAdvice = { opcode: Int ->
                 if (opcode == ARETURN) {
@@ -379,6 +381,7 @@ data class ToggleSprintText(
 )
 
 const val notifPacketClassname = "com/lunarclient/bukkitapi/nethandler/client/LCPacketNotification"
+
 object HandleNotifications : Module() {
     override val isEnabled = true
     override fun generate(node: ClassNode): ClassTransform? {
@@ -463,4 +466,57 @@ data class ModName(
 }), matcher = ClassMatching.matchName(className)) {
     @Transient
     override val isEnabled: Boolean = true
+}
+
+@Serializable
+data class FixPings(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.constants.contains("chat_ping_sound")) return null
+
+        val handleSoundMethod = node.methods.find {
+            it.calls.any { c -> c.name == "bridge\$playSound" }
+        } ?: return null
+        val eventType = Type.getArgumentTypes(handleSoundMethod.desc).first()
+
+        return ClassTransform(VisitorTransform(
+            handleSoundMethod.asDescription(node).asMatcher()
+        ) { parent ->
+            object : MethodVisitor(API, parent) {
+                override fun visitJumpInsn(opcode: Int, label: Label) {
+                    super.visitJumpInsn(opcode, label)
+
+                    if (opcode == IFNE) {
+                        val end = Label()
+
+                        loadVariable(1)
+                        invokeMethod(InvocationType.VIRTUAL, "getType", "()I", eventType.internalName)
+                        visitInsn(ICONST_1)
+                        visitJumpInsn(IF_ICMPEQ, end)
+
+                        returnMethod()
+                        visitLabel(end)
+                    }
+                }
+            }
+        })
+    }
+}
+
+@Serializable
+data class LunarOptions(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find { it.constants.contains("Lunar Options...") } ?: return null
+        return ClassTransform(VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
+            object : MethodVisitor(API, parent) {
+                override fun visitJumpInsn(opcode: Int, label: Label) {
+                    if (opcode == IFNE) {
+                        pop()
+                        return
+                    }
+
+                    super.visitJumpInsn(opcode, label)
+                }
+            }
+        })
+    }
 }

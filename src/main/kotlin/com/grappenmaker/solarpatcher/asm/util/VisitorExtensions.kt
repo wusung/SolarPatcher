@@ -88,7 +88,7 @@ fun MethodVisitor.getField(field: Field) =
 fun MethodVisitor.getField(prop: KProperty<*>) =
     getField(prop.javaField ?: error("No valid java field available"))
 
-fun MethodVisitor.getField(desc: FieldDescription, static: Boolean = desc.access and ACC_STATIC == ACC_STATIC) =
+fun MethodVisitor.getField(desc: FieldDescription, static: Boolean = desc.access and ACC_STATIC != 0) =
     visitFieldInsn(if (static) GETSTATIC else GETFIELD, desc.owner, desc.name, desc.descriptor)
 
 // Makes a methodvisitor get set value of a field
@@ -101,7 +101,7 @@ fun MethodVisitor.setField(field: Field) =
         Type.getDescriptor(field.type)
     )
 
-fun MethodVisitor.setField(desc: FieldDescription, static: Boolean = desc.access and ACC_STATIC == ACC_STATIC) =
+fun MethodVisitor.setField(desc: FieldDescription, static: Boolean = desc.access and ACC_STATIC != 0) =
     visitFieldInsn(if (static) PUTSTATIC else PUTFIELD, desc.owner, desc.name, desc.descriptor)
 
 // Makes a methodvisitor construct a class with a given constructor.

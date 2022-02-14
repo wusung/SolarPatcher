@@ -20,10 +20,6 @@ package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.util.GeneratedCode
 import kotlinx.serialization.Serializable
-import net.md_5.bungee.api.ChatColor
-import net.md_5.bungee.api.chat.ClickEvent
-import net.md_5.bungee.api.chat.HoverEvent
-import net.md_5.bungee.api.chat.TextComponent
 
 // Utility for command handling
 class CommandEventAccessor(private val event: Any) {
@@ -70,25 +66,46 @@ const val helpMessage = "If you need help, or have a suggestion, you can always 
 fun getCodeCommands(): Map<String, Command> {
     val handlerCommand = HandlerCommand {
         cancel()
-        val component = TextComponent(helpMessage).also {
-            it.isItalic = true
-            it.clickEvent = ClickEvent(ClickEvent.Action.OPEN_URL, discordLink)
-            it.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, arrayOf(TextComponent("Click here!")))
-        }
-
-        GeneratedCode.displayMessage(component)
+        GeneratedCode.displayMessage("""
+            {
+                "italic": true,
+                "clickEvent": {
+                    "action": "open_url",
+                    "value": "$discordLink"
+                },
+                "hoverEvent": {
+                    "action": "show_text",
+                    "contents": "Click here!"
+                },
+                "text": "$helpMessage"
+            }            
+        """)
     }
 
     val easterEgg = HandlerCommand {
         cancel()
-        val magicComponent = TextComponent("a").also { it.isObfuscated = true }
-        val component = TextComponent("").also {
-            val actualText = TextComponent(" NotEvenJoking was here ").also { t -> t.isObfuscated = false }
-            it.extra = listOf(magicComponent, actualText, magicComponent)
-            it.color = ChatColor.DARK_PURPLE
-        }
-
-        GeneratedCode.displayMessage(component)
+        GeneratedCode.displayMessage(
+            """
+            {
+                "color": "dark_purple",
+                "extra": [
+                    {
+                        "obfuscated": true,
+                        "text": "a"
+                    },
+                    {
+                        "obfuscated": false,
+                        "text": " NotEvenJoking was here "
+                    },
+                    {
+                        "obfuscated": true,
+                        "text": "a"
+                    }
+                ],
+                "text": ""
+            }
+        """
+        )
     }
 
     return listOf("solartweaks", "solarhelp", "solarsupport", "solartweakshelp", "solartweakssupport", "st")

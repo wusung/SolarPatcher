@@ -20,7 +20,7 @@ style:
   NewLineAtEndOfFile:
     active: false # Why?
   MagicNumber:
-    excludes: ['**/Modules.kt', '**/Transformers.kt', '**VisitorExtensions.kt']
+    active: false # Usually a code smell, but not when talking bytecode manip unfortunately
   WildcardImport:
     active: false # Sometimes it is better right?
   ReturnCount:

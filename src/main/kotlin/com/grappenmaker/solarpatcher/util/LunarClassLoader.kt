@@ -25,7 +25,10 @@ import java.security.ProtectionDomain
 // Utility to get the lunar client main classloader
 // on runtime
 object LunarClassLoader : ClassFileTransformer {
-    lateinit var loader: ClassLoader
+    // Feel free to use !! operator, because if this does not exist lc is a lie :)
+    // Not lateinit because there needs to be a nullcheck
+    var loader: ClassLoader? = null
+        private set
 
     override fun transform(
         loader: ClassLoader?,
@@ -34,7 +37,7 @@ object LunarClassLoader : ClassFileTransformer {
         protectionDomain: ProtectionDomain,
         classfileBuffer: ByteArray
     ): ByteArray? {
-        if (loader != null && loader::class.java.superclass == URLClassLoader::class.java) {
+        if (this.loader == null && loader != null && loader::class.java.superclass == URLClassLoader::class.java) {
             this.loader = loader
         }
 

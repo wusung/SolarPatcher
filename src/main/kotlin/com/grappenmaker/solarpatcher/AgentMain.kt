@@ -60,7 +60,7 @@ fun premain(arg: String?, inst: Instrumentation) {
     }.modulesClone() // TODO: remove, see modulesClone function
 
     // Define transforms and visitors
-    val transforms = config.getModules()
+    val transforms = config.modules
         .filter { it.isEnabled || config.enableAll }
         .also { println("Using modules ${it.joinToString { m -> m::class.simpleName ?: "Unnamed" }}") }
 

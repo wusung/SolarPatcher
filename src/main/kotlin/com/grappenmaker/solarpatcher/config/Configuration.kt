@@ -54,11 +54,14 @@ data class Configuration(
     val debugPackets: DebugPackets = DebugPackets(),
     val keystrokesCPS: KeystrokesCPS = KeystrokesCPS(),
     val toggleSprintText: ToggleSprintText = ToggleSprintText(),
-    val reachText: ReachText = ReachText()
+    val reachText: ReachText = ReachText(),
+    val fixPings: FixPings = FixPings(),
+    val lunarOptions: LunarOptions = LunarOptions()
 ) {
-    fun getModules() = Configuration::class.memberProperties
+    val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ClassCacher)
+    val modules = Configuration::class.memberProperties
         .map { it(this) }
-        .filterIsInstance<Module>() + RuntimeData + HandleNotifications
+        .filterIsInstance<Module>() + alwaysEnabledModules
 
     // TODO: remove when kotlinx.serialization gets fixed
     // See https://github.com/JetBrains/kotlin/pull/4727

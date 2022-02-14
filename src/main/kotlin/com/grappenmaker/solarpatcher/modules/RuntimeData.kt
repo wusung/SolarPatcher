@@ -24,18 +24,24 @@ import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.constants
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.match
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import com.grappenmaker.solarpatcher.asm.method.asDescription
 import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
-import com.grappenmaker.solarpatcher.asm.util.getField
-import com.grappenmaker.solarpatcher.asm.util.invokeMethod
+import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
+import com.grappenmaker.solarpatcher.asm.util.*
+import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.ARRAYLENGTH
+import org.objectweb.asm.Opcodes.ICONST_0
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import java.lang.reflect.Modifier
+import kotlin.reflect.jvm.javaMethod
 
 // Utility "module" to get runtime data
 object RuntimeData : Module() {
@@ -127,4 +133,59 @@ fun MethodVisitor.getLunarMain() =
 fun MethodVisitor.getAssetsSocket() {
     getLunarMain()
     getField(RuntimeData.assetsSocketField!!, static = false)
+}
+
+// Utility "Module" to alter the lunar class loader to cache classes
+object ClassCacher : Module() {
+    val classCache = mutableMapOf<String, ByteArray>()
+
+    override val isEnabled = true
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (node.name != "WWWWWNNNNWMWNNNNWNNNNMMWW") return null
+        return ClassTransform(VisitorTransform(matchName("findClass")) { parent ->
+            object : MethodVisitor(API, parent) {
+                override fun visitMethodInsn(
+                    opcode: Int,
+                    owner: String,
+                    name: String,
+                    descriptor: String,
+                    isInterface: Boolean
+                ) {
+                    if (name == "defineClass") {
+                        pop(2) // Useless
+                        storeVariable(7) // Keep class bytes
+                        storeVariable(8) // Keep class name
+                        pop() // Pop "this"
+
+                        // Load correct parameters
+                        loadVariable(8) // name
+                        loadVariable(7) // bytes
+
+                        // Call cacheClass
+                        val desc = ClassCacher::cacheClass.javaMethod!!.asDescription()
+                        super.visitMethodInsn(Opcodes.INVOKESTATIC, desc.owner, desc.name, desc.descriptor, false)
+
+                        // Reload all the other stuff
+                        loadVariable(0) // this
+                        loadVariable(8) // name
+                        loadVariable(7) // bytes
+                        visitInsn(ICONST_0)
+                        loadVariable(7)
+                        visitInsn(ARRAYLENGTH) // length
+
+                        // Recall original method (drops out of if statement)
+                    }
+
+                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+                }
+            }
+        })
+    }
+
+    @JvmStatic
+    fun cacheClass(name: String, bytes: ByteArray) {
+        if (name.startsWith("net.minecraft.v")) {
+            classCache[name.replace('.', '/')] = bytes
+        }
+    }
 }
