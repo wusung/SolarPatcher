@@ -10,7 +10,7 @@ exceptions:
   PrintStackTrace:
     active: false # Can't use logger, and if I could why would I?
   TooGenericExceptionCaught:
-    excludes: ['**/FileTransformer.kt']
+    active: false # Because sometimes you need to be 100 percent sure of a method not throwing an exception
 
 naming:
   TopLevelPropertyNaming:

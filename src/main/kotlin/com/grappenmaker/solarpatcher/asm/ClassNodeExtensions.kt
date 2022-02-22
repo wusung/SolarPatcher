@@ -36,3 +36,6 @@ fun MethodNode.asDescription(owner: ClassNode) =
 
 fun FieldNode.asDescription(owner: ClassNode) =
     FieldDescription(name, desc, owner.name, access)
+
+fun MethodInsnNode.asDescription() =
+    MethodDescription(name, desc, owner)

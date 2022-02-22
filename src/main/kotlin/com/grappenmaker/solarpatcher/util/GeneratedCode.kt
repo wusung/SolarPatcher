@@ -118,7 +118,7 @@ object GeneratedCode {
     fun displayMessage(message: String) {
         try {
             utilityClass.getMethod(displayMessageDescription.name, String::class.java)(null, message)
-        } catch (e: ReflectiveOperationException) {
+        } catch (e: Exception) {
             e.printStackTrace()
             println("Error while sending chat message: $e")
         }

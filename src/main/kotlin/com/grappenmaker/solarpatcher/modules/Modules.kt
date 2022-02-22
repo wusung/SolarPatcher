@@ -268,22 +268,94 @@ data class CustomCommands(
 }
 
 const val defaultClientID = 562286213059444737L
+const val defaultIcon = "icon_07_11_2020"
+const val defaultText = "Lunar Client"
 
 @Serializable
 data class RPCUpdate(
     val clientID: Long = 920998351430901790,
     val icon: String = "logo",
     val iconText: String = "Solar Tweaks",
+    val afkText: String = "AFK",
+    val menuText: String = "In Menu",
+    val singlePlayerText: String = "Playing Singleplayer",
     override val isEnabled: Boolean = false
-) : Module(), TransformGenerator by matcherGenerator(ClassTransform(visitors = listOf {
-    replaceClassConstants(
-        it, mapOf(
-            defaultClientID to clientID,
-            "icon_07_11_2020" to icon,
-            "Lunar Client" to iconText
-        )
-    )
-}), matcher = { it.constants.contains(defaultClientID) })
+) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val updateMethod = node.methods.find { it.constants.contains(defaultIcon) } ?: return null
+        return ClassTransform(listOf(InvokeAdviceTransform(
+            updateMethod.asDescription(node).asMatcher(),
+            matchName("build"), // RPC builder
+            beforeAdvice = {
+                // There is now a RichPresence.Builder on the stack
+                // Keep in mind that after dropping out of this advice
+                // the builder should be on the stack
+                val builderClass = "com/jagrosh/discordipc/entities/RichPresence\$Builder"
+                val setState = {
+                    invokeMethod(
+                        InvocationType.VIRTUAL,
+                        "setState",
+                        "(L$internalString;)L$builderClass;",
+                        builderClass
+                    )
+                }
+
+                // Labels to jump to
+                val wasNull = Label()
+                val end = Label()
+
+                val afk = Label()
+                isWindowFocused()
+                visitJumpInsn(IFNE, afk)
+                visitLdcInsn(afkText)
+                setState()
+                visitJumpInsn(GOTO, end)
+                visitLabel(afk)
+
+                // Get the server data and check for nullity
+                getServerData()
+                dup()
+
+                // If it is null, pop to stack and jump to end
+                visitJumpInsn(IFNULL, wasNull)
+
+                // If it was not null, get the server ip
+                invokeMethod(
+                    InvocationType.INTERFACE,
+                    "bridge\$serverIP",
+                    "()L$internalString;",
+                    Type.getReturnType(RuntimeData.getServerDataMethod.descriptor).internalName
+                )
+                storeVariable(2) // Store the server ip
+                remapServerIP { loadVariable(2) }
+                concat("(L$internalString;)L$internalString;", "Playing on \u0001")
+
+                // Set the "state"
+                setState()
+
+                // Jump back to original code
+                visitJumpInsn(GOTO, end)
+
+                // Handle nullity by popping the null off the stack
+                visitLabel(wasNull)
+                pop()
+                visitLdcInsn(menuText)
+                setState()
+                visitLabel(end)
+
+                // Continue setting the rpc (drops out of this advice)
+            }
+        )), listOf {
+            replaceClassConstants(
+                it, mapOf(
+                    defaultClientID to clientID,
+                    defaultIcon to icon,
+                    defaultText to iconText
+                )
+            )
+        })
+    }
+}
 
 private fun privacyTransformGenerator(path: String): TransformGenerator = object : TransformGenerator {
     override fun generate(node: ClassNode): ClassTransform? {

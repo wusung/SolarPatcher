@@ -32,10 +32,10 @@ import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants.API
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Opcodes.ARRAYLENGTH
-import org.objectweb.asm.Opcodes.ICONST_0
+import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
@@ -48,8 +48,21 @@ object RuntimeData : Module() {
     override val isEnabled = true
     private val knownData = mutableMapOf<String, Any?>()
 
+    private lateinit var mainNode: ClassNode
+
+    // Classnames that have been found
     lateinit var lunarClientClass: String
+    lateinit var bridgeClass: String
+    lateinit var serverMappingsClass: String
+    val clientBridgeClass: String get() = Type.getReturnType(getClientBridgeMethod.descriptor).internalName
+
+    // Methods that have been found
     lateinit var getLunarmainMethod: MethodDescription
+    lateinit var getClientBridgeMethod: MethodDescription
+    lateinit var getServerDataMethod: MethodDescription
+    lateinit var getServerMappingsMethod: MethodDescription
+    lateinit var getDisplayToIPMapMethod: MethodDescription
+
     var assetsSocketField: FieldDescription? = null
     lateinit var sendPopupMethod: MethodDescription
 
@@ -64,12 +77,48 @@ object RuntimeData : Module() {
         if (node.constants.contains("wss://assetserver.\u0001/connect")) handleAssetsSocket(node)
         if (node.constants.contains("Starting Lunar client...")) handleLunarMain(node)
         if (node.constants.containsAll(listOf("/lc_upload_screenshot", "Screenshot taken"))) handleScreenshotter(node)
+        if (node.constants.contains("https://servermappings.lunarclientcdn.com/servers.json")) handleServerMappings(node)
+        handleBridge(node)
 
         return null // Don't perform transformation
     }
 
+    // Used for retrieving display server names
+    private fun handleServerMappings(node: ClassNode) {
+        serverMappingsClass = node.name
+
+        // Get the remap method
+        val remapServerMethod = node.methods.find {
+            Type.getArgumentTypes(it.desc).getOrNull(0)?.internalName == internalString
+                    && Type.getReturnType(it.desc).internalName == internalString
+        } ?: return
+
+        // Get the call that gets the Map
+        getDisplayToIPMapMethod = remapServerMethod.calls.first().asDescription()
+
+        // Get the server mappings getter
+        getServerMappingsMethod =
+            mainNode.methods.find { Type.getReturnType(it.desc).internalName == serverMappingsClass }
+                ?.asDescription(mainNode) ?: return
+    }
+
+    // Used for retrieving data from the client
+    private fun handleBridge(node: ClassNode) {
+        val serverMethod = node.methods.find { it.calls.any { c -> c.name == "getLunarServer" } } ?: return
+
+        // This is the one and only bridge bridge!
+        // Sounds weird, but it is!
+        bridgeClass = node.name
+
+        // Retrieve code to get the server
+        val calls = serverMethod.calls
+        getClientBridgeMethod = calls.first().asDescription()
+        getServerDataMethod = calls[1].asDescription()
+    }
+
     // Used for retrieving information about the current runtime
     private fun handleLunarMain(node: ClassNode) {
+        mainNode = node
         println("Loading runtime values")
 
         try {
@@ -133,6 +182,72 @@ fun MethodVisitor.getLunarMain() =
 fun MethodVisitor.getAssetsSocket() {
     getLunarMain()
     getField(RuntimeData.assetsSocketField!!, static = false)
+}
+
+// Utility to load the client bridge onto the stack
+fun MethodVisitor.getClientBridge() =
+    invokeMethod(InvocationType.STATIC, RuntimeData.getClientBridgeMethod)
+
+// Utility to load the current server data onto the stack
+fun MethodVisitor.getServerData() {
+    getClientBridge()
+    invokeMethod(InvocationType.INTERFACE, RuntimeData.getServerDataMethod)
+}
+
+// Utility to load server mappings class onto the stack
+fun MethodVisitor.getServerMappings() {
+    getLunarMain()
+    invokeMethod(InvocationType.VIRTUAL, RuntimeData.getServerMappingsMethod)
+}
+
+// Utility to remap a server ip to a display name
+fun MethodVisitor.remapServerIP(default: String = "Private Server", loader: () -> Unit) {
+    getServerMappings()
+    invokeMethod(InvocationType.VIRTUAL, RuntimeData.getDisplayToIPMapMethod) // map
+
+    // Create an inverse view onto the known servers map
+    // This is used to get the display name of a server ip
+    val loop = Label()
+    val reloop = Label()
+    val notFound = Label()
+    val end = Label()
+
+    invokeMethod(InvocationType.INTERFACE, "entrySet", "()Ljava/util/Set;", "java/util/Map") // set of entries
+    invokeMethod(InvocationType.INTERFACE, "iterator", "()Ljava/util/Iterator;", "java/util/Set") // iterator
+
+    visitLabel(loop)
+    dup() // 2x iterator
+    invokeMethod(Iterator<*>::hasNext) // iterator bool
+    visitJumpInsn(IFEQ, notFound)
+
+    dup() // 2x iterator
+    invokeMethod(Iterator<*>::next) // iterator entry
+    dup() // iterator 2x entry
+    invokeMethod(Map.Entry<*, *>::value.getter) // iterator entry list
+    visitTypeInsn(CHECKCAST, "java/util/List")
+    loader() // iterator entry list string
+    invokeMethod(java.util.List<*>::contains) // iterator entry bool
+    visitJumpInsn(IFEQ, reloop) // iterator entry
+    invokeMethod(Map.Entry<*, *>::key.getter) // iterator string
+    visitTypeInsn(CHECKCAST, "java/lang/String")
+    visitInsn(SWAP) // string iterator
+    pop() // string
+    visitJumpInsn(GOTO, end) // exit with string
+
+    visitLabel(reloop)
+    pop()
+    visitJumpInsn(GOTO, loop)
+
+    visitLabel(notFound)
+    pop()
+    visitLdcInsn(default)
+    visitLabel(end)
+}
+
+// Utility to load the boolean if the client window is focused onto the stack
+fun MethodVisitor.isWindowFocused() {
+    getClientBridge()
+    invokeMethod(InvocationType.INTERFACE, "bridge\$isWindowFocused", "()Z", RuntimeData.clientBridgeClass)
 }
 
 // Utility "Module" to alter the lunar class loader to cache classes
