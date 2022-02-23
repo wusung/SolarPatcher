@@ -270,6 +270,7 @@ data class CustomCommands(
 const val defaultClientID = 562286213059444737L
 const val defaultIcon = "icon_07_11_2020"
 const val defaultText = "Lunar Client"
+const val defaultVersionText = "Playing Minecraft \u0001"
 
 @Serializable
 data class RPCUpdate(
@@ -279,6 +280,7 @@ data class RPCUpdate(
     val afkText: String = "AFK",
     val menuText: String = "In Menu",
     val singlePlayerText: String = "Playing Singleplayer",
+    val versionText: String = "Minecraft \u0001",
     override val isEnabled: Boolean = false
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
@@ -350,7 +352,8 @@ data class RPCUpdate(
                 it, mapOf(
                     defaultClientID to clientID,
                     defaultIcon to icon,
-                    defaultText to iconText
+                    defaultText to iconText,
+                    defaultVersionText to versionText
                 )
             )
         })

@@ -19,24 +19,16 @@
 package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.util.GeneratedCode
+import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
 
 // Utility for command handling
-class CommandEventAccessor(private val event: Any) {
+class CommandEventAccessor(event: Any) {
     private val textField = event.javaClass.fields.first()
     private val cancelledField = event.javaClass.superclass.fields.first()
 
-    var text: String
-        get() = textField[event] as String
-        set(value) {
-            textField[event] = value
-        }
-
-    var cancelled: Boolean
-        get() = cancelledField[event] as Boolean
-        set(value) {
-            cancelledField[event] = value
-        }
+    var text: String by javaReflectionProperty(textField, event)
+    var cancelled: Boolean by javaReflectionProperty(cancelledField, event)
 
     fun cancel() {
         cancelled = true

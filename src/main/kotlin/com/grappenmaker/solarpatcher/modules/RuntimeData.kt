@@ -34,13 +34,14 @@ import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import java.lang.reflect.Modifier
+import java.util.function.Predicate
+import java.util.stream.Stream
 import kotlin.reflect.jvm.javaMethod
 
 // Utility "module" to get runtime data
@@ -132,7 +133,7 @@ object RuntimeData : Module() {
             val clinit = node.methods.find { MethodMatching.matchClinit().match(it.asDescription(node)) } ?: return
             val assignments = clinit.instructions
                 .filterIsInstance<FieldInsnNode>()
-                .filter { it.opcode == Opcodes.PUTSTATIC }
+                .filter { it.opcode == PUTSTATIC }
                 .associate { it.name to (it.previous as? LdcInsnNode)?.cst }
 
             knownData += node.fields
@@ -225,8 +226,10 @@ fun MethodVisitor.remapServerIP(default: String = "Private Server", loader: () -
     dup() // iterator 2x entry
     invokeMethod(Map.Entry<*, *>::value.getter) // iterator entry list
     visitTypeInsn(CHECKCAST, "java/util/List")
-    loader() // iterator entry list string
-    invokeMethod(java.util.List<*>::contains) // iterator entry bool
+    invokeMethod(Collection<*>::stream)
+    loader() // iterator entry listStream string
+    invokeMethod(::doesMatch) // iterator entry listStream predicate
+    invokeMethod(Stream<*>::anyMatch) // iterator entry bool
     visitJumpInsn(IFEQ, reloop) // iterator entry
     invokeMethod(Map.Entry<*, *>::key.getter) // iterator string
     visitTypeInsn(CHECKCAST, "java/lang/String")
@@ -243,6 +246,8 @@ fun MethodVisitor.remapServerIP(default: String = "Private Server", loader: () -
     visitLdcInsn(default)
     visitLabel(end)
 }
+
+fun doesMatch(address: String) = Predicate<String> { address.endsWith(it) }
 
 // Utility to load the boolean if the client window is focused onto the stack
 fun MethodVisitor.isWindowFocused() {
@@ -278,7 +283,7 @@ object ClassCacher : Module() {
 
                         // Call cacheClass
                         val desc = ClassCacher::cacheClass.javaMethod!!.asDescription()
-                        super.visitMethodInsn(Opcodes.INVOKESTATIC, desc.owner, desc.name, desc.descriptor, false)
+                        super.visitMethodInsn(INVOKESTATIC, desc.owner, desc.name, desc.descriptor, false)
 
                         // Reload all the other stuff
                         loadVariable(0) // this

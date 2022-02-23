@@ -24,7 +24,7 @@ Edit the config as you wish. A part of the example configuration is shown below,
   "autoGG": {
     "from": "/achat gg", // Original string in the code, don't touch
     "to": "/ac Good game", // Replacement string, put whetever you want
-    "isEnabled": false // Whether or not the module is enabled
+    "isEnabled": false // Whether the module is enabled
   }
 }
 ```

@@ -58,7 +58,7 @@ data class Configuration(
     val fixPings: FixPings = FixPings(),
     val lunarOptions: LunarOptions = LunarOptions()
 ) {
-    val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ClassCacher)
+    private val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ClassCacher)
     val modules = Configuration::class.memberProperties
         .map { it(this) }
         .filterIsInstance<Module>() + alwaysEnabledModules

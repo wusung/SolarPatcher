@@ -43,10 +43,10 @@ fun premain(arg: String?, inst: Instrumentation) {
     }
 
     // Get the config based on the args
-    val filename = arg ?: "config.json"
+    val file = File(arg ?: "config.json")
     val config = try {
-        println("Attempting to read configuration from $filename")
-        json.decodeFromString(File(filename).readText())
+        println("Attempting to read configuration from ${file.canonicalPath}")
+        json.decodeFromString(file.readText())
     } catch (e: SerializationException) {
         e.printStackTrace()
         println("Something went wrong deserializing the config, error is above")
