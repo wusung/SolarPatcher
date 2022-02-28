@@ -432,7 +432,7 @@ data class DebugPackets(override val isEnabled: Boolean = false) : Module(),
             afterAdvice = {
                 visitPrintln {
                     loadVariable(2)
-                    invokeMethod(java.lang.Object::class.java.getMethod("getClass"))
+                    invokeMethod(Object::class.java.getMethod("getClass"))
                     invokeMethod(Class<*>::getName)
 
                     val stringName = internalString

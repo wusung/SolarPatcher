@@ -20,11 +20,12 @@
 
 package com.grappenmaker.solarpatcher
 
+// Used to instruct the user that solar-patcher.jar is not runnable
 fun main() {
     println("""
         |Thanks for using Solar Patcher!
         |
-        |Because this is a runtime patcher, just running this will not work.
+        |Because this patcher is actually a runtime agent, just running this will not work.
         |Try downloading Solar Tweaks, or launch Lunar Client with a custom launcher
         |
         |Add the following argument: "-javaagent:solar-patcher-${Versioning.version}.jar=/path/to/config.json",

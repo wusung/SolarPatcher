@@ -19,6 +19,7 @@
 package com.grappenmaker.solarpatcher.asm
 
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 
 val ClassNode.constants: List<Any>
@@ -39,3 +40,5 @@ fun FieldNode.asDescription(owner: ClassNode) =
 
 fun MethodInsnNode.asDescription() =
     MethodDescription(name, desc, owner)
+
+val ClassNode.isInterface get() = access and Opcodes.ACC_INTERFACE != 0

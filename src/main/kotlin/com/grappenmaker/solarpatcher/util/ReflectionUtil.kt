@@ -23,7 +23,7 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 // Utility to make a property delegate itself to a java field (must be accessible)
-fun <T, V> javaReflectionProperty(field: Field, receiver: T) = object : ReadWriteProperty<T, V> {
+fun <T, V> javaReflectionProperty(field: Field, receiver: T?) = object : ReadWriteProperty<T, V> {
     @Suppress("UNCHECKED_CAST") // The cast is done safely and is handled, so we can suppress
     override fun getValue(thisRef: T, property: KProperty<*>): V =
         field[receiver] as? V

@@ -18,17 +18,23 @@
 
 package com.grappenmaker.solarpatcher.util
 
-import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.modules.ClassCacher
-import org.objectweb.asm.ClassReader
+import com.grappenmaker.solarpatcher.asm.util.getInternalName
+import com.grappenmaker.solarpatcher.asm.util.invokeMethod
+import com.grappenmaker.solarpatcher.asm.util.loadVariable
+import com.grappenmaker.solarpatcher.asm.util.returnMethod
+import com.grappenmaker.solarpatcher.modules.RuntimeData
+import com.grappenmaker.solarpatcher.modules.getPlayerBridge
+import com.grappenmaker.solarpatcher.modules.toBridgeComponent
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.Type
-import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.util.TraceClassVisitor
+import java.io.PrintWriter
+
+const val serializerName = "net/kyori/adventure/text/serializer/gson/GsonComponentSerializer"
+const val componentName = "net/kyori/adventure/text/Component"
 
 // Utility for generated classes on runtime.
 object GeneratedCode {
@@ -42,11 +48,12 @@ object GeneratedCode {
 
     private val utilityClass: Class<*> by lazy {
         val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        writer.visit(V9, ACC_PUBLIC, utilityClassName.replace('.', '/'), null, "java/lang/Object", null)
+        val visitor = TraceClassVisitor(writer, PrintWriter(System.out))
+        visitor.visit(V9, ACC_PUBLIC, utilityClassName.replace('.', '/'), null, "java/lang/Object", null)
 
         val (name, descriptor, _, access) = displayMessageDescription
-        writer.visitMethod(access, name, descriptor, null, null).also(::implementSendMessage)
-        writer.visitEnd()
+        with(visitor.visitMethod(access, name, descriptor, null, null)) { implementDisplayMessage() }
+        visitor.visitEnd()
 
         object : ClassLoader(LunarClassLoader.loader!!) {
             fun createClass(name: String, file: ByteArray): Class<*> =
@@ -54,63 +61,21 @@ object GeneratedCode {
         }.createClass(utilityClassName, writer.toByteArray())
     }
 
-    // Internal lunar thing
-    private val patchHandler: Any by lazy {
-        val loader = LunarClassLoader.loader!!
-        val field = loader::class.java.getDeclaredField("WWWWWNNNNWMWWWMWWMMMWMMWM")
-            .also { it.isAccessible = true }
-        field[loader]
-    }
+    private fun MethodVisitor.implementDisplayMessage() {
+        visitCode()
 
-    // Utility to get the class name map inside of lunar
-    private val classnameMap: Map<String, String> by lazy {
-        val field = patchHandler::class.java.getDeclaredField("MWMMWMMWNNNNMWMWNNNNWMWMM")
-            .also { it.isAccessible = true }
+        getPlayerBridge()
 
-        val map = field[patchHandler] as Map<*, *>
+        visitMethodInsn(INVOKESTATIC, serializerName, "gson", "()L$serializerName;", true)
+        loadVariable(0)
+        invokeMethod(InvocationType.INTERFACE, "deserialize", "(Ljava/lang/Object;)L$componentName;", serializerName)
+        toBridgeComponent()
 
-        // Be aware: it inverts!
-        map.map { (key, value) -> value as String to key as String }.toMap()
-    }
+        invokeMethod(InvocationType.INTERFACE, RuntimeData.displayMessageMethod)
 
-    private fun implementSendMessage(mv: MethodVisitor) {
-        val minecraftMain = getNode("ave")
-        val unknownManager = getNode("avo")
-        val chatHandler = getNode("avt")
-
-        val managerField = minecraftMain.fields.find { it.desc.contains(unknownManager.name) } ?: fail()
-        val chatHandlerMethod =
-            unknownManager.methods.find { Type.getReturnType(it.desc).internalName == chatHandler.name }
-                ?: fail()
-
-        mv.visitParameter(null, 0)
-        mv.visitFieldInsn(
-            GETSTATIC,
-            "net/optifine/Config",
-            "minecraft",
-            "L${minecraftMain.name};"
-        )
-        mv.getField(managerField.asDescription(minecraftMain), static = false)
-        mv.invokeMethod(InvocationType.VIRTUAL, chatHandlerMethod.asDescription(unknownManager))
-
-        mv.loadVariable(0)
-
-        val serializerNode = getNode("eu\$a")
-        val chatComponentName = remapName("eu") ?: fail()
-        val deserializeMethod = serializerNode.methods.find {
-            it.access and ACC_STATIC != 0
-                    && Type.getReturnType(it.desc).internalName == chatComponentName
-        } ?: fail()
-        mv.invokeMethod(InvocationType.STATIC, deserializeMethod.asDescription(serializerNode))
-
-        val displayMessageMethod =
-            chatHandler.methods.find { Type.getArgumentTypes(it.desc).firstOrNull()?.internalName == chatComponentName }
-                ?: fail()
-        mv.invokeMethod(InvocationType.VIRTUAL, displayMessageMethod.asDescription(chatHandler))
-
-        mv.returnMethod()
-        mv.visitMaxs(-1, -1)
-        mv.visitEnd()
+        returnMethod()
+        visitMaxs(-1, -1)
+        visitEnd()
     }
 
     // Utility function to display a message in chat
@@ -123,22 +88,4 @@ object GeneratedCode {
             println("Error while sending chat message: $e")
         }
     }
-
-    // Internal utility to remap nms classes names
-    private fun remapName(className: String) =
-        classnameMap[className.replace('/', '.')]?.replace('.', '/')
-
-    // Cache
-    private val nodesCache = mutableMapOf<String, ClassNode>()
-
-    // Gets the classnode of a patched class
-    private fun getNode(className: String) = nodesCache.getOrPut(className) {
-        val classFile = ClassCacher.classCache[remapName(className) ?: className] ?: fail()
-        ClassNode().also { ClassReader(classFile).accept(it, ClassReader.SKIP_DEBUG) }
-    }
 }
-
-// Internal utility to fail generating code
-// Use only when something nullable is very unlikely to be null
-private fun fail(message: String = "Failed to generate code"): Nothing =
-    throw IllegalStateException(message)

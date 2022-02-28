@@ -18,20 +18,14 @@
 
 package com.grappenmaker.solarpatcher.modules
 
-import com.grappenmaker.solarpatcher.asm.FieldDescription
-import com.grappenmaker.solarpatcher.asm.asDescription
-import com.grappenmaker.solarpatcher.asm.calls
-import com.grappenmaker.solarpatcher.asm.constants
+import com.grappenmaker.solarpatcher.asm.*
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.match
-import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import com.grappenmaker.solarpatcher.asm.method.asDescription
 import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
-import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.config.Constants.API
+import com.grappenmaker.solarpatcher.util.componentName
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
@@ -42,7 +36,6 @@ import org.objectweb.asm.tree.LdcInsnNode
 import java.lang.reflect.Modifier
 import java.util.function.Predicate
 import java.util.stream.Stream
-import kotlin.reflect.jvm.javaMethod
 
 // Utility "module" to get runtime data
 object RuntimeData : Module() {
@@ -56,6 +49,7 @@ object RuntimeData : Module() {
     lateinit var bridgeClass: String
     lateinit var serverMappingsClass: String
     val clientBridgeClass: String get() = Type.getReturnType(getClientBridgeMethod.descriptor).internalName
+    val playerBridgeClass: String get() = Type.getReturnType(getPlayerMethod.descriptor).internalName
 
     // Methods that have been found
     lateinit var getLunarmainMethod: MethodDescription
@@ -63,6 +57,9 @@ object RuntimeData : Module() {
     lateinit var getServerDataMethod: MethodDescription
     lateinit var getServerMappingsMethod: MethodDescription
     lateinit var getDisplayToIPMapMethod: MethodDescription
+    lateinit var toBridgeComponentMethod: MethodDescription
+    lateinit var getPlayerMethod: MethodDescription
+    lateinit var displayMessageMethod: MethodDescription
 
     var assetsSocketField: FieldDescription? = null
     lateinit var sendPopupMethod: MethodDescription
@@ -79,9 +76,35 @@ object RuntimeData : Module() {
         if (node.constants.contains("Starting Lunar client...")) handleLunarMain(node)
         if (node.constants.containsAll(listOf("/lc_upload_screenshot", "Screenshot taken"))) handleScreenshotter(node)
         if (node.constants.contains("https://servermappings.lunarclientcdn.com/servers.json")) handleServerMappings(node)
+        if (node.isInterface) {
+            handleClientBridge(node)
+            handlePlayerEntityBridge(node)
+        }
+
         handleBridge(node)
+        handleChatMod(node)
 
         return null // Don't perform transformation
+    }
+
+    // Used for retrieving information about what method to call to convert to a component
+    private fun handleChatMod(node: ClassNode) {
+        val method = node.methods.find { it.constants.contains(" [x\u0001]") } ?: return
+        toBridgeComponentMethod = method.calls
+            .find {
+                Type.getArgumentTypes(it.desc).firstOrNull()?.internalName == componentName &&
+                        Type.getReturnType(it.desc).internalName.startsWith("lunar/")
+            }?.asDescription() ?: return
+    }
+
+    // Used for retrieving data about the player entity bridge
+    private fun handlePlayerEntityBridge(node: ClassNode) {
+        displayMessageMethod = node.methods.find { it.name == "bridge\$addChatMessage" }?.asDescription(node) ?: return
+    }
+
+    // Used for retrieving information about the client bridege
+    private fun handleClientBridge(node: ClassNode) {
+        getPlayerMethod = node.methods.find { it.name == "bridge\$getPlayer" }?.asDescription(node) ?: return
     }
 
     // Used for retrieving display server names
@@ -255,57 +278,13 @@ fun MethodVisitor.isWindowFocused() {
     invokeMethod(InvocationType.INTERFACE, "bridge\$isWindowFocused", "()Z", RuntimeData.clientBridgeClass)
 }
 
-// Utility "Module" to alter the lunar class loader to cache classes
-object ClassCacher : Module() {
-    val classCache = mutableMapOf<String, ByteArray>()
+// Utility to convert a kyori adventure compoenent that is currently on the stack
+// to a lunar bridge component
+fun MethodVisitor.toBridgeComponent() =
+    invokeMethod(InvocationType.STATIC, RuntimeData.toBridgeComponentMethod)
 
-    override val isEnabled = true
-    override fun generate(node: ClassNode): ClassTransform? {
-        if (node.name != "WWWWWNNNNWMWNNNNWNNNNMMWW") return null
-        return ClassTransform(VisitorTransform(matchName("findClass")) { parent ->
-            object : MethodVisitor(API, parent) {
-                override fun visitMethodInsn(
-                    opcode: Int,
-                    owner: String,
-                    name: String,
-                    descriptor: String,
-                    isInterface: Boolean
-                ) {
-                    if (name == "defineClass") {
-                        pop(2) // Useless
-                        storeVariable(7) // Keep class bytes
-                        storeVariable(8) // Keep class name
-                        pop() // Pop "this"
-
-                        // Load correct parameters
-                        loadVariable(8) // name
-                        loadVariable(7) // bytes
-
-                        // Call cacheClass
-                        val desc = ClassCacher::cacheClass.javaMethod!!.asDescription()
-                        super.visitMethodInsn(INVOKESTATIC, desc.owner, desc.name, desc.descriptor, false)
-
-                        // Reload all the other stuff
-                        loadVariable(0) // this
-                        loadVariable(8) // name
-                        loadVariable(7) // bytes
-                        visitInsn(ICONST_0)
-                        loadVariable(7)
-                        visitInsn(ARRAYLENGTH) // length
-
-                        // Recall original method (drops out of if statement)
-                    }
-
-                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-                }
-            }
-        })
-    }
-
-    @JvmStatic
-    fun cacheClass(name: String, bytes: ByteArray) {
-        if (name.startsWith("net.minecraft.v")) {
-            classCache[name.replace('.', '/')] = bytes
-        }
-    }
+// Utility to load the current player bridge
+fun MethodVisitor.getPlayerBridge() {
+    getClientBridge()
+    invokeMethod(InvocationType.INTERFACE, RuntimeData.getPlayerMethod)
 }

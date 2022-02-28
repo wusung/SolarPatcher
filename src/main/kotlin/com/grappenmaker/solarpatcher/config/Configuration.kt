@@ -19,13 +19,18 @@
 package com.grappenmaker.solarpatcher.config
 
 import com.grappenmaker.solarpatcher.*
+import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
 import com.grappenmaker.solarpatcher.modules.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KVisibility
 import kotlin.reflect.full.functions
 import kotlin.reflect.full.instanceParameter
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 @Serializable
 data class Configuration(
@@ -58,8 +63,9 @@ data class Configuration(
     val fixPings: FixPings = FixPings(),
     val lunarOptions: LunarOptions = LunarOptions()
 ) {
-    private val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ClassCacher)
+    private val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications)
     val modules = Configuration::class.memberProperties
+        .filter { it.visibility == KVisibility.PUBLIC }
         .map { it(this) }
         .filterIsInstance<Module>() + alwaysEnabledModules
 

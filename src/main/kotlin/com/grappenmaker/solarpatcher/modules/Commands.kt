@@ -21,6 +21,8 @@ package com.grappenmaker.solarpatcher.modules
 import com.grappenmaker.solarpatcher.util.GeneratedCode
 import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
+import java.awt.Desktop
+import java.net.URI
 
 // Utility for command handling
 class CommandEventAccessor(event: Any) {
@@ -58,7 +60,8 @@ const val helpMessage = "If you need help, or have a suggestion, you can always 
 fun getCodeCommands(): Map<String, Command> {
     val handlerCommand = HandlerCommand {
         cancel()
-        GeneratedCode.displayMessage("""
+        GeneratedCode.displayMessage(
+            """
             {
                 "italic": true,
                 "clickEvent": {
@@ -71,7 +74,8 @@ fun getCodeCommands(): Map<String, Command> {
                 },
                 "text": "$helpMessage"
             }            
-        """)
+        """
+        )
     }
 
     val easterEgg = HandlerCommand {
@@ -100,6 +104,11 @@ fun getCodeCommands(): Map<String, Command> {
         )
     }
 
+    val rickroll = HandlerCommand {
+        cancel()
+        Desktop.getDesktop().browse(URI("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+    }
+
     return listOf("solartweaks", "solarhelp", "solarsupport", "solartweakshelp", "solartweakssupport", "st")
-        .associateWith { handlerCommand } + mapOf("whowashere" to easterEgg)
+        .associateWith { handlerCommand } + mapOf("whowashere" to easterEgg, "rickroll" to rickroll)
 }
