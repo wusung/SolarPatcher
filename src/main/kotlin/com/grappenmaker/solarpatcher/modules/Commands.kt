@@ -104,6 +104,7 @@ fun getCodeCommands(): Map<String, Command> {
         )
     }
 
+    // :D
     val rickroll = HandlerCommand {
         cancel()
         Desktop.getDesktop().browse(URI("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))

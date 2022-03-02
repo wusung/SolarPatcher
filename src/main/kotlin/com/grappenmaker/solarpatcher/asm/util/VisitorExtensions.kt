@@ -202,6 +202,7 @@ fun MethodVisitor.boxInt() =
 fun MethodVisitor.getObject(kClass: KClass<*>) = getField(kClass.java.getField("INSTANCE"))
 
 // Utility to load a given value as constant onto the stack
+// Warning: because of optimizations, this code is huge
 fun MethodVisitor.loadConstant(value: Any?) = when (value) {
     null -> visitInsn(ACONST_NULL)
     true -> visitInsn(ICONST_1)

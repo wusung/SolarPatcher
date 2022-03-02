@@ -30,35 +30,34 @@ import com.grappenmaker.solarpatcher.modules.toBridgeComponent
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.util.TraceClassVisitor
-import java.io.PrintWriter
 
 const val serializerName = "net/kyori/adventure/text/serializer/gson/GsonComponentSerializer"
 const val componentName = "net/kyori/adventure/text/Component"
 
 // Utility for generated classes on runtime.
+// Used now solely for displaying messages in the minecraft chat.
+// Can be used later for accessing Lunar Client internals with simple bytecode instructions.
 object GeneratedCode {
-    private const val utilityClassName = "com.grappenmaker.solarpatcher.generated.Utility"
+    private const val utilityClassName = "com/grappenmaker/solarpatcher/generated/Utility"
     private val displayMessageDescription = MethodDescription(
         "displayMessage",
         "(L${getInternalName<String>()};)V",
-        utilityClassName.replace('.', '/'),
+        utilityClassName,
         ACC_PUBLIC or ACC_STATIC
     )
 
     private val utilityClass: Class<*> by lazy {
         val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        val visitor = TraceClassVisitor(writer, PrintWriter(System.out))
-        visitor.visit(V9, ACC_PUBLIC, utilityClassName.replace('.', '/'), null, "java/lang/Object", null)
+        writer.visit(V9, ACC_PUBLIC, utilityClassName, null, "java/lang/Object", null)
 
         val (name, descriptor, _, access) = displayMessageDescription
-        with(visitor.visitMethod(access, name, descriptor, null, null)) { implementDisplayMessage() }
-        visitor.visitEnd()
+        with(writer.visitMethod(access, name, descriptor, null, null)) { implementDisplayMessage() }
+        writer.visitEnd()
 
         object : ClassLoader(LunarClassLoader.loader!!) {
             fun createClass(name: String, file: ByteArray): Class<*> =
                 defineClass(name, file, 0, file.size).also { resolveClass(it) }
-        }.createClass(utilityClassName, writer.toByteArray())
+        }.createClass(utilityClassName.replace('/', '.'), writer.toByteArray())
     }
 
     private fun MethodVisitor.implementDisplayMessage() {

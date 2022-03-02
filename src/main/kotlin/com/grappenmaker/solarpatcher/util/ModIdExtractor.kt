@@ -28,6 +28,7 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import java.io.File
 import java.util.jar.JarFile
+import kotlin.system.measureTimeMillis
 
 // Utility to extract so-called "feature ids" from a lunar-prod-optifine.jar file
 // This is done by loading all classes, finding the FeatureDetails class by looking for a constant,
@@ -48,45 +49,49 @@ fun main(args: Array<String>) {
         return
     }
 
-    debugLog("""Loading classes from jarfile "${file.canonicalPath}"...""")
+    val tookMs = measureTimeMillis {
+        debugLog("""Loading classes from jarfile "${file.canonicalPath}"...""")
 
-    val jar = JarFile(file)
-    val classes = jar.entries().asSequence()
-        .filter { it.name.startsWith("lunar/") && it.name.endsWith(".lclass") }
-        .map { e ->
-            ClassNode().also {
-                ClassReader(jar.getInputStream(e).readBytes()).accept(it, ClassReader.SKIP_DEBUG)
-            }
-        }.toList()
+        val jar = JarFile(file)
+        val classes = jar.entries().asSequence()
+            .filter { it.name.startsWith("lunar/") && it.name.endsWith(".lclass") }
+            .map { e ->
+                ClassNode().also {
+                    ClassReader(jar.getInputStream(e).readBytes()).accept(it, ClassReader.SKIP_DEBUG)
+                }
+            }.toList()
 
-    debugLog("${classes.size} classes loaded (as ClassNodes).")
-    debugLog("Finding main class...")
+        debugLog("${classes.size} classes loaded (as ClassNodes).")
+        debugLog("Finding main class...")
 
-    val mainClass = classes.find { it.constants.contains("Starting Lunar client...") }
-        ?: error("Cannot find LC main class")
+        val mainClass = classes.find { it.constants.contains("Starting Lunar client...") }
+            ?: error("Cannot find LC main class")
 
-    val clinit = mainClass.methods.find { it.name == "<clinit>" } ?: error("No clinit was found?")
-    val setVersion = clinit.instructions.filterIsInstance<FieldInsnNode>().find { it.name == "version" }
-        ?: error("Version field was not set")
+        val clinit = mainClass.methods.find { it.name == "<clinit>" } ?: error("No clinit was found?")
+        val setVersion = clinit.instructions.filterIsInstance<FieldInsnNode>().find { it.name == "version" }
+            ?: error("Version field was not set")
 
-    val version = (setVersion.previous as LdcInsnNode).cst
+        val version = (setVersion.previous as LdcInsnNode).cst
 
-    debugLog("Main class is ${mainClass.name}")
-    debugLog("Lunar Client version is $version")
+        debugLog("Main class is ${mainClass.name}")
+        debugLog("Lunar Client version is $version")
 
-    debugLog("Finding FeatureDetails class...")
-    val featureDetails =
-        classes.find { it.constants.contains("FeatureDetails(id=\u0001, categories=\u0001, enabledOnCurrentVersion=\u0001, aliases=\u0001, originalAuthors=\u0001)") }
-            ?: error("No featuredetails was found")
+        debugLog("Finding FeatureDetails class...")
+        val featureDetails =
+            classes.find { it.constants.contains("FeatureDetails(id=\u0001, categories=\u0001, enabledOnCurrentVersion=\u0001, aliases=\u0001, originalAuthors=\u0001)") }
+                ?: error("No featuredetails was found")
 
-    debugLog("Finding implementations of FeatureDetails method...")
-    val featureDetailsImpls =
-        classes.mapNotNull { c -> c.methods.find { it.desc == "()L${featureDetails.name};" && it.access and Opcodes.ACC_PROTECTED != 0 } }
+        debugLog("Finding implementations of FeatureDetails method...")
+        val featureDetailsImpls =
+            classes.mapNotNull { c -> c.methods.find { it.desc == "()L${featureDetails.name};" && it.access and Opcodes.ACC_PROTECTED != 0 } }
 
-    debugLog("Extracting mod ids...")
+        debugLog("Extracting mod ids...")
 
-    val modIds = featureDetailsImpls.mapNotNull { it.constants.firstOrNull() as? String }.sorted()
-    println(modIds.joinToString(System.lineSeparator()))
+        val modIds = featureDetailsImpls.mapNotNull { it.constants.firstOrNull() as? String }.sorted()
+        println(modIds.joinToString(System.lineSeparator()))
+    }
+
+    println("Took ${tookMs}ms")
 }
 
 fun debugLog(msg: String) = System.err.println(msg)

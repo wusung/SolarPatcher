@@ -1,11 +1,7 @@
 {
-    "patcherVersion": "1.4",
+    "patcherVersion": "1.4.1",
     "debug": false,
     "enableAll": false,
-    "modName": {
-        "modName": "SolarTweaks",
-        "className": "net/minecraft/client/ClientBrandRetriever"
-    },
     "nickhider": {
         "from": "You",
         "to": "You",
@@ -53,7 +49,7 @@
     "windowName": {
         "from": "Lunar Client (\u0001-\u0001/\u0001)",
         "to": "Lunar Client (Modded by Solar Tweaks)",
-        "isEnabled": false
+        "isEnabled": true
     },
     "noHitDelay": {
         "isEnabled": false
@@ -87,7 +83,11 @@
         "clientID": 920998351430901790,
         "icon": "logo",
         "iconText": "Solar Tweaks",
-        "isEnabled": false
+        "afkText": "AFK",
+        "menuText": "In Menu",
+        "singlePlayerText": "Playing Singleplayer",
+        "versionText": "Minecraft \u0001",
+        "isEnabled": true
     },
     "tasklistPrivacy": {
         "isEnabled": false
@@ -139,6 +139,15 @@
     "reachText": {
         "from": "blocks",
         "to": "blocks",
+        "isEnabled": false
+    },
+    "fixPings": {
+        "isEnabled": false
+    },
+    "lunarOptions": {
+        "isEnabled": false
+    },
+    "supportOverlays": {
         "isEnabled": false
     }
 }

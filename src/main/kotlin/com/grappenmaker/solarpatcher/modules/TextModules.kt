@@ -101,7 +101,7 @@ data class MantleIntegration(
 data class WindowName(
     val from: String = "Lunar Client (\u0001-\u0001/\u0001)",
     val to: String = "Lunar Client (Modded by Solar Tweaks)",
-    override val isEnabled: Boolean = false
+    override val isEnabled: Boolean = true
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val method = node.methods.find { it.constants.contains(from) } ?: return null

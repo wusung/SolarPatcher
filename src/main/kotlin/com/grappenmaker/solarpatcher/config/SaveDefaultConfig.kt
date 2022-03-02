@@ -23,6 +23,7 @@ package com.grappenmaker.solarpatcher.config
 import kotlinx.serialization.encodeToString
 import java.io.File
 
+// Allows you to create a "default configuration" that is used by the launcher to configure solar patcher
 fun main(args: Array<String>) {
     val filename = args.firstOrNull() ?: "config.json"
     println("Saving default config to $filename")

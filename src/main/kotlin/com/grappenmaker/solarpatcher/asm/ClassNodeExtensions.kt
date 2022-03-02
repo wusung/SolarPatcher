@@ -19,8 +19,12 @@
 package com.grappenmaker.solarpatcher.asm
 
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
+import org.objectweb.asm.util.TraceClassVisitor
+import java.io.PrintWriter
 
 val ClassNode.constants: List<Any>
     get() = methods.flatMap { m -> m.constants }
@@ -42,3 +46,6 @@ fun MethodInsnNode.asDescription() =
     MethodDescription(name, desc, owner)
 
 val ClassNode.isInterface get() = access and Opcodes.ACC_INTERFACE != 0
+
+fun ClassNode.dump() = accept(TraceClassVisitor(PrintWriter(System.out)))
+fun ClassNode.asBytes() = ClassWriter(0).also { accept(it) }.toByteArray()

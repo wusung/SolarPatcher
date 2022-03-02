@@ -19,9 +19,7 @@
 package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.Versioning
-import com.grappenmaker.solarpatcher.asm.asDescription
-import com.grappenmaker.solarpatcher.asm.calls
-import com.grappenmaker.solarpatcher.asm.constants
+import com.grappenmaker.solarpatcher.asm.*
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatcherData
@@ -281,7 +279,7 @@ data class RPCUpdate(
     val menuText: String = "In Menu",
     val singlePlayerText: String = "Playing Singleplayer",
     val versionText: String = "Minecraft \u0001",
-    override val isEnabled: Boolean = false
+    override val isEnabled: Boolean = true
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val updateMethod = node.methods.find { it.constants.contains(defaultIcon) } ?: return null
@@ -510,35 +508,34 @@ object HandleNotifications : Module() {
     }
 }
 
-@Serializable
-data class ModName(
-    val modName: String = "SolarTweaks",
-    val className: String = "net/minecraft/client/ClientBrandRetriever"
-) : Module(), TransformGenerator by matcherGenerator(ClassTransform(ImplementTransform(matchName("getClientModName")) {
-    val solarVersion = "$modName v${Versioning.version}"
+const val modName: String = "SolarTweaks"
 
-    // Add a try catch block, because class access might fail
-    val start = Label()
-    val end = Label()
-    visitTryCatchBlock(start, end, end, "java/lang/Throwable")
+object ModName : Module(),
+    TransformGenerator by matcherGenerator(ClassTransform(ImplementTransform(matchName("getClientModName")) {
+        val solarVersion = "$modName v${Versioning.version}"
 
-    // try-start
-    visitLabel(start)
+        // Add a try catch block, because class access might fail
+        val start = Label()
+        val end = Label()
+        visitTryCatchBlock(start, end, end, "java/lang/Throwable")
 
-    getObject(RuntimeData::class)
-    invokeMethod(RuntimeData::version.getter)
-    concat("(L$internalString;)L$internalString;", "Lunar Client \u0001/$solarVersion")
-    returnMethod(ARETURN)
+        // try-start
+        visitLabel(start)
 
-    // try-end
-    visitLabel(end)
+        getObject(RuntimeData::class)
+        invokeMethod(RuntimeData::version.getter)
+        concat("(L$internalString;)L$internalString;", "Lunar Client \u0001/$solarVersion")
+        returnMethod(ARETURN)
 
-    // try-handler
-    dup()
-    invokeMethod(Throwable::class.java.getMethod("printStackTrace"))
-    visitLdcInsn(solarVersion)
-    returnMethod(ARETURN)
-}), matcher = ClassMatching.matchName(className)) {
+        // try-end
+        visitLabel(end)
+
+        // try-handler
+        dup()
+        invokeMethod(Throwable::class.java.getMethod("printStackTrace"))
+        visitLdcInsn(solarVersion)
+        returnMethod(ARETURN)
+    }), matcher = ClassMatching.matchName("net/minecraft/client/ClientBrandRetriever")) {
     @Transient
     override val isEnabled: Boolean = true
 }
@@ -593,5 +590,17 @@ data class LunarOptions(override val isEnabled: Boolean = false) : Module() {
                 }
             }
         })
+    }
+}
+
+@Serializable
+data class SupportOverlays(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find {
+            Type.getArgumentTypes(it.desc).firstOrNull()?.internalName == internalString
+                    && it.constants.contains("assets/lunar/")
+        } ?: return null
+
+        return ClassTransform(ConstantValueTransform(method.asDescription(node).asMatcher(), true))
     }
 }

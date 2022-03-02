@@ -217,7 +217,6 @@ open class ImplementTransform(
 }
 
 // Utility to give a method a constant value
-// Warning: because of optimizations, this code is huge
 class ConstantValueTransform(
     matcher: MethodMatcher,
     value: Any?

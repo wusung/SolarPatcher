@@ -22,8 +22,7 @@ import java.lang.instrument.ClassFileTransformer
 import java.net.URLClassLoader
 import java.security.ProtectionDomain
 
-// Utility to get the lunar client main classloader
-// on runtime
+// Utility to get the lunar client main classloader on runtime
 object LunarClassLoader : ClassFileTransformer {
     // Feel free to use !! operator, because if this does not exist lc is a lie :)
     // Not lateinit because there needs to be a nullcheck

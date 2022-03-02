@@ -31,6 +31,6 @@ fun main() {
         |Add the following argument: "-javaagent:solar-patcher-${Versioning.version}.jar=/path/to/config.json",
         |where you replace the path with the path of a configuration file.
         |
-        |For more information, go to https://github.com/Solar-Tweaks/SolarPatcher 
+        |For more information, go to https://github.com/Solar-Tweaks/SolarPatcher or join our Discord server
     """.trimMargin())
 }

@@ -32,6 +32,7 @@ import java.lang.instrument.Instrumentation
 import java.util.*
 
 @Suppress("unused")
+// premain method, see https://docs.oracle.com/javase/9/docs/api/java/lang/instrument/package-summary.html
 fun premain(arg: String?, inst: Instrumentation) {
     println("Solar Patcher v${Versioning.version}")
     println("Built ${Date(Versioning.buildTimestamp)}")

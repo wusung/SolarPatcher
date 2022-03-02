@@ -38,6 +38,7 @@ import java.util.function.Predicate
 import java.util.stream.Stream
 
 // Utility "module" to get runtime data
+// Internally used to lookup classes and methods that can't be recognized with simple analysis
 object RuntimeData : Module() {
     override val isEnabled = true
     private val knownData = mutableMapOf<String, Any?>()
