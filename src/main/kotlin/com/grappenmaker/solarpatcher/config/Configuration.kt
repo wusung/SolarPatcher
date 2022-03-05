@@ -71,7 +71,10 @@ data class Configuration(
     // Fix chat "pings" to only happen with actual chat packets and not action bars
     val fixPings: FixPings = FixPings(),
     val lunarOptions: LunarOptions = LunarOptions(), // Always show "Lunar Options" in pause menu
-    val supportOverlays: SupportOverlays = SupportOverlays()
+    // Reenables overlays (e.g. to change the icon or panorama, builtin lunar assets)
+    val supportOverlays: SupportOverlays = SupportOverlays(),
+    // Allows you to use toggle sneak in containers on hypixel
+    val toggleSneakContainer: ToggleSneakContainer = ToggleSneakContainer()
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification

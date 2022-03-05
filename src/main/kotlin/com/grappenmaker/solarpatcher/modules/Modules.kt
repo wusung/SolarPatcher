@@ -279,6 +279,7 @@ data class RPCUpdate(
     val menuText: String = "In Menu",
     val singlePlayerText: String = "Playing Singleplayer",
     val versionText: String = "Minecraft \u0001",
+    val displayActivity: Boolean = true,
     override val isEnabled: Boolean = true
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
@@ -287,6 +288,8 @@ data class RPCUpdate(
             updateMethod.asDescription(node).asMatcher(),
             matchName("build"), // RPC builder
             beforeAdvice = {
+                if (!displayActivity) return@InvokeAdviceTransform
+
                 // There is now a RichPresence.Builder on the stack
                 // Keep in mind that after dropping out of this advice
                 // the builder should be on the stack
@@ -594,7 +597,7 @@ data class LunarOptions(override val isEnabled: Boolean = false) : Module() {
 }
 
 @Serializable
-data class SupportOverlays(override val isEnabled: Boolean = false) : Module() {
+data class SupportOverlays(override val isEnabled: Boolean = true) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val method = node.methods.find {
             Type.getArgumentTypes(it.desc).firstOrNull()?.internalName == internalString
@@ -602,5 +605,21 @@ data class SupportOverlays(override val isEnabled: Boolean = false) : Module() {
         } ?: return null
 
         return ClassTransform(ConstantValueTransform(method.asDescription(node).asMatcher(), true))
+    }
+}
+
+@Serializable
+data class ToggleSneakContainer(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.constants.contains("toggleSneak")) return null
+
+        val method = node.methods.find { it.calls.any { c -> c.name == "getServer" } } ?: return null
+        return ClassTransform(ReplaceCodeTransform(
+            method.asDescription(node).asMatcher(),
+            matchName("contains")
+        ) { _, _ ->
+            pop(2)
+            visitInsn(ICONST_0)
+        })
     }
 }
