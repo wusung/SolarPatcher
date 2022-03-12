@@ -53,6 +53,7 @@ object MethodMatching {
 
     // Utility to match clinit
     fun matchClinit(): MethodMatcher = matchData(MethodMatcherData.CLINIT)
+    fun matchInit(): MethodMatcher = { it.name == "<init>" }
 
     // Utility to chain matchers
     operator fun MethodMatcher.plus(other: MethodMatcher): MethodMatcher = { this(it) && other(it) }

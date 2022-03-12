@@ -18,7 +18,7 @@
 
 package com.grappenmaker.solarpatcher.modules
 
-import com.grappenmaker.solarpatcher.util.GeneratedCode
+import com.grappenmaker.solarpatcher.util.GeneratedAccessor
 import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
 import java.awt.Desktop
@@ -60,7 +60,7 @@ const val helpMessage = "If you need help, or have a suggestion, you can always 
 fun getCodeCommands(): Map<String, Command> {
     val handlerCommand = HandlerCommand {
         cancel()
-        GeneratedCode.displayMessage(
+        GeneratedAccessor.displayMessage(
             """
             {
                 "italic": true,
@@ -80,7 +80,7 @@ fun getCodeCommands(): Map<String, Command> {
 
     val easterEgg = HandlerCommand {
         cancel()
-        GeneratedCode.displayMessage(
+        GeneratedAccessor.displayMessage(
             """
             {
                 "color": "dark_purple",

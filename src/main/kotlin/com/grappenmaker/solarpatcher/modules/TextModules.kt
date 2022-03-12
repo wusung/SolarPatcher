@@ -35,18 +35,16 @@ sealed class TextTransformModule : Module() {
     @Transient
     open val matcher: ClassMatcher = matchLunar()
 
-    @Transient
-    open val prefix: String = ""
-
     abstract val from: String
     abstract val to: String
 
     private val generator: TransformGenerator
         get() = matcherGenerator(
-            ClassTransform(listOf(TextTransform(MethodMatching.matchAny(), prefix + from, prefix + to))),
+            ClassTransform(listOf(TextTransform(MethodMatching.matchAny(), from, to))),
             matcher = matcher + {
-                from != to && it.constants.filterIsInstance<String>().any { s -> s.contains(from) }
-            })
+                from != to && it.constants.contains(from)
+            }
+        )
 
     override fun generate(node: ClassNode) = generator.generate(node)
 }
@@ -63,7 +61,6 @@ data class Nickhider(
 
 @Serializable
 data class FPS(
-    override val prefix: String = "\u0001 ",
     override val from: String = Constants.defaultFPSText,
     override val to: String = Constants.defaultFPSText,
     override val isEnabled: Boolean = false
@@ -99,7 +96,7 @@ data class MantleIntegration(
 
 @Serializable
 data class WindowName(
-    val from: String = "Lunar Client (\u0001-\u0001/\u0001)",
+    val from: String = Constants.defaultWindowName,
     val to: String = "Lunar Client (Modded by Solar Tweaks)",
     override val isEnabled: Boolean = true
 ) : Module() {
@@ -125,3 +122,10 @@ data class ReachText(
     override val matcher: ClassMatcher
         get() = matchLunar() + { it.constants.contains("[1.3 blocks]") }
 }
+
+@Serializable
+data class PingText(
+    override val from: String = Constants.defaultPingText,
+    override val to: String = Constants.defaultPingText,
+    override val isEnabled: Boolean = false
+) : TextTransformModule()

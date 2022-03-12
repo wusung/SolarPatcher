@@ -25,6 +25,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.TraceClassVisitor
+import java.io.File
 import java.io.PrintWriter
 import java.lang.instrument.ClassFileTransformer
 import java.security.ProtectionDomain
@@ -66,7 +67,7 @@ class FileTransformer(
 
             reader.accept(TransformVisitor(classTransform.methodTransforms, visitor), options)
         } catch (e: Exception) {
-            println("Error while transforming: $e")
+            println("Error while transforming ${node.name}: $e")
             e.printStackTrace()
             return null
         }

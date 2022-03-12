@@ -194,6 +194,9 @@ fun MethodVisitor.concat(desc: String, template: String) =
 fun MethodVisitor.intToString() =
     invokeMethod(java.lang.Integer::class.java.getMethod("toString", Int::class.javaPrimitiveType))
 
+// Utility to convert the current object on the stack to a string
+fun MethodVisitor.visitToString() = invokeMethod(Any::toString)
+
 // Utility to box an integer on operand stack
 fun MethodVisitor.boxInt() =
     invokeMethod(java.lang.Integer::class.java.getMethod("valueOf", Int::class.javaPrimitiveType))

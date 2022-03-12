@@ -36,9 +36,19 @@ object Constants {
     const val defaultLevelHeadText = "Level: "
     const val defaultAutoGGText = "/achat gg"
     const val defaultNickhiderName = "You"
-    const val defaultFPSText = "FPS"
-    const val defaultCPSText = "CPS"
-    const val defaultReachText = "blocks"
+    const val defaultFPSText = "\u0001 FPS"
+    const val defaultCPSText = "\u0001 CPS"
+    const val defaultReachText = "\u0001 blocks"
+    const val defaultPingText = "\u0001 ms"
+    const val defaultWindowName = "Lunar Client (\u0001-\u0001/\u0001)"
+
+    // The difference is one letter, beware
+    private const val optifinePrefix = "net/optifine/player"
+    const val playerConfigurationsName = "$optifinePrefix/PlayerConfigurations"
+    const val playerConfigurationName = "$optifinePrefix/PlayerConfiguration"
+    const val playerConfigReceivername = "$optifinePrefix/PlayerConfigurationReceiver"
+    const val fileDownloadThreadName = "net/optifine/http/FileDownloadThread"
+    const val httpUtilName = "net/optifine/http/HttpUtils"
 
     object ToggleSprint {
         private const val defaultFlyingText = "flying"

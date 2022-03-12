@@ -43,6 +43,8 @@ import org.objectweb.asm.tree.*
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
+import java.util.function.Predicate
+import java.util.stream.Stream
 import kotlin.math.floor
 import kotlin.reflect.jvm.javaMethod
 
@@ -241,7 +243,7 @@ data class CustomCommands(
 
                 // Load chat event class onto the stack
                 getObject(RuntimeData::class)
-                invokeMethod(RuntimeData::outgoingPacketEvent.getter)
+                invokeMethod(RuntimeData::outgoingChatEvent.getter)
 
                 // Compare the strings
                 invokeMethod(String::equals)
@@ -359,7 +361,59 @@ data class RPCUpdate(
             )
         })
     }
+
+    // Utility to remap a server ip to a display name
+    private fun MethodVisitor.remapServerIP(default: String = "Private Server", loader: () -> Unit) {
+        getServerMappings()
+        invokeMethod(
+            InvocationType.VIRTUAL,
+            RuntimeData.getDisplayToIPMapMethod
+        ) // map
+
+        // Create an inverse view onto the known servers map
+        // This is used to get the display name of a server ip
+        val loop = Label()
+        val reloop = Label()
+        val notFound = Label()
+        val end = Label()
+
+        invokeMethod(InvocationType.INTERFACE, "entrySet", "()Ljava/util/Set;", "java/util/Map") // set of entries
+        invokeMethod(InvocationType.INTERFACE, "iterator", "()Ljava/util/Iterator;", "java/util/Set") // iterator
+
+        visitLabel(loop)
+        dup() // 2x iterator
+        invokeMethod(Iterator<*>::hasNext) // iterator bool
+        visitJumpInsn(IFEQ, notFound)
+
+        dup() // 2x iterator
+        invokeMethod(Iterator<*>::next) // iterator entry
+        dup() // iterator 2x entry
+        invokeMethod(Map.Entry<*, *>::value.getter) // iterator entry list
+        visitTypeInsn(CHECKCAST, "java/util/List")
+        invokeMethod(Collection<*>::stream)
+        loader() // iterator entry listStream string
+        invokeMethod(::doesMatch) // iterator entry listStream predicate
+        invokeMethod(Stream<*>::anyMatch) // iterator entry bool
+        visitJumpInsn(IFEQ, reloop) // iterator entry
+        invokeMethod(Map.Entry<*, *>::key.getter) // iterator string
+        visitTypeInsn(CHECKCAST, "java/lang/String")
+        visitInsn(SWAP) // string iterator
+        pop() // string
+        visitJumpInsn(GOTO, end) // exit with string
+
+        visitLabel(reloop)
+        pop()
+        visitJumpInsn(GOTO, loop)
+
+        visitLabel(notFound)
+        pop()
+        visitLdcInsn(default)
+        visitLabel(end)
+    }
 }
+
+@Suppress("MemberVisibilityCanBePrivate") // can't be private because used in bytecode
+fun doesMatch(address: String) = Predicate<String> { address.endsWith(it) }
 
 private fun privacyTransformGenerator(path: String): TransformGenerator = object : TransformGenerator {
     override fun generate(node: ClassNode): ClassTransform? {
@@ -476,9 +530,9 @@ object HandleNotifications : Module() {
                         getAssetsSocket()
 
                         // Create packet
-                        val popupMethod = RuntimeData.sendPopupMethod
+                        val popupMethod = RuntimeData.sendPopupMethod ?: error("No popup method?")
                         construct(
-                            Type.getArgumentTypes(popupMethod.descriptor).first().internalName,
+                            Type.getArgumentTypes(popupMethod.method.desc).first().internalName,
                             "(L$internalString;L$internalString;)V"
                         ) {
                             // Load title onto operand stack
@@ -503,7 +557,7 @@ object HandleNotifications : Module() {
                         }
 
                         // Fake send packet
-                        invokeMethod(InvocationType.VIRTUAL, popupMethod)
+                        invokeMethod(InvocationType.VIRTUAL, popupMethod.asDescription())
                     }
                 }
             }
@@ -621,5 +675,45 @@ data class ToggleSneakContainer(override val isEnabled: Boolean = false) : Modul
             pop(2)
             visitInsn(ICONST_0)
         })
+    }
+}
+
+@Serializable
+data class PingSpoof(
+    val pingValue: String = "69",
+    override val isEnabled: Boolean = false
+) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find { it.constants.contains(Constants.defaultPingText) } ?: return null
+        return ClassTransform(VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
+            object : MethodVisitor(API, parent) {
+                override fun visitInvokeDynamicInsn(
+                    name: String,
+                    desc: String,
+                    handle: Handle,
+                    vararg args: Any?
+                ) {
+                    if (name == "makeConcatWithConstants") {
+                        visitInsn(POP2)
+                        visitLdcInsn(pingValue)
+                        super.visitInvokeDynamicInsn(name, "(L$internalString;)L$internalString;", handle, *args)
+                    } else {
+                        super.visitInvokeDynamicInsn(name, desc, handle, *args)
+                    }
+                }
+            }
+        })
+    }
+}
+
+@Serializable
+data class ClothCapes(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find {
+            it.constants.contains("LunarPlus")
+                    && it.calls.any { c -> c.name == "containsKey" }
+        } ?: return null
+
+        return ClassTransform(ConstantValueTransform(method.asDescription(node).asMatcher(), true))
     }
 }

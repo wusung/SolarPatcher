@@ -78,12 +78,20 @@ fun main(args: Array<String>) {
 
         debugLog("Finding FeatureDetails class...")
         val featureDetails =
-            classes.find { it.constants.contains("FeatureDetails(id=\u0001, categories=\u0001, enabledOnCurrentVersion=\u0001, aliases=\u0001, originalAuthors=\u0001)") }
+            classes.find { it.constants.contains("FeatureDetails(id=\u0001, " +
+                    "categories=\u0001, " +
+                    "enabledOnCurrentVersion=\u0001, " +
+                    "aliases=\u0001, " +
+                    "originalAuthors=\u0001)") }
                 ?: error("No featuredetails was found")
 
         debugLog("Finding implementations of FeatureDetails method...")
-        val featureDetailsImpls =
-            classes.mapNotNull { c -> c.methods.find { it.desc == "()L${featureDetails.name};" && it.access and Opcodes.ACC_PROTECTED != 0 } }
+        val featureDetailsImpls = classes.mapNotNull { c ->
+            c.methods.find {
+                it.desc == "()L${featureDetails.name};"
+                        && it.access and Opcodes.ACC_PROTECTED != 0
+            }
+        }
 
         debugLog("Extracting mod ids...")
 

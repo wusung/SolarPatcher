@@ -18,8 +18,8 @@
 
 package com.grappenmaker.solarpatcher.asm
 
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatcher
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
@@ -39,6 +39,9 @@ val MethodNode.calls: List<MethodInsnNode>
 fun MethodNode.asDescription(owner: ClassNode) =
     MethodDescription(name, desc, owner.name, access)
 
+fun MethodNode.asDescription(owner: String) =
+    MethodDescription(name, desc, owner, access)
+
 fun FieldNode.asDescription(owner: ClassNode) =
     FieldDescription(name, desc, owner.name, access)
 
@@ -46,6 +49,13 @@ fun MethodInsnNode.asDescription() =
     MethodDescription(name, desc, owner)
 
 val ClassNode.isInterface get() = access and Opcodes.ACC_INTERFACE != 0
+val ClassNode.isAbstract get() = access and Opcodes.ACC_ABSTRACT != 0
 
 fun ClassNode.dump() = accept(TraceClassVisitor(PrintWriter(System.out)))
-fun ClassNode.asBytes() = ClassWriter(0).also { accept(it) }.toByteArray()
+fun ClassNode.asBytes(): ByteArray = ClassWriter(0).also { accept(it) }.toByteArray()
+
+fun ClassNode.hasConstant(cst: Any?) = constants.contains(cst)
+fun ClassNode.calls(matcher: MethodMatcher) = methods.any { it.calls.any { c -> matcher(c.asDescription()) } }
+
+fun MethodNode.hasConstant(cst: Any?) = constants.contains(cst)
+fun MethodNode.calls(matcher: MethodMatcher) = calls.any { matcher(it.asDescription()) }

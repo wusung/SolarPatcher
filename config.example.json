@@ -8,14 +8,13 @@
         "isEnabled": false
     },
     "fps": {
-        "prefix": "\u0001 ",
-        "from": "FPS",
-        "to": "FPS",
+        "from": "\u0001 FPS",
+        "to": "\u0001 FPS",
         "isEnabled": false
     },
     "cps": {
-        "from": "CPS",
-        "to": "CPS",
+        "from": "\u0001 CPS",
+        "to": "\u0001 CPS",
         "isEnabled": false
     },
     "autoGG": {
@@ -87,6 +86,7 @@
         "menuText": "In Menu",
         "singlePlayerText": "Playing Singleplayer",
         "versionText": "Minecraft \u0001",
+        "displayActivity": true,
         "isEnabled": true
     },
     "tasklistPrivacy": {
@@ -115,8 +115,8 @@
         "isEnabled": false
     },
     "keystrokesCPS": {
-        "from": "CPS",
-        "to": "CPS",
+        "from": "\u0001 CPS",
+        "to": "\u0001 CPS",
         "isEnabled": false
     },
     "toggleSprintText": {
@@ -137,8 +137,8 @@
         "isEnabled": false
     },
     "reachText": {
-        "from": "blocks",
-        "to": "blocks",
+        "from": "\u0001 blocks",
+        "to": "\u0001 blocks",
         "isEnabled": false
     },
     "fixPings": {
@@ -148,6 +148,25 @@
         "isEnabled": false
     },
     "supportOverlays": {
+        "isEnabled": true
+    },
+    "toggleSneakContainer": {
+        "isEnabled": false
+    },
+    "pingText": {
+        "from": "\u0001 ms",
+        "to": "\u0001 ms",
+        "isEnabled": false
+    },
+    "pingSpoof": {
+        "pingValue": "69",
+        "isEnabled": false
+    },
+    "clothCapes": {
+        "isEnabled": false
+    },
+    "optifineItems": {
+        "capeServer": "http://capes.mantle.gg",
         "isEnabled": false
     }
 }

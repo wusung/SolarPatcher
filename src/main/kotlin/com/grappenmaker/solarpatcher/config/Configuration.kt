@@ -74,7 +74,11 @@ data class Configuration(
     // Reenables overlays (e.g. to change the icon or panorama, builtin lunar assets)
     val supportOverlays: SupportOverlays = SupportOverlays(),
     // Allows you to use toggle sneak in containers on hypixel
-    val toggleSneakContainer: ToggleSneakContainer = ToggleSneakContainer()
+    val toggleSneakContainer: ToggleSneakContainer = ToggleSneakContainer(),
+    val pingText: PingText = PingText(), // Change your ping text
+    val pingSpoof: PingSpoof = PingSpoof(), // Change the text of the ping value (not a multiplier)
+    val clothCapes: ClothCapes = ClothCapes(),
+    val optifineItems: OptifineItems = OptifineItems()
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification
