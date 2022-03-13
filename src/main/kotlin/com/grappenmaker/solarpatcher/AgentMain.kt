@@ -31,6 +31,8 @@ import java.io.IOException
 import java.lang.instrument.Instrumentation
 import java.util.*
 
+lateinit var configuration: Configuration
+
 @Suppress("unused")
 // premain method, see https://docs.oracle.com/javase/9/docs/api/java/lang/instrument/package-summary.html
 fun premain(arg: String?, inst: Instrumentation) {
@@ -45,7 +47,7 @@ fun premain(arg: String?, inst: Instrumentation) {
 
     // Get the config based on the args
     val file = File(arg ?: "config.json")
-    val config = try {
+    configuration = try {
         println("Attempting to read configuration from ${file.canonicalPath}")
         json.decodeFromString(file.readText())
     } catch (e: SerializationException) {
@@ -61,7 +63,7 @@ fun premain(arg: String?, inst: Instrumentation) {
     }.modulesClone() // TODO: remove, see modulesClone function
 
     // Define transforms and visitors
-    val transforms = config.modules.filter { it.isEnabled || config.enableAll }.also {
+    val transforms = configuration.modules.filter { it.isEnabled || configuration.enableAll }.also {
         val moduleText = it.map { m -> m::class.simpleName ?: "Unnamed" }.sorted().joinToString()
         println("Using modules $moduleText")
     }
@@ -70,7 +72,7 @@ fun premain(arg: String?, inst: Instrumentation) {
     println()
 
     // Add them to the instrumentation backend implementation of the jvm
-    inst.addTransformer(FileTransformer(transforms, debug = config.debug))
+    inst.addTransformer(FileTransformer(transforms, debug = configuration.debug))
 
     // Utility to store lunar client's class loader
     inst.addTransformer(LunarClassLoader)

@@ -47,15 +47,17 @@ data class OptifineItems(
     val capeServer: String = "http://capes.mantle.gg",
     override val isEnabled: Boolean = false
 ) : Module() {
-    override fun generate(node: ClassNode): ClassTransform? =
+    override fun generate(node: ClassNode) =
         handleAddLayer(node) ?: handleGetConfig(node) ?: handleHttpUtil(node)
 
     private fun handleHttpUtil(node: ClassNode): ClassTransform? = if (node.name == Constants.httpUtilName) {
         ClassTransform(ConstantValueTransform(matchName("getPlayerItemsUrl"), capeServer))
     } else null
 
-    private fun handleGetConfig(node: ClassNode): ClassTransform? =
-        if (node.name == Constants.playerConfigurationsName) {
+    private fun handleGetConfig(node: ClassNode): ClassTransform? {
+        val getConfigMethod = node.methods.find { it.name == "getPlayerConfiguration" } ?: return null
+        if (getConfigMethod.instructions.size() > 2) return null
+        return if (node.name == Constants.playerConfigurationsName) {
             ClassTransform(listOf(
                 ImplementTransform(matchName("getPlayerConfiguration")) {
                     getObject(ConfigDelegateAccessor::class)
@@ -73,6 +75,7 @@ data class OptifineItems(
                 }
             ))
         } else null
+    }
 
     private fun handleAddLayer(node: ClassNode): ClassTransform? {
         if (node.isInterface) return null
@@ -94,12 +97,18 @@ data class OptifineItems(
                     super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
 
                     if (name == addLayerMethod && !hasVisited) {
+                        val label = Label()
+                        invokeMethod(::shouldImplementItems)
+                        visitJumpInsn(IFEQ, label)
+
                         hasVisited = true
                         loadVariable(3)
                         getObject(GeneratedCode::class)
                         invokeMethod(GeneratedCode::itemLayerInstance.getter)
                         visitInsn(ICONST_1)
                         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+
+                        visitLabel(label)
                     }
                 }
             }
@@ -177,9 +186,10 @@ private fun getRendererMethod(name: String): MethodDescription {
 }
 
 object ConfigFetcher {
-    private val configs = mutableMapOf<String, Any>() // Player name to config
+    val configs = mutableMapOf<String, Any>() // Player name to config
     fun getConfig(name: String?): Any? {
         if (name == null) return null
+        if (!shouldImplementItems()) return null
         return configs.getOrPut(name) { ConfigDelegateAccessor.downloadPlayerConfig(name) }
     }
 
@@ -188,3 +198,5 @@ object ConfigFetcher {
         configs[name] = value
     }
 }
+
+fun shouldImplementItems() = ConfigDelegateAccessor.getVersion() in listOf("v1_8", "v1_7")

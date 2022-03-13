@@ -327,9 +327,8 @@ data class RPCUpdate(
                 // If it was not null, get the server ip
                 invokeMethod(
                     InvocationType.INTERFACE,
-                    "bridge\$serverIP",
-                    "()L$internalString;",
-                    Type.getReturnType(RuntimeData.getServerDataMethod.descriptor).internalName
+                    RuntimeData.getServerIPMethod?.asDescription()
+                        ?: error("No server ip method was found")
                 )
                 storeVariable(2) // Store the server ip
                 remapServerIP { loadVariable(2) }
@@ -684,7 +683,7 @@ data class PingSpoof(
     override val isEnabled: Boolean = false
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
-        val method = node.methods.find { it.constants.contains(Constants.defaultPingText) } ?: return null
+        val method = node.methods.find { it.constants.contains("\u0001 ms") } ?: return null
         return ClassTransform(VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
             object : MethodVisitor(API, parent) {
                 override fun visitInvokeDynamicInsn(

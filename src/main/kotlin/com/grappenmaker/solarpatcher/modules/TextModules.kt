@@ -35,6 +35,9 @@ sealed class TextTransformModule : Module() {
     @Transient
     open val matcher: ClassMatcher = matchLunar()
 
+    @Transient
+    open val pattern: String = "%s"
+
     abstract val from: String
     abstract val to: String
 
@@ -42,7 +45,7 @@ sealed class TextTransformModule : Module() {
         get() = matcherGenerator(
             ClassTransform(listOf(TextTransform(MethodMatching.matchAny(), from, to))),
             matcher = matcher + {
-                from != to && it.constants.contains(from)
+                from != to && it.constants.contains(String.format(pattern, from))
             }
         )
 
@@ -51,8 +54,8 @@ sealed class TextTransformModule : Module() {
 
 @Serializable
 data class Nickhider(
-    override val from: String = Constants.defaultNickhiderName,
-    override val to: String = Constants.defaultNickhiderName,
+    override val from: String = "You",
+    override val to: String = "You",
     override val isEnabled: Boolean = false
 ) : TextTransformModule() {
     override val matcher: ClassMatcher
@@ -61,42 +64,46 @@ data class Nickhider(
 
 @Serializable
 data class FPS(
-    override val from: String = Constants.defaultFPSText,
-    override val to: String = Constants.defaultFPSText,
+    override val pattern: String = "\u0001 %s",
+    override val from: String = "FPS",
+    override val to: String = "FPS",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
 @Serializable
 data class CPS(
-    override val from: String = Constants.defaultCPSText,
-    override val to: String = Constants.defaultCPSText,
+    override val pattern: String = "\u0001 %s",
+    override val from: String = "CPS",
+    override val to: String = "CPS",
     override val isEnabled: Boolean = false,
 ) : TextTransformModule()
 
 @Serializable
 data class AutoGG(
-    override val from: String = Constants.defaultAutoGGText,
-    override val to: String = Constants.defaultAutoGGText,
+    override val from: String = "/achat gg",
+    override val to: String = "/ac gg",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
 @Serializable
 data class LevelHead(
-    override val from: String = Constants.defaultLevelHeadText,
-    override val to: String = Constants.defaultLevelHeadText,
+    override val pattern: String = "%s: ",
+    override val from: String = "Level",
+    override val to: String = "Level",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
 @Serializable
 data class MantleIntegration(
-    override val from: String = Constants.defaultCapesServer,
+    override val pattern: String = "http://%s",
+    override val from: String = "s.optifine.net",
     override val to: String = "capes.mantle.gg",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
 @Serializable
 data class WindowName(
-    val from: String = Constants.defaultWindowName,
+    val from: String = "Lunar Client (\u0001-\u0001/\u0001)",
     val to: String = "Lunar Client (Modded by Solar Tweaks)",
     override val isEnabled: Boolean = true
 ) : Module() {
@@ -107,16 +114,10 @@ data class WindowName(
 }
 
 @Serializable
-data class KeystrokesCPS(
-    override val from: String = Constants.defaultCPSText,
-    override val to: String = Constants.defaultCPSText,
-    override val isEnabled: Boolean = false
-) : TextTransformModule()
-
-@Serializable
 data class ReachText(
-    override val from: String = Constants.defaultReachText,
-    override val to: String = Constants.defaultReachText,
+    override val pattern: String = "\u0001 %s",
+    override val from: String = "blocks",
+    override val to: String = "blocks",
     override val isEnabled: Boolean = false
 ) : TextTransformModule() {
     override val matcher: ClassMatcher
@@ -125,7 +126,8 @@ data class ReachText(
 
 @Serializable
 data class PingText(
-    override val from: String = Constants.defaultPingText,
-    override val to: String = Constants.defaultPingText,
+    override val pattern: String = "\u0001 %s",
+    override val from: String = "ms",
+    override val to: String = "ms",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()

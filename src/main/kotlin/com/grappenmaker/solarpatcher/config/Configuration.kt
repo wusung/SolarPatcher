@@ -65,7 +65,6 @@ data class Configuration(
     val removeHashing: RemoveHashing = RemoveHashing(), // Removes class hash checks. Can speed up launches
     // For developers. Allows to intercept packets being sent from and to Lunar BukkitAPI
     val debugPackets: DebugPackets = DebugPackets(),
-    val keystrokesCPS: KeystrokesCPS = KeystrokesCPS(), // Change the Keystrokes CPS text
     val toggleSprintText: ToggleSprintText = ToggleSprintText(), // Change the togglesprint text
     val reachText: ReachText = ReachText(), // Change the reach display etxt
     // Fix chat "pings" to only happen with actual chat packets and not action bars

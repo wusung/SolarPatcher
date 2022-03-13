@@ -18,11 +18,17 @@
 
 package com.grappenmaker.solarpatcher.modules
 
+import com.grappenmaker.solarpatcher.Versioning
+import com.grappenmaker.solarpatcher.configuration
+import com.grappenmaker.solarpatcher.util.ConfigDelegateAccessor
 import com.grappenmaker.solarpatcher.util.GeneratedAccessor
 import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
 import java.awt.Desktop
 import java.net.URI
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 // Utility for command handling
 class CommandEventAccessor(event: Any) {
@@ -110,6 +116,102 @@ fun getCodeCommands(): Map<String, Command> {
         Desktop.getDesktop().browse(URI("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
     }
 
+    val reloadCosmetics = HandlerCommand {
+        cancel()
+        GeneratedAccessor.displayMessage("""{"text": "Reloading your cosmetics...", "color": "gray"}""")
+
+        try {
+            ConfigDelegateAccessor.reloadPlayerCosmetics()
+            GeneratedAccessor.displayMessage("""{"text": "Successfully unregistered cosmetics!", "color": "green"}""")
+        } catch (e: Exception) {
+            GeneratedAccessor.displayMessage("""{"text": "There was an error while reloading your cosmetics:\n${e.message}", "color": "red"}""")
+        }
+    }
+
+    val debugCommand = HandlerCommand {
+        cancel()
+        val formattedDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+            Instant.ofEpochMilli(Versioning.buildTimestamp)
+                .atZone(ZoneId.systemDefault()).toOffsetDateTime()
+        )
+        val moduleText = configuration.modules.map { m -> m::class.simpleName ?: "Unnamed" }
+            .sorted().joinToString()
+
+        GeneratedAccessor.displayMessage(
+            """[
+            "",
+            {
+                "text": "Solar Patcher Debug",
+                "color": "red"
+            },
+            {
+                "text": "\n\n"
+            },
+            {
+                "text": "Minecraft Version: ",
+                "color": "green"
+            },
+            {
+                "text": "${GeneratedAccessor.getVersion()}\n"
+            },
+            {
+                "text": "Patcher Version: ",
+                "color": "green"
+            },
+            {
+                "text": "${Versioning.version}\n"
+            },
+            {
+                "text": "Build type: ",
+                "color": "green"
+            },
+            {
+                "text": "$formattedDate\n"
+            },
+            {
+                "text": "Development Build: ",
+                "color": "green"
+            },
+            {
+                "text": "${if (Versioning.devBuild) "Development" else "Production"}\n"
+            },
+            {
+                "text": "Player: ",
+                "color": "green"
+            },
+            {
+                "text": "${GeneratedAccessor.getPlayerName()}\n"
+            },
+            {
+                "text": "UUID: ",
+                "color": "green"
+            },
+            {
+                "text": "${GeneratedAccessor.getPlayerUUID()}\n"
+            },
+            {
+                "text": "Current Server: ",
+                "color": "green"
+            },
+            {
+                "text": "${GeneratedAccessor.getServerIP() ?: "Singleplayer"}\n"
+            },
+            {
+                "text": "Active modules (${configuration.modules.size}: ",
+                "color": "green"
+            },
+            {
+                "text": "$moduleText"
+            }
+        ]"""
+        )
+    }
+
     return listOf("solartweaks", "solarhelp", "solarsupport", "solartweakshelp", "solartweakssupport", "st")
-        .associateWith { handlerCommand } + mapOf("whowashere" to easterEgg, "rickroll" to rickroll)
+        .associateWith { handlerCommand } + mapOf(
+        "whowashere" to easterEgg,
+        "rickroll" to rickroll,
+        "reloadcosmetics" to reloadCosmetics,
+        "solardebug" to debugCommand
+    )
 }

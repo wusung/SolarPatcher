@@ -32,15 +32,6 @@ val json = Json {
 object Constants {
     const val API = Opcodes.ASM7
     const val packetClassname = "com/lunarclient/bukkitapi/nethandler/LCPacket"
-    const val defaultCapesServer = "s.optifine.net"
-    const val defaultLevelHeadText = "Level: "
-    const val defaultAutoGGText = "/achat gg"
-    const val defaultNickhiderName = "You"
-    const val defaultFPSText = "\u0001 FPS"
-    const val defaultCPSText = "\u0001 CPS"
-    const val defaultReachText = "\u0001 blocks"
-    const val defaultPingText = "\u0001 ms"
-    const val defaultWindowName = "Lunar Client (\u0001-\u0001/\u0001)"
 
     // The difference is one letter, beware
     private const val optifinePrefix = "net/optifine/player"

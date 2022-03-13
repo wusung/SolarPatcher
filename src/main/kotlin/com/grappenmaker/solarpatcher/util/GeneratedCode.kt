@@ -22,12 +22,11 @@ import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.modules.*
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
+import java.util.*
 
 const val serializerName = "net/kyori/adventure/text/serializer/gson/GsonComponentSerializer"
 const val componentName = "net/kyori/adventure/text/Component"
@@ -56,7 +55,80 @@ object GeneratedCode {
                     null,
                     null
                 )
-            ) { implementDisplayMessage() }
+            ) {
+                visitCode()
+
+                getPlayerBridge()
+
+                visitMethodInsn(INVOKESTATIC, serializerName, "gson", "()L$serializerName;", true)
+                loadVariable(1)
+                invokeMethod(
+                    InvocationType.INTERFACE,
+                    "deserialize",
+                    "(Ljava/lang/Object;)L$componentName;",
+                    serializerName
+                )
+                toBridgeComponent()
+
+                val displayMessageMethod =
+                    RuntimeData.displayMessageMethod ?: error("No display message method was found")
+                invokeMethod(InvocationType.INTERFACE, displayMessageMethod.asDescription())
+
+                returnMethod()
+                visitMaxs(-1, -1)
+                visitEnd()
+            }
+
+            with(visitMethod(ACC_PUBLIC, "getPlayerName", "()L$internalString;", null, null)) {
+                visitCode()
+                getPlayerBridge()
+                invokeMethod(
+                    InvocationType.INTERFACE,
+                    RuntimeData.getPlayerNameMethod?.asDescription() ?: error("No getName method was found")
+                )
+                returnMethod(ARETURN)
+                visitMaxs(-1, -1)
+                visitEnd()
+            }
+
+            with(visitMethod(ACC_PUBLIC, "getPlayerUUID", "()L${getInternalName<UUID>()};", null, null)) {
+                visitCode()
+                getPlayerBridge()
+                invokeMethod(
+                    InvocationType.INTERFACE,
+                    RuntimeData.getUUIDMethod?.asDescription() ?: error("No getUUID method was found")
+                )
+                returnMethod(ARETURN)
+                visitMaxs(-1, -1)
+                visitEnd()
+            }
+
+            with(visitMethod(ACC_PUBLIC, "getServerIP", "()L$internalString;", null, null)) {
+                visitCode()
+
+                val label = Label()
+
+                getServerData()
+                dup()
+                visitJumpInsn(IFNULL, label)
+
+                invokeMethod(
+                    InvocationType.INTERFACE,
+                    RuntimeData.getServerIPMethod?.asDescription()
+                        ?: error("No server ip method was found")
+                )
+                returnMethod(ARETURN)
+
+                visitLabel(label)
+                pop()
+                visitInsn(ACONST_NULL)
+                returnMethod(ARETURN)
+
+                visitMaxs(-1, -1)
+                visitEnd()
+            }
+
+            implementGetVersion()
         }
     }
 
@@ -71,7 +143,7 @@ object GeneratedCode {
             with(visitMethod(ACC_PUBLIC, renderName, renderDesc, null, null)) { implementRender() }
             with(visitMethod(ACC_PUBLIC, shouldRenderName, "()Z", null, null)) {
                 visitCode()
-                visitInsn(ICONST_1)
+                if (shouldImplementItems()) visitInsn(ICONST_1) else visitInsn(ICONST_0)
                 returnMethod(IRETURN)
                 visitMaxs(1, 0)
                 visitEnd()
@@ -91,12 +163,13 @@ object GeneratedCode {
             }
 
             with(visitMethod(ACC_PUBLIC, "getPlayerConfig", "(Ljava/lang/Object;)Ljava/lang/Object;", null, null)) {
-                // Delegate the call to a specialized class, no way I will implement this in bytecode
                 visitCode()
+                // Delegate the call to a specialized class, no way I will implement this in bytecode
                 getObject(ConfigFetcher::class)
                 getName()
                 invokeMethod(ConfigFetcher::getConfig)
                 returnMethod(ARETURN)
+
                 visitMaxs(-1, -1)
                 visitEnd()
             }
@@ -107,7 +180,8 @@ object GeneratedCode {
                 loadVariable(1)
                 loadVariable(2)
                 invokeMethod(ConfigFetcher::setConfig)
-                returnMethod(RETURN)
+                returnMethod()
+
                 visitMaxs(-1, -1)
                 visitEnd()
             }
@@ -137,6 +211,31 @@ object GeneratedCode {
                 visitMaxs(-1, -1)
                 visitEnd()
             }
+
+            with(visitMethod(ACC_PUBLIC, "reloadPlayerCosmetics", "()V", null, null)) {
+                visitCode()
+                getObject(ConfigFetcher::class)
+                invokeMethod(ConfigFetcher::configs.getter)
+                getPlayerBridge()
+                invokeMethod(
+                    InvocationType.INTERFACE,
+                    RuntimeData.getPlayerNameMethod?.asDescription() ?: error("No getName method was found")
+                )
+                invokeMethod(java.util.Map::class.java.getMethod("remove", Any::class.java))
+                pop()
+                getPlayerBridge()
+                val reloadCapeMethod = (RuntimeData.reloadCapeMethod?.asDescription()
+                    ?: error("No reload cape method has been found"))
+                visitTypeInsn(CHECKCAST, Type.getArgumentTypes(reloadCapeMethod.descriptor).first().internalName)
+
+                invokeMethod(InvocationType.STATIC, reloadCapeMethod)
+                returnMethod()
+
+                visitMaxs(-1, -1)
+                visitEnd()
+            }
+
+            implementGetVersion()
         }
     }
 
@@ -153,7 +252,14 @@ object GeneratedCode {
         val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
         val visitor = TraceClassVisitor(writer, PrintWriter(System.out))
         visitor.visit(V9, ACC_PUBLIC, name, null, extends, interfaces)
-        visitor.generator()
+
+        try {
+            visitor.generator()
+        } catch (e: Exception) {
+            println("Error while generating class $name: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
 
         with(visitor.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null)) {
             visitCode()
@@ -173,6 +279,10 @@ object GeneratedAccessor : IGenerated by GeneratedCode.instance
 
 interface IGenerated {
     fun displayMessage(message: String)
+    fun getPlayerName(): String
+    fun getPlayerUUID(): UUID
+    fun getServerIP(): String?
+    fun getVersion(): String
 }
 
 object ConfigDelegateAccessor : IConfigDelegate by GeneratedCode.configFetcherInstance
@@ -181,22 +291,23 @@ interface IConfigDelegate {
     fun getPlayerConfig(player: Any): Any?
     fun setPlayerConfig(name: String, config: Any)
     fun downloadPlayerConfig(name: String): Any
+    fun reloadPlayerCosmetics()
+    fun getVersion(): String // Yes, this is a duplicate, there are reasons :D
 }
 
-private fun MethodVisitor.implementDisplayMessage() {
-    visitCode()
-
-    getPlayerBridge()
-
-    visitMethodInsn(INVOKESTATIC, serializerName, "gson", "()L$serializerName;", true)
-    loadVariable(1)
-    invokeMethod(InvocationType.INTERFACE, "deserialize", "(Ljava/lang/Object;)L$componentName;", serializerName)
-    toBridgeComponent()
-
-    val displayMessageMethod = RuntimeData.displayMessageMethod ?: error("No display message method was found")
-    invokeMethod(InvocationType.INTERFACE, displayMessageMethod.asDescription())
-
-    returnMethod()
-    visitMaxs(-1, -1)
-    visitEnd()
-}
+private fun ClassVisitor.implementGetVersion() =
+    with(visitMethod(ACC_PUBLIC, "getVersion", "()L$internalString;", null, null)) {
+        visitCode()
+        invokeMethod(
+            InvocationType.STATIC,
+            RuntimeData.getVersionMethod?.asDescription()
+                ?: error("No get version method was found")
+        )
+        getField(
+            RuntimeData.versionIdField ?: error("No version id field was found!"),
+            static = false
+        )
+        returnMethod(ARETURN)
+        visitMaxs(-1, -1)
+        visitEnd()
+    }

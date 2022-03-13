@@ -19,6 +19,7 @@
 package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.asm.*
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescription
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
@@ -30,11 +31,9 @@ import com.grappenmaker.solarpatcher.util.componentName
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldInsnNode
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.*
 import java.lang.reflect.Modifier
+import java.util.Comparator
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -67,25 +66,41 @@ object RuntimeData : Module() {
     val sendPopupMethod by +FindMethod { it.method.hasConstant("\u0001[\u0001\u0001\u0001] \u0001\u0001") }
     val getPlayerMethod by +findBridgeMethod("bridge\$getPlayer")
     val getPlayerNameMethod by +findBridgeMethod("bridge\$getName") { (owner) -> owner.methods.any { it.name == "bridge\$getGameProfile" } }
+    val getUUIDMethod by +findBridgeMethod("bridge\$getUniqueID")
     val isWindowFocusedMethod by +findBridgeMethod("bridge\$isWindowFocused")
+    val getServerDataMethod by +findBridgeMethod("bridge\$getCurrentServerData")
+    val getServerIPMethod by +findBridgeMethod("bridge\$serverIP")
     val displayMessageMethod by +findBridgeMethod("bridge\$addChatMessage", { (owner) -> playerEntityBridge = owner })
     val renderPlayerItemsMethod by +FindMethod {
         it.method.name == "renderPlayerItems" &&
                 it.owner.name == Constants.playerConfigurationsName
     }
 
+    val getVersionMethod by +FindMethod { it.method.calls(matchName("getMinecraftVersion")) }
+    private val isVersionOldMethod by +FindMethod {
+        it.owner.hasConstant("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+                && Type.getReturnType(it.method.desc) == Type.BOOLEAN_TYPE
+                && it.method.hasConstant("v1_8")
+    }
+
+    val reloadCapeMethod by +FindMethod { it.method.name == "reloadCape" }
+
     // Method descriptions that have been found
     lateinit var getDisplayToIPMapMethod: MethodDescription
     lateinit var getServerMappingsMethod: MethodDescription
     lateinit var getLunarmainMethod: MethodDescription
     lateinit var getClientBridgeMethod: MethodDescription
-    lateinit var getServerDataMethod: MethodDescription
     lateinit var toBridgeComponentMethod: MethodDescription
     lateinit var renderLayerMethod: MethodDescription
     lateinit var shouldRenderLayerMethod: MethodDescription
 
     // Field descriptions that have been found
     lateinit var assetsSocketField: FieldDescription
+
+    val versionIdField
+        get() = isVersionOldMethod?.method?.instructions
+            ?.filterIsInstance<FieldInsnNode>()
+            ?.first()?.asDescription()
 
     // Available runtime data
     val version by runtimeValue("version", "unknown")
@@ -94,17 +109,17 @@ object RuntimeData : Module() {
 
     // Finders that do not need to be stored
     init {
-        +FindClass({ node ->
-            node.methods.find { m -> m.name == "<init>" }?.let { m ->
-                val type = m.instructions.filterIsInstance<LdcInsnNode>()
-                    .lastOrNull { it.cst is Type }?.cst as Type? ?: return@FindClass
-                outgoingChatEvent = type.className
-            }
-        }) { it.constants.containsAll(listOf("/lc_upload_screenshot", "Screenshot taken")) }
+        +FindMethod({
+            outgoingChatEvent = it.method.instructions.filterIsInstance<MethodInsnNode>()
+                .last { c -> c.name == "getMessage" }
+                .owner.replace('/', '.')
+        }) {
+            it.method.calls { m -> m.name == "getMessage" && m.owner.startsWith("lunar/") }
+                    && it.owner.name.startsWith("net/minecraft/")
+        }
 
         +FindMethod({
             getClientBridgeMethod = it.method.calls.first().asDescription()
-            getServerDataMethod = it.method.calls[1].asDescription()
         }) { it.method.calls(matchName("getLunarServer")) && it.owner.calls(matchName("bridge\$getPlayer")) }
 
         +FindMethod({ (_, method) ->
@@ -250,7 +265,10 @@ fun MethodVisitor.getClientBridge() =
 // Utility to load the current server data onto the stack
 fun MethodVisitor.getServerData() {
     getClientBridge()
-    invokeMethod(InvocationType.INTERFACE, RuntimeData.getServerDataMethod)
+    invokeMethod(
+        InvocationType.INTERFACE, RuntimeData.getServerDataMethod?.asDescription()
+            ?: error("No getCurrentServerData method was found")
+    )
 }
 
 // Utility to load server mappings class onto the stack

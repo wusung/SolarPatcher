@@ -8,23 +8,26 @@
         "isEnabled": false
     },
     "fps": {
-        "from": "\u0001 FPS",
-        "to": "\u0001 FPS",
+        "pattern": "\u0001 %s",
+        "from": "FPS",
+        "to": "FPS",
         "isEnabled": false
     },
     "cps": {
-        "from": "\u0001 CPS",
-        "to": "\u0001 CPS",
+        "pattern": "\u0001 %s",
+        "from": "CPS",
+        "to": "CPS",
         "isEnabled": false
     },
     "autoGG": {
         "from": "/achat gg",
-        "to": "/achat gg",
+        "to": "/ac gg",
         "isEnabled": false
     },
     "levelHead": {
-        "from": "Level: ",
-        "to": "Level: ",
+        "pattern": "%s: ",
+        "from": "Level",
+        "to": "Level",
         "isEnabled": false
     },
     "metadata": {
@@ -41,6 +44,7 @@
         "isEnabled": false
     },
     "mantleIntegration": {
+        "pattern": "http://%s",
         "from": "s.optifine.net",
         "to": "capes.mantle.gg",
         "isEnabled": false
@@ -114,11 +118,6 @@
     "debugPackets": {
         "isEnabled": false
     },
-    "keystrokesCPS": {
-        "from": "\u0001 CPS",
-        "to": "\u0001 CPS",
-        "isEnabled": false
-    },
     "toggleSprintText": {
         "replacements": {
             "flying": "flying",
@@ -137,8 +136,9 @@
         "isEnabled": false
     },
     "reachText": {
-        "from": "\u0001 blocks",
-        "to": "\u0001 blocks",
+        "pattern": "\u0001 %s",
+        "from": "blocks",
+        "to": "blocks",
         "isEnabled": false
     },
     "fixPings": {
@@ -154,8 +154,9 @@
         "isEnabled": false
     },
     "pingText": {
-        "from": "\u0001 ms",
-        "to": "\u0001 ms",
+        "pattern": "\u0001 %s",
+        "from": "ms",
+        "to": "ms",
         "isEnabled": false
     },
     "pingSpoof": {

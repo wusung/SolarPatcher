@@ -59,3 +59,5 @@ fun ClassNode.calls(matcher: MethodMatcher) = methods.any { it.calls.any { c -> 
 
 fun MethodNode.hasConstant(cst: Any?) = constants.contains(cst)
 fun MethodNode.calls(matcher: MethodMatcher) = calls.any { matcher(it.asDescription()) }
+
+fun FieldInsnNode.asDescription() = FieldDescription(name, desc, owner)
