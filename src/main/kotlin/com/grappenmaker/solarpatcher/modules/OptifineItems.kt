@@ -56,7 +56,8 @@ data class OptifineItems(
 
     private fun handleGetConfig(node: ClassNode): ClassTransform? {
         val getConfigMethod = node.methods.find { it.name == "getPlayerConfiguration" } ?: return null
-        if (getConfigMethod.instructions.size() > 2) return null
+        if (getConfigMethod.calls(matchName("getPlayerItemsUrl"))) return null
+
         return if (node.name == Constants.playerConfigurationsName) {
             ClassTransform(listOf(
                 ImplementTransform(matchName("getPlayerConfiguration")) {
@@ -133,7 +134,6 @@ fun MethodVisitor.implementRender() {
 
     val instanceof = Label()
     loadVariable(2)
-
     // Check cast for player entity bridge
     val playerBridgeName = RuntimeData.playerEntityBridge.name
     visitTypeInsn(INSTANCEOF, playerBridgeName)
@@ -190,7 +190,11 @@ object ConfigFetcher {
     fun getConfig(name: String?): Any? {
         if (name == null) return null
         if (!shouldImplementItems()) return null
-        return configs.getOrPut(name) { ConfigDelegateAccessor.downloadPlayerConfig(name) }
+
+        return configs.getOrPut(name) {
+            println("Attempting to fetch configuration for $name")
+            ConfigDelegateAccessor.downloadPlayerConfig(name)
+        }
     }
 
     fun setConfig(name: String?, value: Any?) {

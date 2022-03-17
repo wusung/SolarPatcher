@@ -162,14 +162,14 @@ fun getCodeCommands(): Map<String, Command> {
                 "text": "${Versioning.version}\n"
             },
             {
-                "text": "Build type: ",
+                "text": "Built date: ",
                 "color": "green"
             },
             {
                 "text": "$formattedDate\n"
             },
             {
-                "text": "Development Build: ",
+                "text": "Build type: ",
                 "color": "green"
             },
             {
@@ -197,11 +197,18 @@ fun getCodeCommands(): Map<String, Command> {
                 "text": "${GeneratedAccessor.getServerIP() ?: "Singleplayer"}\n"
             },
             {
-                "text": "Active modules (${configuration.modules.size}: ",
+                "text": "Active modules (${configuration.modules.size}): ",
                 "color": "green"
             },
             {
-                "text": "$moduleText"
+                "text": "$moduleText\n"
+            },
+            {
+                "text": "Cosmetics Server: ",
+                "color": "green"
+            },
+            {
+                "text": "${configuration.optifineItems.capeServer}"
             }
         ]"""
         )
