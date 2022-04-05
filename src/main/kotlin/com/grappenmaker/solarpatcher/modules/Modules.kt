@@ -46,6 +46,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.stream.Stream
 import kotlin.math.floor
+import kotlin.math.min
 import kotlin.reflect.jvm.javaMethod
 
 val internalString = getInternalName<String>()
@@ -193,9 +194,11 @@ data class CustomCommands(
         "qbd" to TextCommand("/play duels_bridge_doubles"),
         "db" to TextCommand("/duel ", " bridge"),
         "bwp" to TextCommand("/play bedwars_practice")
-    ),
-    override val isEnabled: Boolean = false
+    )
 ) : Module() {
+    @Transient
+    override val isEnabled = true
+
     init {
         // Yep this is a fake singleton
         // Might want to work on a better "storage" system
@@ -203,8 +206,8 @@ data class CustomCommands(
     }
 
     @Transient
-    private val actualCommands: Map<String, Command> =
-        commands + getCodeCommands()
+    internal val actualCommands: List<Pair<String, Command>> =
+        (commands + getCodeCommands()).toList()
 
     companion object {
         // Instance of this class, initialized at runtime
@@ -216,7 +219,7 @@ data class CustomCommands(
         // so that we don't have to implement it with bytecode
         @Suppress("Unused") // it is used obviously
         @JvmStatic
-        fun handler(event: Any?) {
+        fun commandHandler(event: Any?) {
             if (event == null) return // Java sadness
 
             val accessor = CommandEventAccessor(event)
@@ -224,7 +227,10 @@ data class CustomCommands(
             if (!text.startsWith("/")) return
 
             val components = text.split(" ")
-            instance.actualCommands[components.first().substring(1)]?.handle(accessor)
+            val commandName = components.first().substring(1)
+            instance.actualCommands
+                .find { (name) -> name.equals(commandName, true) }
+                ?.second?.handle(accessor)
         }
     }
 
@@ -255,7 +261,7 @@ data class CustomCommands(
                 loadVariable(1)
                 invokeMethod(
                     InvocationType.STATIC,
-                    "handler",
+                    "commandHandler",
                     "(Ljava/lang/Object;)V",
                     getInternalName<CustomCommands>()
                 )
@@ -325,11 +331,7 @@ data class RPCUpdate(
                 visitJumpInsn(IFNULL, wasNull)
 
                 // If it was not null, get the server ip
-                invokeMethod(
-                    InvocationType.INTERFACE,
-                    RuntimeData.getServerIPMethod?.asDescription()
-                        ?: error("No server ip method was found")
-                )
+                callBridgeMethod(RuntimeData.getServerIPMethod)
                 storeVariable(2) // Store the server ip
                 remapServerIP { loadVariable(2) }
                 concat("(L$internalString;)L$internalString;", "Playing on \u0001")
@@ -714,5 +716,45 @@ data class ClothCapes(override val isEnabled: Boolean = false) : Module() {
         } ?: return null
 
         return ClassTransform(ConstantValueTransform(method.asDescription(node).asMatcher(), true))
+    }
+}
+
+@Serializable
+data class HurtCamShake(val multiplier: Float = .3f, override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.constants.contains("Failed to load shader: ")) return null
+
+        val originalValue = 14.0f
+        return ClassTransform(visitors = listOf { parent ->
+            replaceClassConstants(parent, mapOf(originalValue to originalValue * multiplier))
+        })
+    }
+}
+
+@Serializable
+data class ChatLimit(val limit: Int = 255, override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.constants.contains("sendAutocompleteRequest")) return null
+
+        val originalLimit = 100
+        return ClassTransform(visitors = listOf { parent ->
+            replaceClassConstants(parent, mapOf(originalLimit to min(limit, 255)))
+        })
+    }
+}
+
+@Serializable
+data class MumbleFix(override val isEnabled: Boolean = true) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.hasConstant("AllTalk")) return null
+
+        val method = node.methods.find { it.hasConstant("win") } ?: return null
+        return ClassTransform(ReplaceCodeTransform(
+            method.asDescription(node).asMatcher(),
+            matchName("contains")
+        ) { _, _ ->
+            pop()
+            visitInsn(ICONST_1)
+        })
     }
 }

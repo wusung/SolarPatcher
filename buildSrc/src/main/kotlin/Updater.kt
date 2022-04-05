@@ -50,7 +50,7 @@ private fun Project.createUpdaterTask() = tasks.create("updaterConfig") {
         val hexHash = hash.joinToString("") { "%02x".format(it) }
 
         // Save config
-        // Yes, i reallly hardcoded the json here, why would i use
+        // Yes, i really hardcoded the json here, why would i use
         // an overkill serialization lib?
         val json = """
             {

@@ -210,7 +210,10 @@ fun MethodVisitor.loadConstant(value: Any?) = when (value) {
     null -> visitInsn(ACONST_NULL)
     true -> visitInsn(ICONST_1)
     false -> visitInsn(ICONST_0)
-    is Byte -> visitIntInsn(BIPUSH, value.toInt())
+    is Byte -> {
+        visitIntInsn(BIPUSH, value.toInt())
+        visitInsn(I2B)
+    }
     is Int -> when (value) {
         -1 -> visitInsn(ICONST_M1)
         0 -> visitInsn(ICONST_0)
@@ -219,7 +222,8 @@ fun MethodVisitor.loadConstant(value: Any?) = when (value) {
         3 -> visitInsn(ICONST_3)
         4 -> visitInsn(ICONST_4)
         5 -> visitInsn(ICONST_5)
-        in 0..Byte.MAX_VALUE -> visitIntInsn(BIPUSH, value)
+        in Byte.MIN_VALUE..Byte.MAX_VALUE -> visitIntInsn(BIPUSH, value)
+        in Short.MIN_VALUE..Short.MAX_VALUE -> visitIntInsn(SIPUSH, value)
         else -> visitLdcInsn(value)
     }
     is Float -> when (value) {
@@ -236,8 +240,12 @@ fun MethodVisitor.loadConstant(value: Any?) = when (value) {
     is Long -> when (value) {
         0L -> visitInsn(LCONST_0)
         1L -> visitInsn(LCONST_1)
-        in 0..Byte.MAX_VALUE -> {
+        in Byte.MIN_VALUE..Byte.MAX_VALUE -> {
             visitIntInsn(BIPUSH, value.toInt())
+            visitInsn(I2L)
+        }
+        in Short.MIN_VALUE..Short.MAX_VALUE -> {
+            visitIntInsn(SIPUSH, value.toInt())
             visitInsn(I2L)
         }
         else -> visitLdcInsn(value)
@@ -246,7 +254,10 @@ fun MethodVisitor.loadConstant(value: Any?) = when (value) {
         visitIntInsn(BIPUSH, value.code)
         visitInsn(I2C)
     }
-    is Short -> visitIntInsn(SIPUSH, value.toInt())
+    is Short -> {
+        visitIntInsn(SIPUSH, value.toInt())
+        visitInsn(I2S)
+    }
     is String -> visitLdcInsn(value)
     else -> error("Constant value ($value) is not a valid JVM constant!")
 }

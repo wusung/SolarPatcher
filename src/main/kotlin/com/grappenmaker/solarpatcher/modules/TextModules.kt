@@ -131,3 +131,12 @@ data class PingText(
     override val to: String = "ms",
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
+
+private const val defaultUrl = "wss://assetserver.\u0001/connect"
+
+//@Serializable
+//data class Websocket(
+//    override val from: String = defaultUrl,
+//    override val to: String = defaultUrl,
+//    override val isEnabled: Boolean = false
+//) : TextTransformModule()

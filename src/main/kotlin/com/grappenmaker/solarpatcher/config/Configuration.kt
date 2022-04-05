@@ -76,8 +76,12 @@ data class Configuration(
     val toggleSneakContainer: ToggleSneakContainer = ToggleSneakContainer(),
     val pingText: PingText = PingText(), // Change your ping text
     val pingSpoof: PingSpoof = PingSpoof(), // Change the text of the ping value (not a multiplier)
-    val clothCapes: ClothCapes = ClothCapes(),
-    val optifineItems: OptifineItems = OptifineItems()
+    val clothCapes: ClothCapes = ClothCapes(), // Enable cloth capes for everyone
+    val optifineItems: OptifineItems = OptifineItems(), // Enables you to use optifine items (Cloaksplus, mantle etc)
+    val hurtCamShake: HurtCamShake = HurtCamShake(), // Allows you to modify your hurt cam shake effect multiplier
+    val chatLimit: ChatLimit = ChatLimit(), // Removes the maximum chat limit count to a preset value
+    val mumbleFix: MumbleFix = MumbleFix()
+//    val websocket: Websocket = Websocket()
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification

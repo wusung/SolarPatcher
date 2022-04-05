@@ -28,3 +28,9 @@ If you need help with one of the modules, you can get help in our Discord server
 - Lunar Options - Removes the Open to LAN button entirely (who uses it anyway) and replaces it with the Lunar Options button
 - Toggle Sneak Container - Allows you to use togglesneak while in containers
 - Mantle Integration - Allows you to use a different cape system than just optifine capes, by default this is mantle
+- ClothCapes - Enable cloth capes for everyone 
+- OptifineItems - Enables you to use optifine items/cosmetics (CloaksPlus, mantle etc)
+- HurtCamShake - Allows you to modify your hurt cam shake effect multiplier 
+- ChatLimit - Removes the maximum chat limit count to a preset value
+
+*This list might be incomplete, check out [this code](src/main/kotlin/com/grappenmaker/solarpatcher/config/Configuration.kt) for a full list of configurable modules.*

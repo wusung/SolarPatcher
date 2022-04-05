@@ -69,10 +69,7 @@ object GeneratedCode {
                     serializerName
                 )
                 toBridgeComponent()
-
-                val displayMessageMethod =
-                    RuntimeData.displayMessageMethod ?: error("No display message method was found")
-                invokeMethod(InvocationType.INTERFACE, displayMessageMethod.asDescription())
+                callBridgeMethod(RuntimeData.displayMessageMethod)
 
                 returnMethod()
                 visitMaxs(-1, -1)
@@ -82,10 +79,7 @@ object GeneratedCode {
             with(visitMethod(ACC_PUBLIC, "getPlayerName", "()L$internalString;", null, null)) {
                 visitCode()
                 getPlayerBridge()
-                invokeMethod(
-                    InvocationType.INTERFACE,
-                    RuntimeData.getPlayerNameMethod?.asDescription() ?: error("No getName method was found")
-                )
+                callBridgeMethod(RuntimeData.getPlayerNameMethod)
                 returnMethod(ARETURN)
                 visitMaxs(-1, -1)
                 visitEnd()
@@ -94,10 +88,7 @@ object GeneratedCode {
             with(visitMethod(ACC_PUBLIC, "getPlayerUUID", "()L${getInternalName<UUID>()};", null, null)) {
                 visitCode()
                 getPlayerBridge()
-                invokeMethod(
-                    InvocationType.INTERFACE,
-                    RuntimeData.getUUIDMethod?.asDescription() ?: error("No getUUID method was found")
-                )
+                callBridgeMethod(RuntimeData.getUUIDMethod)
                 returnMethod(ARETURN)
                 visitMaxs(-1, -1)
                 visitEnd()
@@ -112,11 +103,7 @@ object GeneratedCode {
                 dup()
                 visitJumpInsn(IFNULL, label)
 
-                invokeMethod(
-                    InvocationType.INTERFACE,
-                    RuntimeData.getServerIPMethod?.asDescription()
-                        ?: error("No server ip method was found")
-                )
+                callBridgeMethod(RuntimeData.getServerIPMethod)
                 returnMethod(ARETURN)
 
                 visitLabel(label)
@@ -156,10 +143,7 @@ object GeneratedCode {
             fun MethodVisitor.getName() {
                 loadVariable(1)
                 visitTypeInsn(CHECKCAST, RuntimeData.playerEntityBridge.name)
-                invokeMethod(
-                    InvocationType.INTERFACE,
-                    RuntimeData.getPlayerNameMethod?.asDescription() ?: error("No getName method found")
-                )
+                callBridgeMethod(RuntimeData.getPlayerNameMethod)
             }
 
             with(visitMethod(ACC_PUBLIC, "getPlayerConfig", "(Ljava/lang/Object;)Ljava/lang/Object;", null, null)) {
@@ -217,10 +201,7 @@ object GeneratedCode {
                 getObject(ConfigFetcher::class)
                 invokeMethod(ConfigFetcher::configs.getter)
                 getPlayerBridge()
-                invokeMethod(
-                    InvocationType.INTERFACE,
-                    RuntimeData.getPlayerNameMethod?.asDescription() ?: error("No getName method was found")
-                )
+                callBridgeMethod(RuntimeData.getPlayerNameMethod)
                 invokeMethod(java.util.Map::class.java.getMethod("remove", Any::class.java))
                 pop()
                 getPlayerBridge()

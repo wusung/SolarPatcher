@@ -56,7 +56,7 @@ fun replaceMethodConstants(parent: MethodVisitor, map: Map<Any, Any?>) = object 
         when (value) {
             in map -> {
                 val replace = map.getValue(value!!)
-                if (replace != null) super.visitLdcInsn(replace)
+                if (replace != null) parent.loadConstant(replace)
             }
             else -> super.visitLdcInsn(value)
         }
@@ -65,11 +65,16 @@ fun replaceMethodConstants(parent: MethodVisitor, map: Map<Any, Any?>) = object 
     override fun visitIntInsn(opcode: Int, operand: Int) {
         if (opcode == BIPUSH || opcode == SIPUSH) {
             val value = map[operand] ?: operand
+            if (value == operand) {
+                super.visitIntInsn(opcode, operand)
+                return
+            }
+
             if (value !is Int) {
                 throw IllegalArgumentException("Replacement for an integer should be an integer")
             }
 
-            super.visitIntInsn(opcode, value)
+            parent.loadConstant(value)
         } else {
             super.visitIntInsn(opcode, operand)
         }

@@ -23,11 +23,10 @@ import java.nio.file.Files
 fun Project.addVersioningTask(resourcesDir: File) = tasks.create("versioning") {
     doLast {
         if (!resourcesDir.exists()) Files.createDirectories(resourcesDir.toPath())
-
         val properties = mapOf(
             "version" to version,
             "buildTimestamp" to System.currentTimeMillis(),
-            "devBuild" to !properties.containsKey("prod")
+            "devBuild" to !gradle.taskGraph.allTasks.any { it.name.endsWith("buildProd") }
         )
 
         File(resourcesDir, "versions.txt").writeText(properties.map { (key, value) -> "$key=$value" }

@@ -29,7 +29,7 @@ plugins {
 
 // Set metadata
 group = "com.grappenmaker"
-version = "1.5"
+version = "1.5.1"
 
 // Enable mavenCentral
 repositories {
@@ -82,4 +82,10 @@ tasks.create("lint") {
 // Configure detekt to always run (not cache)
 tasks.detekt {
     outputs.upToDateWhen { false }
+}
+
+// Create task to build with prod configuration
+tasks.create("buildProd") {
+    outputs.upToDateWhen { false }
+    dependsOn("build")
 }

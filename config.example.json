@@ -1,5 +1,5 @@
 {
-    "patcherVersion": "1.4.1",
+    "patcherVersion": "1.5-beta",
     "debug": false,
     "enableAll": false,
     "nickhider": {
@@ -169,5 +169,13 @@
     "optifineItems": {
         "capeServer": "http://capes.mantle.gg",
         "isEnabled": false
+    },
+    "hurtCamShake": {
+        "multiplier": 0.3,
+        "isEnabled": false
+    },
+    "chatLimit": {
+        "limit": 255,
+        "isEnabled": true
     }
 }

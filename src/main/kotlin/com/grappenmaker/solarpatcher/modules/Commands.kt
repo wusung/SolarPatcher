@@ -37,6 +37,7 @@ class CommandEventAccessor(event: Any) {
 
     var text: String by javaReflectionProperty(textField, event)
     var cancelled: Boolean by javaReflectionProperty(cancelledField, event)
+    val arguments get() = text.split(" +".toRegex()).drop(1)
 
     fun cancel() {
         cancelled = true
@@ -55,36 +56,17 @@ data class TextCommand(val prefix: String, val suffix: String = "") : Command() 
     }
 }
 
-class HandlerCommand(val handler: CommandEventAccessor.() -> Unit) : Command() {
+class HandlerCommand(
+    val description: String = "No description was given.",
+    val hidden: Boolean = false,
+    val handler: CommandEventAccessor.() -> Unit,
+) : Command() {
     override fun handle(accessor: CommandEventAccessor) = accessor.handler()
 }
 
 // Custom implemented commands
-const val discordLink = "https://discord.solartweaks.com/"
-const val helpMessage = "If you need help, or have a suggestion, you can always get support at $discordLink"
-
 fun getCodeCommands(): Map<String, Command> {
-    val handlerCommand = HandlerCommand {
-        cancel()
-        GeneratedAccessor.displayMessage(
-            """
-            {
-                "italic": true,
-                "clickEvent": {
-                    "action": "open_url",
-                    "value": "$discordLink"
-                },
-                "hoverEvent": {
-                    "action": "show_text",
-                    "contents": "Click here!"
-                },
-                "text": "$helpMessage"
-            }            
-        """
-        )
-    }
-
-    val easterEgg = HandlerCommand {
+    val easterEgg = HandlerCommand("???", hidden = true) {
         cancel()
         GeneratedAccessor.displayMessage(
             """
@@ -111,12 +93,12 @@ fun getCodeCommands(): Map<String, Command> {
     }
 
     // :D
-    val rickroll = HandlerCommand {
+    val rickroll = HandlerCommand("???", hidden = true) {
         cancel()
         Desktop.getDesktop().browse(URI("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
     }
 
-    val reloadCosmetics = HandlerCommand {
+    val reloadCosmetics = HandlerCommand("Reloads your cosmetics (for the OptifineItems Module)") {
         cancel()
         GeneratedAccessor.displayMessage("""{"text": "Reloading your cosmetics...", "color": "gray"}""")
 
@@ -128,12 +110,13 @@ fun getCodeCommands(): Map<String, Command> {
         }
     }
 
-    val debugCommand = HandlerCommand {
+    val debugCommand = HandlerCommand("Displays debug information") {
         cancel()
         val formattedDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(
             Instant.ofEpochMilli(Versioning.buildTimestamp)
                 .atZone(ZoneId.systemDefault()).toOffsetDateTime()
         )
+
         val moduleText = configuration.modules.map { m -> m::class.simpleName ?: "Unnamed" }
             .sorted().joinToString()
 
@@ -214,11 +197,48 @@ fun getCodeCommands(): Map<String, Command> {
         )
     }
 
-    return listOf("solartweaks", "solarhelp", "solarsupport", "solartweakshelp", "solartweakssupport", "st")
-        .associateWith { handlerCommand } + mapOf(
+    val helpCommand = HandlerCommand("Displays this help message") {
+        val commandsText = configuration.customCommands.actualCommands
+            .filter { (_, cmd) -> (cmd as? HandlerCommand)?.hidden == true }
+            .sortedBy { (name) -> name }
+            .joinToString(",\n") { (name, command) ->
+                val description = when (command) {
+                    is HandlerCommand -> command.description
+                    is TextCommand -> "User-defined custom command"
+                }
+                """{"text": "$name: ", "color": "green"},{"text": "$description\n"}"""
+            }
+
+        cancel()
+        GeneratedAccessor.displayMessage(
+            """[
+            "",
+            {
+                "text": "Solar Tweaks - Commands help",
+                "color": "red"
+            },
+            {
+                "text": "\nBelow is a list of all custom/Solar Tweaks built-in commands\n\n"
+            },
+            $commandsText
+        ]"""
+        )
+    }
+
+    val extraHelp = HandlerCommand(hidden = true) {
+        GeneratedAccessor.displayMessage("""{
+            "text": "If you need Solar Tweaks related help, take a look in the discord server, or use /solarhelp",
+            "color": "dark_purple",
+            "italic": true
+        }""")
+    }
+
+    return mapOf(
         "whowashere" to easterEgg,
         "rickroll" to rickroll,
         "reloadcosmetics" to reloadCosmetics,
-        "solardebug" to debugCommand
+        "solardebug" to debugCommand,
+        "solarhelp" to helpCommand,
+        "help" to extraHelp
     )
 }

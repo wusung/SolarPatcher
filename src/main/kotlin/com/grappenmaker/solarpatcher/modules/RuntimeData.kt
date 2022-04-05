@@ -29,6 +29,7 @@ import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.util.componentName
 import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
@@ -265,10 +266,7 @@ fun MethodVisitor.getClientBridge() =
 // Utility to load the current server data onto the stack
 fun MethodVisitor.getServerData() {
     getClientBridge()
-    invokeMethod(
-        InvocationType.INTERFACE, RuntimeData.getServerDataMethod?.asDescription()
-            ?: error("No getCurrentServerData method was found")
-    )
+    callBridgeMethod(RuntimeData.getServerDataMethod)
 }
 
 // Utility to load server mappings class onto the stack
@@ -280,11 +278,10 @@ fun MethodVisitor.getServerMappings() {
 // Utility to load the boolean if the client window is focused onto the stack
 fun MethodVisitor.isWindowFocused() {
     getClientBridge()
-    val windowFocusedMethod = RuntimeData.isWindowFocusedMethod ?: error("Window focused method has not been found")
-    invokeMethod(InvocationType.INTERFACE, windowFocusedMethod.asDescription())
+    callBridgeMethod(RuntimeData.isWindowFocusedMethod)
 }
 
-// Utility to convert a kyori adventure compoenent that is currently on the stack
+// Utility to convert a kyori adventure component that is currently on the stack
 // to a lunar bridge component
 fun MethodVisitor.toBridgeComponent() =
     invokeMethod(InvocationType.STATIC, RuntimeData.toBridgeComponentMethod)
@@ -292,7 +289,9 @@ fun MethodVisitor.toBridgeComponent() =
 // Utility to load the current player bridge
 fun MethodVisitor.getPlayerBridge() {
     getClientBridge()
-
-    val playerMethod = RuntimeData.getPlayerMethod ?: error("Get player method was not found")
-    invokeMethod(InvocationType.INTERFACE, playerMethod.asDescription())
+    callBridgeMethod(RuntimeData.getPlayerMethod)
 }
+
+// Utility to call a bridge method from a visitor
+fun MethodVisitor.callBridgeMethod(methodInfo: RuntimeData.MethodInfo?) =
+    invokeMethod(InvocationType.INTERFACE, methodInfo?.asDescription() ?: error("Couldn't find bridge method!"))

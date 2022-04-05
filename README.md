@@ -1,5 +1,5 @@
 # Solar Patcher
-![Discord](https://img.shields.io/discord/880500602910679112?color=404eed&logo=discord&logoColor=%23fff&style=for-the-badge)
+![Discord](https://img.shields.io/discord/930481786797064242?color=404eed&logo=discord&logoColor=%23fff&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/Solar-Tweaks/SolarPatcher?style=for-the-badge)
 ![Maintenance](https://img.shields.io/maintenance/yes/2022?style=for-the-badge)
 
@@ -61,7 +61,7 @@ $ gradlew build
 # Useful tasks
 These are tasks that can be run with the `gradlew` command. Useful for development.  
 - `build`: Generate an artifact  
-- `build -Pprod`: Same as `build`, but enabled the production configuration.  
+- `buildProd`: Same as `build`, but enabled the production configuration.  
 - `defaultConfig`: Generates a config.example.json file with default values.  
 - `updater`: Generates the `updater.json` file in the `build` directory, with data used for the updater in the launcher  
 - `detekt`: Runs static analysis over the code with [detekt](https://github.com/detekt/detekt)  
