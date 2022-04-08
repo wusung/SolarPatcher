@@ -38,7 +38,7 @@ import kotlin.system.measureTimeMillis
 // Note: streaming (like with > and |) is supported because debug logs are sent to the STDERR
 
 // Usage:
-// java -cp solar-patcher-vX.X.jar com.grappenmaker.solarpatcher.util.ModIdExtractor /path/to/lunar-prod-optifine.jar
+// java -cp lunar-util-vX.X.jar com.grappenmaker.solarpatcher.util.ModIdExtractor /path/to/lunar-prod-optifine.jar
 // And you could add "> mods.txt" to save this to a file.
 fun main(args: Array<String>) {
     val fileName = args.firstOrNull() ?: "lunar-prod-optifine.jar"
@@ -102,4 +102,4 @@ fun main(args: Array<String>) {
     println("Took ${tookMs}ms")
 }
 
-fun debugLog(msg: String) = System.err.println(msg)
+private fun debugLog(msg: String) = System.err.println(msg)

@@ -64,6 +64,7 @@ These are tasks that can be run with the `gradlew` command. Useful for developme
 - `buildProd`: Same as `build`, but enabled the production configuration.  
 - `defaultConfig`: Generates a config.example.json file with default values.  
 - `updater`: Generates the `updater.json` file in the `build` directory, with data used for the updater in the launcher  
+- `runMapper` and `runExtractor`: See [the README](lunar-util/README.md)
 - `detekt`: Runs static analysis over the code with [detekt](https://github.com/detekt/detekt)  
 - `lint`: Same as `detekt`  
 - `clean`: Delete all compilation data/artifacts from disk.  

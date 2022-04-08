@@ -85,4 +85,4 @@ data class MethodMatcherData(
 }
 
 // Util to generate a matcher from method description
-fun MethodDescription.asMatcher() = MethodMatching.matchDescription(this)
+fun MethodDescription.asMatcher() = com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescription(this)

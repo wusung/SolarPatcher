@@ -30,7 +30,6 @@ val json = Json {
 
 // Several constant values. Some constant values exist in the Modules.kt files, or alike
 object Constants {
-    const val API = Opcodes.ASM7
     const val packetClassname = "com/lunarclient/bukkitapi/nethandler/LCPacket"
 
     // The difference is one letter, beware

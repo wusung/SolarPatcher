@@ -80,8 +80,9 @@ data class Configuration(
     val optifineItems: OptifineItems = OptifineItems(), // Enables you to use optifine items (Cloaksplus, mantle etc)
     val hurtCamShake: HurtCamShake = HurtCamShake(), // Allows you to modify your hurt cam shake effect multiplier
     val chatLimit: ChatLimit = ChatLimit(), // Removes the maximum chat limit count to a preset value
-    val mumbleFix: MumbleFix = MumbleFix()
-//    val websocket: Websocket = Websocket()
+    val mumbleFix: MumbleFix = MumbleFix(), // Allows you to use mumble on other oses (requires special native)
+    val websocket: Websocket = Websocket(), // Allows you to set the websocket url
+    val enableWrapped: EnableWrapped = EnableWrapped() // Re-enables lunar client Wrapped
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification

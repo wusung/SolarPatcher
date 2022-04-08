@@ -199,7 +199,7 @@ fun getCodeCommands(): Map<String, Command> {
 
     val helpCommand = HandlerCommand("Displays this help message") {
         val commandsText = configuration.customCommands.actualCommands
-            .filter { (_, cmd) -> (cmd as? HandlerCommand)?.hidden == true }
+            .filter { (_, cmd) -> (cmd as? HandlerCommand)?.hidden != true }
             .sortedBy { (name) -> name }
             .joinToString(",\n") { (name, command) ->
                 val description = when (command) {

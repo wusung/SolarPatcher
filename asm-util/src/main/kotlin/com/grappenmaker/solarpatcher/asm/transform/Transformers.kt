@@ -18,11 +18,11 @@
 
 package com.grappenmaker.solarpatcher.asm.transform
 
+import com.grappenmaker.solarpatcher.asm.API
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatcher
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescription
 import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle
 import org.objectweb.asm.MethodVisitor

@@ -18,7 +18,7 @@
 
 package com.grappenmaker.solarpatcher.asm.util
 
-import com.grappenmaker.solarpatcher.config.Constants.API
+import com.grappenmaker.solarpatcher.asm.API
 import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.BIPUSH
 import org.objectweb.asm.Opcodes.SIPUSH

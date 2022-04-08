@@ -18,6 +18,7 @@
 
 package com.grappenmaker.solarpatcher.modules
 
+import com.grappenmaker.solarpatcher.asm.API
 import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.isInterface
@@ -29,9 +30,11 @@ import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.transform.ConstantValueTransform
 import com.grappenmaker.solarpatcher.asm.transform.ImplementTransform
 import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
+import com.grappenmaker.solarpatcher.asm.util.getObject
+import com.grappenmaker.solarpatcher.asm.util.invokeMethod
+import com.grappenmaker.solarpatcher.asm.util.loadVariable
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
-import com.grappenmaker.solarpatcher.config.Constants.API
 import com.grappenmaker.solarpatcher.util.ConfigDelegateAccessor
 import com.grappenmaker.solarpatcher.util.GeneratedCode
 import com.grappenmaker.solarpatcher.util.IConfigDelegate

@@ -29,11 +29,12 @@ import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchOwner
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.plus
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
-import com.grappenmaker.solarpatcher.asm.method.*
+import com.grappenmaker.solarpatcher.asm.method.InvocationType
+import com.grappenmaker.solarpatcher.asm.method.asMatcher
 import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
+import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.config.Constants
-import com.grappenmaker.solarpatcher.config.Constants.API
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -744,7 +745,7 @@ data class ChatLimit(val limit: Int = 255, override val isEnabled: Boolean = fal
 }
 
 @Serializable
-data class MumbleFix(override val isEnabled: Boolean = true) : Module() {
+data class MumbleFix(override val isEnabled: Boolean = false) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         if (!node.hasConstant("AllTalk")) return null
 
@@ -752,6 +753,20 @@ data class MumbleFix(override val isEnabled: Boolean = true) : Module() {
         return ClassTransform(ReplaceCodeTransform(
             method.asDescription(node).asMatcher(),
             matchName("contains")
+        ) { _, _ ->
+            pop()
+            visitInsn(ICONST_1)
+        })
+    }
+}
+
+@Serializable
+data class EnableWrapped(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find { it.hasConstant("Wrapped") } ?: return null
+        return ClassTransform(ReplaceCodeTransform(
+            method.asDescription(node).asMatcher(),
+            matchName("booleanValue")
         ) { _, _ ->
             pop()
             visitInsn(ICONST_1)

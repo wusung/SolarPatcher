@@ -18,16 +18,21 @@
 
 package com.grappenmaker.solarpatcher.modules
 
+import com.grappenmaker.solarpatcher.asm.API
 import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.constants
+import com.grappenmaker.solarpatcher.asm.hasConstant
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching.plus
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
 import com.grappenmaker.solarpatcher.asm.transform.*
-import com.grappenmaker.solarpatcher.config.Constants
+import com.grappenmaker.solarpatcher.asm.util.loadConstant
+import com.grappenmaker.solarpatcher.asm.util.pop
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.objectweb.asm.Handle
+import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.tree.ClassNode
 
 @Serializable
@@ -134,9 +139,30 @@ data class PingText(
 
 private const val defaultUrl = "wss://assetserver.\u0001/connect"
 
-//@Serializable
-//data class Websocket(
-//    override val from: String = defaultUrl,
-//    override val to: String = defaultUrl,
-//    override val isEnabled: Boolean = false
-//) : TextTransformModule()
+@Serializable
+data class Websocket(
+    val to: String = defaultUrl,
+    override val isEnabled: Boolean = false
+) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find { it.hasConstant(defaultUrl) } ?: return null
+        return ClassTransform(VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
+            object : MethodVisitor(API, parent) {
+                override fun visitInvokeDynamicInsn(
+                    name: String,
+                    descriptor: String,
+                    handle: Handle,
+                    vararg args: Any
+                ) {
+                    if (args.contains(defaultUrl)) {
+                        pop()
+                        loadConstant(to)
+                        return
+                    }
+
+                    super.visitInvokeDynamicInsn(name, descriptor, handle, *args)
+                }
+            }
+        })
+    }
+}

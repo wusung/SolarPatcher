@@ -18,8 +18,9 @@
 
 package com.grappenmaker.solarpatcher.modules
 
+import com.grappenmaker.solarpatcher.asm.FieldDescription
+import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.*
-import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescription
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
@@ -29,12 +30,10 @@ import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.util.componentName
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import java.lang.reflect.Modifier
-import java.util.Comparator
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 

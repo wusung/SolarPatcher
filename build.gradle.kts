@@ -29,7 +29,7 @@ plugins {
 
 // Set metadata
 group = "com.grappenmaker"
-version = "1.5.1"
+version = Versions.project
 
 // Enable mavenCentral
 repositories {
@@ -38,14 +38,11 @@ repositories {
 
 // Declare dependencies
 dependencies {
-    // Kotlin dependencies
-    implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serializationJSON}")
+    // Depend on asm-util
+    implementation(project(":asm-util"))
 
-    // ASM
-    implementation("org.ow2.asm:asm:${Versions.asm}")
-    implementation("org.ow2.asm:asm-commons:${Versions.asm}")
-    implementation("org.ow2.asm:asm-util:${Versions.asm}")
+    // Kotlin dependencies
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serializationJSON}")
 }
 
 // Add dependencies and manifest to jar task
@@ -74,18 +71,20 @@ detekt {
     config = files("detekt.yml")
 }
 
-// Shortcut to run detekt
-tasks.create("lint") {
-    dependsOn("detekt")
+tasks {
+    // Shortcut to run detekt
+    create("lint") {
+        dependsOn("detekt")
+    }
+
+    // Create task to build with prod configuration
+    create("buildProd") {
+        outputs.upToDateWhen { false }
+        dependsOn("build")
+    }
 }
 
 // Configure detekt to always run (not cache)
 tasks.detekt {
     outputs.upToDateWhen { false }
-}
-
-// Create task to build with prod configuration
-tasks.create("buildProd") {
-    outputs.upToDateWhen { false }
-    dependsOn("build")
 }

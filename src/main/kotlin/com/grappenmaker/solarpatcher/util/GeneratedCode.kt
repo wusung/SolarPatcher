@@ -19,6 +19,7 @@
 package com.grappenmaker.solarpatcher.util
 
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
+import com.grappenmaker.solarpatcher.asm.util.getInternalName
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.modules.*

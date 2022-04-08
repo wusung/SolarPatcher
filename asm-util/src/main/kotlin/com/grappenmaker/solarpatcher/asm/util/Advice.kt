@@ -18,9 +18,10 @@
 
 package com.grappenmaker.solarpatcher.asm.util
 
+import com.grappenmaker.solarpatcher.asm.API
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatcher
+import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.method.*
-import com.grappenmaker.solarpatcher.config.Constants.API
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.AdviceAdapter
