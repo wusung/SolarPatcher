@@ -1,5 +1,4 @@
 # Solar Patcher
-![Discord](https://img.shields.io/discord/930481786797064242?color=404eed&logo=discord&logoColor=%23fff&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/Solar-Tweaks/SolarPatcher?style=for-the-badge)
 ![Maintenance](https://img.shields.io/maintenance/yes/2022?style=for-the-badge)
 
@@ -15,17 +14,14 @@ NO warranty whatsoever is provided for this application, and support will not be
 USE AT YOUR OWN RISK.
 
 # Features
-Solar Patcher currently supports 26 distinctive modules, all very configurable.
+Solar Patcher currently supports 32 distinctive modules, all very configurable.
 A full list of these features can be found [here](Features.md)
 
 # Downloading
 You can download a prebuilt artifact from the [releases page](https://github.com/Solar-Tweaks/SolarPatcher/releases).
 
 # Usage
-In order to use Solar Patcher, you will need to use a third party software to launch Lunar Client.
-You can use [Lunar Client Lite](https://github.com/Aetopia/LCLPy), or launch it through the command line using the [wrapper](https://github.com/Aetopia/Lunar-Client-Lite-Launcher/blob/main/wrapper.cmd) made by Aetopia and Lemons#2555.  
-
-In the near future, a new launcher will be released that uses this patcher automatically.
+In the near future, a new launcher will be released that uses this patcher automatically. Right now, you have to manually add the patcher as a launch parameter to a third-party. Add `-javaagent:/path/to/solar-patcher.jar=/path/to/config.json` to the JVM arguments.  
 
 ## Configuration
 Open a `config.json` file (anywhere you like) with a text editor. An example configuration is shipped with the repository, or can be generated with `gradlew defaultConfig`.
