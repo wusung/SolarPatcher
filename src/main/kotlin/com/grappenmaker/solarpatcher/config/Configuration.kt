@@ -19,6 +19,7 @@
 package com.grappenmaker.solarpatcher.config
 
 import com.grappenmaker.solarpatcher.Versioning
+import com.grappenmaker.solarpatcher.configuration
 import com.grappenmaker.solarpatcher.modules.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -97,7 +98,7 @@ data class Configuration(
     val modules = Configuration::class.memberProperties
         .filter { it.visibility == KVisibility.PUBLIC }
         .map { it(this) }
-        .filterIsInstance<Module>() + alwaysEnabledModules
+        .filterIsInstance<Module>().filter { it.isEnabled || enableAll } + alwaysEnabledModules
 
     // TODO: remove when kotlinx.serialization gets fixed
     // See https://github.com/JetBrains/kotlin/pull/4727

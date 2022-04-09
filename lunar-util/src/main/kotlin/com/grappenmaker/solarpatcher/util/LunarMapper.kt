@@ -26,7 +26,6 @@ import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry
 import kotlin.system.exitProcess
 
 // Utility to map the lunar client classes, so the output jar contains
@@ -51,31 +50,52 @@ fun main(args: Array<String>) {
     val mappingsEntry = jar.getPatchEntry("mappings")
 
     // Load patches
-    val patches = jar.loadPatches(patchEntry) { (name, patch) -> name to Base64.getDecoder().decode(patch) }
+    val patches =
+        jar.loadPatches(patchEntry) { (name, patch) -> name.toInternalName() to Base64.getDecoder().decode(patch) }
     println("Loaded ${patches.size} patches")
 
     // Load mappings
-    val mappings = jar.loadPatches(mappingsEntry) { (k, v) -> v to k.replace('.', '/') }
+    val mappings = jar.loadPatches(mappingsEntry) { (k, v) -> v.toInternalName() to k.toInternalName() }
 
-    // Load all classes, and patch when neccesary
-    val (toPatch, passThrough) = (loadJar(jar) + loadJar(JarFile(minecraftFile)))
-        .partition { (name) -> name in patches }
+    // Load all classes, and patch when necessary
+    val mcJar = JarFile(minecraftFile)
+    val (classes, resources) = (jar.load() + mcJar.load())
+        .partition { (e) -> e.name.endsWith(".lclass") || e.name.endsWith(".class") }
 
-    println("Loaded ${toPatch.size + passThrough.size} classes, ${toPatch.size} need to be patched")
+    mcJar.close()
+
+    val (toPatch, passThroughClasses) = classes
+        .map { (e, f) -> e.name.substringBeforeLast('.') to f }
+        .partition { (name) -> name in patches && isAllowed(name) }
+
+    val passThrough = (resources
+        .map { (e, f) -> e.name to f } + passThroughClasses
+        .map { (name, f) -> "$name.class" to f })
+        .filter { (name) -> !name.contains("META-INF") }
+
+    println("Loaded ${classes.size} classes, ${toPatch.size} need to be patched")
     jar.close()
 
-    // Create new jarfile, and save passthrough classes
-    val output = File(args.getOrElse(2) { "${file.nameWithoutExtension}-remapped.jar" }).also { if (it.exists()) it.delete() }
-    val outputJar = JarOutputStream(output.outputStream())
-    passThrough.forEach { (name, file) -> outputJar.writeFile("$name.class", file) }
+    // Create new jarfile, and save pass through classes
+    val output = File(args.getOrElse(2) { "${file.nameWithoutExtension}-remapped.jar" })
+        .also { if (it.exists()) it.delete() }
 
-    println("Written ${passThrough.size} classes without patching")
+    val outputJar = JarOutputStream(output.outputStream())
+    passThrough.forEach { (name, file) -> outputJar.writeFile(name, file) }
+
+    println("Written ${passThrough.size} files without patching")
     println("Starting to patch...")
 
     toPatch.map { (name, file) ->
         val patch = patches[name] ?: error("Impossible")
-        outputJar.putNextEntry(ZipEntry("${mappings[name] ?: name}.class"))
-        Patch.patch(file, patch, outputJar)
+        val mappedName = mappings[name] ?: name
+
+        outputJar.putNextEntry(JarEntry("$mappedName.class"))
+        when (mappedName) {
+            "net/optifine/Config" -> outputJar.write(file)
+            else -> Patch.patch(file, patch, outputJar)
+        }
+
         outputJar.closeEntry()
     }
 
@@ -84,12 +104,11 @@ fun main(args: Array<String>) {
     println("Done!")
 }
 
-fun loadJar(file: JarFile) = file.entries().asSequence()
-    .filter { it.name.endsWith(".lclass") || it.name.endsWith(".class") }
-    .map { it.name.substringBeforeLast('.') to file.getInputStream(it).readBytes() }
+fun JarFile.load() = entries().asSequence()
+    .map { it to getInputStream(it).readBytes() }
 
 fun JarOutputStream.writeFile(name: String, file: ByteArray) {
-    putNextEntry(ZipEntry(name))
+    putNextEntry(JarEntry(name))
     write(file)
     closeEntry()
 }
@@ -114,3 +133,9 @@ private fun exitWithError(msg: String): Nothing {
     System.err.println(msg)
     exitProcess(-1)
 }
+
+fun String.toInternalName() = replace('.', '/')
+fun String.toBinaryName() = replace('/', '.')
+
+val disallowed = listOf("net/minecraftforge/", "net/optifine/", "shadersmod/", "org/spongepowered/")
+fun isAllowed(name: String) = disallowed.none { name.startsWith(it) }

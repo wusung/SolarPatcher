@@ -19,7 +19,6 @@
 package com.grappenmaker.solarpatcher.util
 
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
-import com.grappenmaker.solarpatcher.asm.util.getInternalName
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.modules.*
@@ -111,6 +110,37 @@ object GeneratedCode {
                 pop()
                 visitInsn(ACONST_NULL)
                 returnMethod(ARETURN)
+
+                visitMaxs(-1, -1)
+                visitEnd()
+            }
+
+            // Arguments:
+            // 0: this (automatically stacked by jvm)
+            // 1: title: java/lang/String
+            // 2: description: java/lang/String
+            with(visitMethod(ACC_PUBLIC, "displayPopup", "(L$internalString;L$internalString;)V", null, null)) {
+                visitCode()
+
+                // Get assets socket
+                getAssetsSocket()
+
+                // Create packet
+                val popupMethod = RuntimeData.sendPopupMethod ?: error("No popup method?")
+                construct(
+                    Type.getArgumentTypes(popupMethod.method.desc).first().internalName,
+                    "(L$internalString;L$internalString;)V"
+                ) {
+                    // Load title onto operand stack
+                    loadVariable(1)
+
+                    // Load description onto operand stack
+                    loadVariable(2)
+                }
+
+                // Fake send packet
+                invokeMethod(InvocationType.VIRTUAL, popupMethod.asDescription())
+                returnMethod(RETURN)
 
                 visitMaxs(-1, -1)
                 visitEnd()
@@ -221,7 +251,14 @@ object GeneratedCode {
         }
     }
 
-    val instance by lazy { utilityClass.getConstructor().newInstance() as IGenerated }
+    val instance by lazy {
+        try {
+            utilityClass.getConstructor().newInstance() as IGenerated
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
+    }
     val itemLayerInstance: Any by lazy { playerItemsLayer.getConstructor().newInstance() }
     val configFetcherInstance by lazy { configFetcherDelegate.getConstructor().newInstance() as IConfigDelegate }
 
@@ -265,6 +302,7 @@ interface IGenerated {
     fun getPlayerUUID(): UUID
     fun getServerIP(): String?
     fun getVersion(): String
+    fun displayPopup(title: String, description: String)
 }
 
 object ConfigDelegateAccessor : IConfigDelegate by GeneratedCode.configFetcherInstance

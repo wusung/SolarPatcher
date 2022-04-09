@@ -36,7 +36,7 @@ object LunarClassLoader : ClassFileTransformer {
         protectionDomain: ProtectionDomain,
         classfileBuffer: ByteArray
     ): ByteArray? {
-        if (this.loader == null && loader != null && loader::class.java.superclass == URLClassLoader::class.java) {
+        if (this.loader == null && loader != null && URLClassLoader::class.java.isAssignableFrom(loader::class.java)) {
             this.loader = loader
         }
 

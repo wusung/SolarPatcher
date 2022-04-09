@@ -37,6 +37,9 @@ dependencies {
 
     // BSDIFF implementation for java (for LunarMapper)
     implementation("io.sigpipe:jbsdiff:1.0")
+
+    // HOCON parser (for the launcher)
+    implementation("com.typesafe:config:1.4.2")
 }
 
 // Add dependencies to jar task

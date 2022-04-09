@@ -29,13 +29,12 @@ import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchOwner
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.plus
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
-import com.grappenmaker.solarpatcher.asm.method.InvocationType
-import com.grappenmaker.solarpatcher.asm.method.asMatcher
+import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.asm.method.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
+import com.grappenmaker.solarpatcher.util.GeneratedAccessor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.*
