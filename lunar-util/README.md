@@ -26,3 +26,23 @@ You can use this command to get the desired result:*
 ```shell
 java -cp lunar-util-vX.X.jar com.grappenmaker.solarpatcher.util.ModIdExtractor /path/to/lunar-prod-optifine.jar > output.txt
 ```
+
+### LunarLauncher
+The LunarLauncher class is used to launch a remapped lunar client jarfile (produced by the `LunarMapper`)
+which in general is much faster than the normal launcher, and allows for the usage of tools like
+a debugger, profiler or alike.  
+
+*Note: currently, if you use the default resource pack, because
+lunar client forces connected glass textures, which get patched in by a custom ClassLoader
+the textures won't show up. You might want to apply a pack that provides glass textures*
+
+#### Usage
+*Note: the version is the name of the directory in the .lunarclient/offline directory*  
+*Note: nativesPath is usually located at the .lunarclient/offline/<version>/natives directory,
+the location of .lunarclient depends on your operating system, but it is always located in your home directory*  
+*Note: in the passthrough arguments, you at least need to have a --accessToken and a --version argument*
+*If you want cosmetics, provide a --texturesDir*
+
+```shell
+./gradlew runLauncher -Pnatives=<nativesPath> --args "<remapped jar path> <version> [<pass through arguments>]"
+```

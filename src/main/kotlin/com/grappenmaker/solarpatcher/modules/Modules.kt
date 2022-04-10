@@ -34,7 +34,6 @@ import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
-import com.grappenmaker.solarpatcher.util.GeneratedAccessor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.*
@@ -286,8 +285,10 @@ data class RPCUpdate(
     val afkText: String = "AFK",
     val menuText: String = "In Menu",
     val singlePlayerText: String = "Playing Singleplayer",
-    val versionText: String = "Minecraft \u0001",
+    val versionText: String = "Minecraft",
     val displayActivity: Boolean = true,
+    // EXACT MATCH -> display name
+    val customServerMappings: Map<String, String> = mapOf(),
     override val isEnabled: Boolean = true
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
@@ -357,7 +358,7 @@ data class RPCUpdate(
                     defaultClientID to clientID,
                     defaultIcon to icon,
                     defaultText to iconText,
-                    defaultVersionText to versionText
+                    defaultVersionText to "$versionText \u0001"
                 )
             )
         })
@@ -365,6 +366,30 @@ data class RPCUpdate(
 
     // Utility to remap a server ip to a display name
     private fun MethodVisitor.remapServerIP(default: String = "Private Server", loader: () -> Unit) {
+        val defaultHandler = Label()
+        val end = Label()
+
+        if (customServerMappings.isNotEmpty()) {
+            val keys = customServerMappings.keys.map { it.hashCode() }
+            val parts = customServerMappings.values.map {
+                val label = Label()
+                label to {
+                    visitLabel(label)
+                    visitLdcInsn(it)
+                    visitJumpInsn(GOTO, end)
+                }
+            }
+
+            val labels = parts.map { it.first }.toTypedArray()
+
+            loader()
+            invokeMethod(String::hashCode)
+            visitLookupSwitchInsn(defaultHandler, keys.toIntArray(), labels)
+
+            parts.forEach { (_, code) -> code() }
+        }
+
+        visitLabel(defaultHandler)
         getServerMappings()
         invokeMethod(
             InvocationType.VIRTUAL,
@@ -376,7 +401,6 @@ data class RPCUpdate(
         val loop = Label()
         val reloop = Label()
         val notFound = Label()
-        val end = Label()
 
         invokeMethod(InvocationType.INTERFACE, "entrySet", "()Ljava/util/Set;", "java/util/Map") // set of entries
         invokeMethod(InvocationType.INTERFACE, "iterator", "()Ljava/util/Iterator;", "java/util/Set") // iterator

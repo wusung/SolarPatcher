@@ -48,12 +48,24 @@ tasks.withType<Jar>().configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-fun createRunTask(name: String, clazz: String) = rootProject.tasks.create<JavaExec>(name) {
-    val jarTask = tasks.jar.get()
-    dependsOn(jarTask.path)
-    classpath(jarTask.outputs.files.map { it.absolutePath })
-    mainClass.set("com.grappenmaker.solarpatcher.util.$clazz")
-}
+fun createRunTask(name: String, clazz: String, block: JavaExec.() -> Unit = {}) =
+    rootProject.tasks.create<JavaExec>(name) {
+        val jarTask = tasks.jar.get()
+        dependsOn(jarTask.path)
+        classpath(jarTask.outputs.files.map { it.absolutePath })
+        mainClass.set("com.grappenmaker.solarpatcher.util.$clazz")
+
+        block()
+    }
 
 createRunTask("runMapper", "LunarMapper")
+createRunTask("runLauncher", "LunarLauncher") {
+    doFirst {
+        systemProperties(
+            "java.library.path" to (properties["natives"]
+                ?: error("Specify the natives path!"))
+        )
+    }
+}
+
 createRunTask("runExtractor", "ModIdExtractor")

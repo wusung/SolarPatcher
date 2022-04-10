@@ -20,4 +20,5 @@ package com.grappenmaker.solarpatcher.asm
 
 import org.objectweb.asm.Opcodes
 
+// The ow2 ASM version that is supported
 const val API = Opcodes.ASM9

@@ -22,8 +22,10 @@ package com.grappenmaker.solarpatcher.util
 
 import com.typesafe.config.ConfigFactory
 import java.io.File
+import java.io.InputStream
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.net.URL
 import java.net.URLClassLoader
 import java.util.jar.JarFile
 import kotlin.system.exitProcess
@@ -52,6 +54,7 @@ fun main(args: Array<String>) {
     // Verify the natives path state
     val nativesDir = File(versionDir, "natives").assertExists()
     if (!System.getProperty("java.library.path").contains(nativesDir.absolutePath)) {
+        // Try to access the natives path
         exitWithError("Make sure the natives directory exists in your library path!")
     }
 
@@ -93,13 +96,38 @@ fun main(args: Array<String>) {
 
     println("Found all ${allLibs.size} libs, launching the game...")
 
+    // Check if Solar Patcher exists
+    try {
+        Class.forName("com.grappenmaker.solarpatcher.AgentMain", false, ClassLoader.getSystemClassLoader())
+        println("Solar Patcher was detected. Usage with this launcher is experimental!")
+    } catch (e: ClassNotFoundException) {
+        // Do nothing when class not found
+    }
+
     // Create classloader with required libraries
-    val loader = URLClassLoader(allLibs.map { it.toURI().toURL() }.toTypedArray())
+    val loader = Loader(allLibs.map { it.toURI().toURL() }.toTypedArray())
     Thread.currentThread().contextClassLoader = loader
 
     // Launch game based on config, pass through all extra arguments
     val launchClass = Class.forName(versionConfig.getString("launch-class"), false, loader)
-    val gameArgs = args.drop(2).toTypedArray()
+    val gameArgs = buildList {
+        addAll(args.drop(2))
+
+        val addConditional = { name: String, default: String ->
+            if (!contains(name)) {
+                add(name)
+                add(default)
+            }
+        }
+
+        addConditional("--accessToken", "0")
+        addConditional("--version", version)
+
+        val warnWhenMissing = { name: String, msg: String -> if (!contains(name)) println("Warning: $msg") }
+        warnWhenMissing("--gameDir", "game is running in current directory; set a gamedir with --gameDir")
+        warnWhenMissing("--assetsDir", "assets will be saved in current directory; set your assets dir with --assetsDir")
+        warnWhenMissing("--texturesDir", "cosmetics will not work without a --texturesDir")
+    }.toTypedArray()
 
     // Use MethodHandles to minimize frames
     MethodHandles.lookup().findStatic(
@@ -107,6 +135,27 @@ fun main(args: Array<String>) {
         "main",
         MethodType.methodType(Void::class.javaPrimitiveType, gameArgs::class.java)
     ).invokeExact(gameArgs)
+}
+
+class Loader(urls: Array<URL>) : URLClassLoader(urls) {
+    private val patches =
+        super.getResourceAsStream("optifinePatches.cfg")
+            ?.bufferedReader()?.lineSequence()
+            ?.filter { !it.startsWith("#") }
+            ?.map {
+                val (regex, mapped) = it.split("=")
+                regex.trim().toRegex() to mapped.trim()
+            }?.toList()
+
+    // Optifine resources handler
+    override fun getResourceAsStream(name: String): InputStream? {
+        return super.getResourceAsStream(name)
+            ?: Loader::class.java.classLoader.getResourceAsStream(name)
+            ?: let {
+                val patch = patches?.find { (pattern) -> pattern.matches(name) }
+                patch?.second?.let { getResourceAsStream(it) }
+            }
+    }
 }
 
 // Utility to make sure certain files exist
