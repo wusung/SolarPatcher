@@ -99,14 +99,6 @@ data class LevelHead(
 ) : TextTransformModule()
 
 @Serializable
-data class MantleIntegration(
-    override val pattern: String = "http://%s",
-    override val from: String = "s.optifine.net",
-    override val to: String = "capes.mantle.gg",
-    override val isEnabled: Boolean = false
-) : TextTransformModule()
-
-@Serializable
 data class WindowName(
     val from: String = "Lunar Client (\u0001-\u0001/\u0001)",
     val to: String = "Lunar Client (Modded by Solar Tweaks)",

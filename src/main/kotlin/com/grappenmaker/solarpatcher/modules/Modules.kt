@@ -55,6 +55,12 @@ sealed class Module : TransformGenerator {
     abstract val isEnabled: Boolean
 }
 
+@Serializable
+sealed class JoinedModule(@Transient private val modules: List<Module> = listOf()) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? =
+        modules.mapNotNull { it.generate(node) }.reduceTransforms()
+}
+
 const val initMethodName = "init"
 
 private val metadataMatcher: ClassMatcher = { node ->

@@ -185,13 +185,6 @@ fun getCodeCommands(): Map<String, Command> {
             },
             {
                 "text": "$moduleText\n"
-            },
-            {
-                "text": "Cosmetics Server: ",
-                "color": "green"
-            },
-            {
-                "text": "${configuration.optifineItems.capeServer}"
             }
         ]"""
         )

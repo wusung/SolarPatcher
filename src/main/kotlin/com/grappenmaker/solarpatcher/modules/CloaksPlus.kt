@@ -22,17 +22,12 @@ import com.grappenmaker.solarpatcher.asm.API
 import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.isInterface
+import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
-import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
-import com.grappenmaker.solarpatcher.asm.transform.ConstantValueTransform
-import com.grappenmaker.solarpatcher.asm.transform.ImplementTransform
-import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
-import com.grappenmaker.solarpatcher.asm.util.getObject
-import com.grappenmaker.solarpatcher.asm.util.invokeMethod
-import com.grappenmaker.solarpatcher.asm.util.loadVariable
+import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.util.ConfigDelegateAccessor
@@ -45,43 +40,49 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 
+const val capeServer = "http://server.cloaksplus.com"
+
 @Serializable
-data class OptifineItems(
-    val capeServer: String = "http://capes.mantle.gg",
-    override val isEnabled: Boolean = false
-) : Module() {
-    override fun generate(node: ClassNode) =
-        handleAddLayer(node) ?: handleGetConfig(node) ?: handleHttpUtil(node)
+data class CloaksPlus(override val isEnabled: Boolean = true)
+    : JoinedModule(listOf(ChangeURL, ImplementConfigFetcher, ImplementSkinLayer, CapeServerURL))
 
-    private fun handleHttpUtil(node: ClassNode): ClassTransform? = if (node.name == Constants.httpUtilName) {
-        ClassTransform(ConstantValueTransform(matchName("getPlayerItemsUrl"), capeServer))
-    } else null
+private object ChangeURL : Module(), TransformGenerator by matcherGenerator(
+    ClassTransform(ConstantValueTransform(matchName("getPlayerItemsUrl"), capeServer)),
+    ClassMatching.matchName(Constants.httpUtilName)
+) {
+    override val isEnabled = true
+}
 
-    private fun handleGetConfig(node: ClassNode): ClassTransform? {
+private object ImplementConfigFetcher : Module() {
+    override val isEnabled = true
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (node.name != Constants.playerConfigurationsName) return null
+
         val getConfigMethod = node.methods.find { it.name == "getPlayerConfiguration" } ?: return null
         if (getConfigMethod.calls(matchName("getPlayerItemsUrl"))) return null
 
-        return if (node.name == Constants.playerConfigurationsName) {
-            ClassTransform(listOf(
-                ImplementTransform(matchName("getPlayerConfiguration")) {
-                    getObject(ConfigDelegateAccessor::class)
-                    loadVariable(0)
-                    invokeMethod(IConfigDelegate::getPlayerConfig)
-                    visitTypeInsn(CHECKCAST, Constants.playerConfigurationName)
-                    returnMethod(ARETURN)
-                },
-                ImplementTransform(matchName("setPlayerConfiguration")) {
-                    getObject(ConfigDelegateAccessor::class)
-                    loadVariable(0)
-                    loadVariable(1)
-                    invokeMethod(IConfigDelegate::setPlayerConfig)
-                    returnMethod(RETURN)
-                }
-            ))
-        } else null
+        return ClassTransform(listOf(
+            ImplementTransform(matchName("getPlayerConfiguration")) {
+                getObject(ConfigDelegateAccessor::class)
+                loadVariable(0)
+                invokeMethod(IConfigDelegate::getPlayerConfig)
+                visitTypeInsn(CHECKCAST, Constants.playerConfigurationName)
+                returnMethod(ARETURN)
+            },
+            ImplementTransform(matchName("setPlayerConfiguration")) {
+                getObject(ConfigDelegateAccessor::class)
+                loadVariable(0)
+                loadVariable(1)
+                invokeMethod(IConfigDelegate::setPlayerConfig)
+                returnMethod(RETURN)
+            }
+        ))
     }
+}
 
-    private fun handleAddLayer(node: ClassNode): ClassTransform? {
+private object ImplementSkinLayer : Module() {
+    override val isEnabled = true
+    override fun generate(node: ClassNode): ClassTransform? {
         if (node.isInterface) return null
 
         val addLayerMethod = "bridge\$addLayer"
@@ -118,6 +119,12 @@ data class OptifineItems(
             }
         })
     }
+}
+
+private object CapeServerURL : TextTransformModule() {
+    override val from = "http://s.optifine.net"
+    override val to = capeServer
+    override val isEnabled = true
 }
 
 fun MethodVisitor.implementRender() {

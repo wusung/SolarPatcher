@@ -85,13 +85,15 @@ class FileTransformer(
 
 // Utility to get a class transform based on the name
 private fun Collection<TransformGenerator>.getFromNode(node: ClassNode) =
-    mapNotNull { it.generate(node) }.reduceOrNull { acc, cur ->
-        ClassTransform(
-            acc.methodTransforms + cur.methodTransforms,
-            acc.visitors + cur.visitors,
-            acc.shouldExpand || cur.shouldExpand
-        )
-    }
+    mapNotNull { it.generate(node) }.reduceTransforms()
+
+fun Collection<ClassTransform>.reduceTransforms() = reduceOrNull { acc, cur ->
+    ClassTransform(
+        acc.methodTransforms + cur.methodTransforms,
+        acc.visitors + cur.visitors,
+        acc.shouldExpand || cur.shouldExpand
+    )
+}
 
 // Transform generator type
 interface TransformGenerator {

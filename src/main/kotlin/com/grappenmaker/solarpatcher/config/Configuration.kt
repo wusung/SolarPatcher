@@ -19,7 +19,6 @@
 package com.grappenmaker.solarpatcher.config
 
 import com.grappenmaker.solarpatcher.Versioning
-import com.grappenmaker.solarpatcher.configuration
 import com.grappenmaker.solarpatcher.modules.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -47,7 +46,7 @@ data class Configuration(
     val metadata: Metadata = Metadata(),
     // Removes LCModSettingsPacket so no mods can be disabled by servers
     val modpacketRemoval: ModpacketRemoval = ModpacketRemoval(),
-    val mantleIntegration: MantleIntegration = MantleIntegration(), // Integrate with Mantle.gg cape system
+    val cloaksPlus: CloaksPlus = CloaksPlus(), // Integrate with cloaksplus capes + cosmetics system
     val windowName: WindowName = WindowName(), // Change the name of the window
     // Removes "hit delay" (1.7-like combat). Note that this is not a cheat, just a bugfix for 1.8
     val noHitDelay: NoHitDelay = NoHitDelay(),
@@ -78,7 +77,6 @@ data class Configuration(
     val pingText: PingText = PingText(), // Change your ping text
     val pingSpoof: PingSpoof = PingSpoof(), // Change the text of the ping value (not a multiplier)
     val clothCapes: ClothCapes = ClothCapes(), // Enable cloth capes for everyone
-    val optifineItems: OptifineItems = OptifineItems(), // Enables you to use optifine items (Cloaksplus, mantle etc)
     val hurtCamShake: HurtCamShake = HurtCamShake(), // Allows you to modify your hurt cam shake effect multiplier
     val chatLimit: ChatLimit = ChatLimit(), // Removes the maximum chat limit count to a preset value
     val mumbleFix: MumbleFix = MumbleFix(), // Allows you to use mumble on other oses (requires special native)
