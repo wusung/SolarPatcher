@@ -129,15 +129,16 @@ data class PingText(
     override val isEnabled: Boolean = false
 ) : TextTransformModule()
 
-private const val defaultUrl = "wss://assetserver.\u0001/connect"
+private const val constantURL = "wss://assetserver.\u0001/connect"
+private const val defaultURL = "wss://assetserver.lunarclientprod.com/connect"
 
 @Serializable
 data class Websocket(
-    val to: String = defaultUrl,
+    val to: String = defaultURL,
     override val isEnabled: Boolean = false
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
-        val method = node.methods.find { it.hasConstant(defaultUrl) } ?: return null
+        val method = node.methods.find { it.hasConstant(constantURL) } ?: return null
         return ClassTransform(VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
             object : MethodVisitor(API, parent) {
                 override fun visitInvokeDynamicInsn(
@@ -146,7 +147,7 @@ data class Websocket(
                     handle: Handle,
                     vararg args: Any
                 ) {
-                    if (args.contains(defaultUrl)) {
+                    if (args.contains(constantURL)) {
                         pop()
                         loadConstant(to)
                         return

@@ -51,6 +51,8 @@ fun main(args: Array<String>) {
     val versionDir = File(lunarDir, "offline/$version").assertExists()
     val vpatcher = File(versionDir, "vpatcher-prod.jar").assertExists()
 
+    println("Found version dir: ${versionDir.absolutePath}, vpatcher at ${vpatcher.absolutePath}")
+
     // Verify the natives path state
     val nativesDir = File(versionDir, "natives").assertExists()
     if (!System.getProperty("java.library.path").contains(nativesDir.absolutePath)) {
@@ -127,6 +129,9 @@ fun main(args: Array<String>) {
         warnWhenMissing("--gameDir", "game is running in current directory; set a gamedir with --gameDir")
         warnWhenMissing("--assetsDir", "assets will be saved in current directory; set your assets dir with --assetsDir")
         warnWhenMissing("--texturesDir", "cosmetics will not work without a --texturesDir")
+
+        warnWhenMissing("--assetIndex", "asset index not specified; automatically adding $version, might fail!")
+        addConditional("--assetIndex", version)
     }.toTypedArray()
 
     // Use MethodHandles to minimize frames
@@ -160,7 +165,7 @@ class Loader(urls: Array<URL>) : URLClassLoader(urls) {
 
 // Utility to make sure certain files exist
 private fun File.assertExists(): File {
-    if (!exists()) exitWithError("File $name does not exist!")
+    if (!exists()) exitWithError("File $absolutePath does not exist!")
     return this
 }
 

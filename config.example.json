@@ -1,5 +1,5 @@
 {
-    "patcherVersion": "1.5-beta",
+    "patcherVersion": "1.6",
     "debug": false,
     "enableAll": false,
     "nickhider": {
@@ -43,11 +43,8 @@
     "modpacketRemoval": {
         "isEnabled": false
     },
-    "mantleIntegration": {
-        "pattern": "http://%s",
-        "from": "s.optifine.net",
-        "to": "capes.mantle.gg",
-        "isEnabled": false
+    "cloaksPlus": {
+        "isEnabled": true
     },
     "windowName": {
         "from": "Lunar Client (\u0001-\u0001/\u0001)",
@@ -79,8 +76,7 @@
                 "prefix": "/play bedwars_practice",
                 "suffix": ""
             }
-        },
-        "isEnabled": false
+        }
     },
     "rpcUpdate": {
         "clientID": 920998351430901790,
@@ -89,8 +85,10 @@
         "afkText": "AFK",
         "menuText": "In Menu",
         "singlePlayerText": "Playing Singleplayer",
-        "versionText": "Minecraft \u0001",
+        "versionText": "Minecraft",
         "displayActivity": true,
+        "customServerMappings": {
+        },
         "isEnabled": true
     },
     "tasklistPrivacy": {
@@ -166,16 +164,22 @@
     "clothCapes": {
         "isEnabled": false
     },
-    "optifineItems": {
-        "capeServer": "http://capes.mantle.gg",
-        "isEnabled": false
-    },
     "hurtCamShake": {
         "multiplier": 0.3,
         "isEnabled": false
     },
     "chatLimit": {
         "limit": 255,
-        "isEnabled": true
+        "isEnabled": false
+    },
+    "mumbleFix": {
+        "isEnabled": false
+    },
+    "websocket": {
+        "to": "wss://assetserver.lunarclientprod.com/connect",
+        "isEnabled": false
+    },
+    "enableWrapped": {
+        "isEnabled": false
     }
 }

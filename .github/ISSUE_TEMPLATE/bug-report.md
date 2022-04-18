@@ -24,10 +24,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment (please complete the following information):**
- - OS: [e.g. Windoes]
+ - OS: [e.g. Windows]
  - Launcher [e.g. solar tweaks, lcqt, lcl]
  - Version [e.g. 1.5.1]
  - Lunar Version [e.g. a0b1c2]
 
 **Additional context**
-Add any other context about the problem here. If applicable, attach stacktraces and errors.
+Add any other context about the problem here. If applicable, attach (parts of) stacktraces and errors, config files etc.
