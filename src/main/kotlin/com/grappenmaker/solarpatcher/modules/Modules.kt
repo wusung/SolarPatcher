@@ -253,7 +253,7 @@ data class CustomCommands(
                 invokeMethod(Class<*>::getName)
 
                 // Load chat event class onto the stack
-                getObject(RuntimeData::class)
+                getObject<RuntimeData>()
                 invokeMethod(RuntimeData::outgoingChatEvent.getter)
 
                 // Compare the strings
@@ -376,23 +376,14 @@ data class RPCUpdate(
         val end = Label()
 
         if (customServerMappings.isNotEmpty()) {
-            val keys = customServerMappings.keys.map { it.hashCode() }
-            val parts = customServerMappings.values.map {
-                val label = Label()
-                label to {
-                    visitLabel(label)
-                    visitLdcInsn(it)
-                    visitJumpInsn(GOTO, end)
-                }
-            }
-
-            val labels = parts.map { it.first }.toTypedArray()
-
             loader()
             invokeMethod(String::hashCode)
-            visitLookupSwitchInsn(defaultHandler, keys.toIntArray(), labels)
-
-            parts.forEach { (_, code) -> code() }
+            createLookupSwitch(defaultHandler, customServerMappings.mapKeys { (k) -> k.hashCode() }.mapValues { (_, v) ->
+                {
+                    visitLdcInsn(v)
+                    visitJumpInsn(GOTO, end)
+                }
+            })
         }
 
         visitLabel(defaultHandler)
@@ -610,7 +601,7 @@ object ModName : Module(),
         // try-start
         visitLabel(start)
 
-        getObject(RuntimeData::class)
+        getObject<RuntimeData>()
         invokeMethod(RuntimeData::version.getter)
         concat("(L$internalString;)L$internalString;", "Lunar Client \u0001/$solarVersion")
         returnMethod(ARETURN)

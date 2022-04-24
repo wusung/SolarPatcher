@@ -20,8 +20,7 @@ package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.Versioning
 import com.grappenmaker.solarpatcher.configuration
-import com.grappenmaker.solarpatcher.util.ConfigDelegateAccessor
-import com.grappenmaker.solarpatcher.util.GeneratedAccessor
+import com.grappenmaker.solarpatcher.util.generation.Accessors
 import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
 import java.awt.Desktop
@@ -68,7 +67,7 @@ class HandlerCommand(
 fun getCodeCommands(): Map<String, Command> {
     val easterEgg = HandlerCommand("???", hidden = true) {
         cancel()
-        GeneratedAccessor.displayMessage(
+        Accessors.Utility.displayMessage(
             """
             {
                 "color": "dark_purple",
@@ -100,13 +99,13 @@ fun getCodeCommands(): Map<String, Command> {
 
     val reloadCosmetics = HandlerCommand("Reloads your cosmetics (for the OptifineItems Module)") {
         cancel()
-        GeneratedAccessor.displayMessage("""{"text": "Reloading your cosmetics...", "color": "gray"}""")
+        Accessors.Utility.displayMessage("""{"text": "Reloading your cosmetics...", "color": "gray"}""")
 
         try {
-            ConfigDelegateAccessor.reloadPlayerCosmetics()
-            GeneratedAccessor.displayMessage("""{"text": "Successfully unregistered cosmetics!", "color": "green"}""")
+            Accessors.ConfigDelegate.reloadPlayerCosmetics()
+            Accessors.Utility.displayMessage("""{"text": "Successfully unregistered cosmetics!", "color": "green"}""")
         } catch (e: Exception) {
-            GeneratedAccessor.displayMessage("""{"text": "There was an error while reloading your cosmetics:\n${e.message}", "color": "red"}""")
+            Accessors.Utility.displayMessage("""{"text": "There was an error while reloading your cosmetics:\n${e.message}", "color": "red"}""")
         }
     }
 
@@ -120,7 +119,7 @@ fun getCodeCommands(): Map<String, Command> {
         val moduleText = configuration.modules.map { m -> m::class.simpleName ?: "Unnamed" }
             .sorted().joinToString()
 
-        GeneratedAccessor.displayMessage(
+        Accessors.Utility.displayMessage(
             """[
             "",
             {
@@ -135,7 +134,7 @@ fun getCodeCommands(): Map<String, Command> {
                 "color": "green"
             },
             {
-                "text": "${GeneratedAccessor.getVersion()}\n"
+                "text": "${Accessors.Utility.getVersion()}\n"
             },
             {
                 "text": "Patcher Version: ",
@@ -163,21 +162,21 @@ fun getCodeCommands(): Map<String, Command> {
                 "color": "green"
             },
             {
-                "text": "${GeneratedAccessor.getPlayerName()}\n"
+                "text": "${Accessors.Utility.getPlayerName()}\n"
             },
             {
                 "text": "UUID: ",
                 "color": "green"
             },
             {
-                "text": "${GeneratedAccessor.getPlayerUUID()}\n"
+                "text": "${Accessors.Utility.getPlayerUUID()}\n"
             },
             {
                 "text": "Current Server: ",
                 "color": "green"
             },
             {
-                "text": "${GeneratedAccessor.getServerIP() ?: "Singleplayer"}\n"
+                "text": "${Accessors.Utility.getServerIP() ?: "Singleplayer"}\n"
             },
             {
                 "text": "Active modules (${configuration.modules.size}): ",
@@ -203,7 +202,7 @@ fun getCodeCommands(): Map<String, Command> {
             }
 
         cancel()
-        GeneratedAccessor.displayMessage(
+        Accessors.Utility.displayMessage(
             """[
             "",
             {
@@ -219,7 +218,7 @@ fun getCodeCommands(): Map<String, Command> {
     }
 
     val extraHelp = HandlerCommand(hidden = true) {
-        GeneratedAccessor.displayMessage("""{
+        Accessors.Utility.displayMessage("""{
             "text": "If you need Solar Tweaks related help, take a look in the discord server, or use /solarhelp",
             "color": "dark_purple",
             "italic": true

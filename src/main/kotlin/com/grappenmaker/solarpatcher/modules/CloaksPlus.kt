@@ -25,19 +25,19 @@ import com.grappenmaker.solarpatcher.asm.isInterface
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
-import com.grappenmaker.solarpatcher.asm.method.InvocationType
-import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.transform.*
-import com.grappenmaker.solarpatcher.asm.util.*
+import com.grappenmaker.solarpatcher.asm.util.getObject
+import com.grappenmaker.solarpatcher.asm.util.invokeMethod
+import com.grappenmaker.solarpatcher.asm.util.loadVariable
+import com.grappenmaker.solarpatcher.asm.util.returnMethod
 import com.grappenmaker.solarpatcher.config.Constants
-import com.grappenmaker.solarpatcher.util.ConfigDelegateAccessor
-import com.grappenmaker.solarpatcher.util.GeneratedCode
-import com.grappenmaker.solarpatcher.util.IConfigDelegate
+import com.grappenmaker.solarpatcher.util.generation.Accessors
+import com.grappenmaker.solarpatcher.util.generation.IConfigDelegate
+import com.grappenmaker.solarpatcher.util.generation.Instances
 import kotlinx.serialization.Serializable
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 
 const val capeServer = "http://server.cloaksplus.com"
@@ -63,14 +63,14 @@ private object ImplementConfigFetcher : Module() {
 
         return ClassTransform(listOf(
             ImplementTransform(matchName("getPlayerConfiguration")) {
-                getObject(ConfigDelegateAccessor::class)
+                getObject<Accessors.ConfigDelegate>()
                 loadVariable(0)
                 invokeMethod(IConfigDelegate::getPlayerConfig)
                 visitTypeInsn(CHECKCAST, Constants.playerConfigurationName)
                 returnMethod(ARETURN)
             },
             ImplementTransform(matchName("setPlayerConfiguration")) {
-                getObject(ConfigDelegateAccessor::class)
+                getObject<Accessors.ConfigDelegate>()
                 loadVariable(0)
                 loadVariable(1)
                 invokeMethod(IConfigDelegate::setPlayerConfig)
@@ -108,8 +108,8 @@ private object ImplementSkinLayer : Module() {
 
                         hasVisited = true
                         loadVariable(3)
-                        getObject(GeneratedCode::class)
-                        invokeMethod(GeneratedCode::itemLayerInstance.getter)
+                        getObject<Instances>()
+                        invokeMethod(Instances::playerItemsLayer.getter)
                         visitInsn(ICONST_1)
                         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
 
@@ -127,74 +127,6 @@ private object CapeServerURL : TextTransformModule() {
     override val isEnabled = true
 }
 
-fun MethodVisitor.implementRender() {
-    visitCode()
-    // Argument 0: bridge
-    // Argument 1: renderer
-    // Argument 2: entity bridge
-    // Argument 3: player model
-    // 4 float limbSwing
-    // 5 float limbSwingAmount
-    // 6 float partialTicks
-    // 7 float ticksExisted
-    // 8 float headYaw
-    // 9 float rotationPitch
-    // 10 float scale
-    // Variable 11: casted player entity bridge
-
-    val instanceof = Label()
-    loadVariable(2)
-    // Check cast for player entity bridge
-    val playerBridgeName = RuntimeData.playerEntityBridge.name
-    visitTypeInsn(INSTANCEOF, playerBridgeName)
-    visitJumpInsn(IFEQ, instanceof)
-
-    // Checked cast to player bridge
-    loadVariable(2)
-    visitTypeInsn(CHECKCAST, playerBridgeName)
-    storeVariable(11)
-
-    // Prepare render
-    callRenderer("bridge\$color") { repeat(4) { visitInsn(FCONST_1) } }
-    callRenderer("bridge\$disableRescaleNormal")
-//    callRenderer("bridge\$enableCull")
-
-    // Call render method
-    val methodInfo = RuntimeData.renderPlayerItemsMethod ?: error("No render player items method was found?")
-    val arguments = Type.getArgumentTypes(methodInfo.method.desc)
-
-    // Load arguments
-    loadVariable(3)
-    visitTypeInsn(CHECKCAST, arguments[0].internalName)
-    loadVariable(11)
-    visitTypeInsn(CHECKCAST, arguments[1].internalName)
-    loadVariable(10, FLOAD)
-    loadVariable(6, FLOAD)
-    invokeMethod(InvocationType.STATIC, methodInfo.asDescription())
-
-    // Remove culling
-//    callRenderer("bridge\$disableCull")
-
-    // Done!
-
-    visitLabel(instanceof)
-    returnMethod()
-    visitMaxs(-1, -1)
-    visitEnd()
-}
-
-private inline fun MethodVisitor.callRenderer(name: String, arguments: MethodVisitor.() -> Unit = {}) {
-    loadVariable(1)
-    arguments()
-    invokeMethod(InvocationType.VIRTUAL, getRendererMethod(name))
-}
-
-private fun getRendererMethod(name: String): MethodDescription {
-    val renderer = RuntimeData.renderer ?: error("Renderer has not been found!")
-    return renderer.methods.find { it.calls(matchName(name)) }?.asDescription(renderer)
-        ?: error("Requested render method does not exist!")
-}
-
 object ConfigFetcher {
     val configs = mutableMapOf<String, Any>() // Player name to config
     fun getConfig(name: String?): Any? {
@@ -203,7 +135,7 @@ object ConfigFetcher {
 
         return configs.getOrPut(name) {
             println("Attempting to fetch configuration for $name")
-            ConfigDelegateAccessor.downloadPlayerConfig(name)
+            Accessors.ConfigDelegate.downloadPlayerConfig(name)
         }
     }
 
@@ -213,4 +145,4 @@ object ConfigFetcher {
     }
 }
 
-fun shouldImplementItems() = ConfigDelegateAccessor.getVersion() in listOf("v1_8", "v1_7")
+fun shouldImplementItems() = Accessors.ConfigDelegate.getVersion() in listOf("v1_8", "v1_7")

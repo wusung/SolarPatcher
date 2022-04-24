@@ -81,7 +81,8 @@ data class Configuration(
     val chatLimit: ChatLimit = ChatLimit(), // Removes the maximum chat limit count to a preset value
     val mumbleFix: MumbleFix = MumbleFix(), // Allows you to use mumble on other oses (requires special native)
     val websocket: Websocket = Websocket(), // Allows you to set the websocket url
-    val enableWrapped: EnableWrapped = EnableWrapped() // Re-enables lunar client Wrapped
+    val enableWrapped: EnableWrapped = EnableWrapped(), // Re-enables lunar client Wrapped
+    val customMods: CustomMods = CustomMods()
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification

@@ -24,6 +24,7 @@ import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.method.invocationType
 import org.objectweb.asm.Handle
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
@@ -202,7 +203,10 @@ fun MethodVisitor.boxInt() =
     invokeMethod(java.lang.Integer::class.java.getMethod("valueOf", Int::class.javaPrimitiveType))
 
 // Utility to get an object instance
-fun MethodVisitor.getObject(kClass: KClass<*>) = getField(kClass.java.getField("INSTANCE"))
+fun MethodVisitor.getObject(kClass: KClass<*>) =
+    getField(kClass.java.getField("INSTANCE"))
+
+inline fun <reified T> MethodVisitor.getObject() = getObject(T::class)
 
 // Utility to load a given value as constant onto the stack
 // Warning: because of optimizations, this code is huge
@@ -260,4 +264,21 @@ fun MethodVisitor.loadConstant(value: Any?) = when (value) {
     }
     is String -> visitLdcInsn(value)
     else -> error("Constant value ($value) is not a valid JVM constant!")
+}
+
+// Utility to create a lookup switch
+// Used because apparently entries have to be sorted, and i forget that
+// Int needs to be on stack
+fun MethodVisitor.createLookupSwitch(default: Label, cases: Map<Int, MethodVisitor.() -> Unit>) {
+    val sorted = cases.toSortedMap()
+    val entries = sorted.values.map {
+        val label = Label()
+        label to {
+            visitLabel(label)
+            it()
+        }
+    }
+
+    visitLookupSwitchInsn(default, sorted.keys.toIntArray(), entries.map { it.first }.toTypedArray())
+    entries.forEach { (_, code) -> code() }
 }

@@ -18,8 +18,6 @@
 
 package com.grappenmaker.solarpatcher.modules
 
-import com.grappenmaker.solarpatcher.asm.FieldDescription
-import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.*
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
@@ -28,7 +26,6 @@ import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.util.getField
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.config.Constants
-import com.grappenmaker.solarpatcher.util.componentName
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
@@ -55,12 +52,23 @@ object RuntimeData : Module() {
         assetsSocketField = FieldDescription(insn.name, insn.desc, insn.owner)
     }) { it.hasConstant("Starting Lunar client...") }
 
+    val textModClass by +FindClass { node ->
+        node.hasConstant("[\u0001]") && node.methods.any { m ->
+            val args = Type.getArgumentTypes(m.desc)
+            args.size == 4 && args[0].internalName.startsWith("lunar/") &&
+                    args[1].internalName == internalString &&
+                    args.drop(2).all { it == Type.FLOAT_TYPE } &&
+                    m.access == 0x4
+        }
+    }
+
     val renderer by +FindClass { it.calls { c -> c.name == "bridge\$enableColorMaterial" } }
     lateinit var playerEntityBridge: ClassNode
 
     // Class names that have been found
     lateinit var outgoingChatEvent: String // not internal name!
     lateinit var skinLayerClass: String
+    var featureDetailsClass: String? = null
 
     // Method nodes that have been found
     val sendPopupMethod by +FindMethod { it.method.hasConstant("\u0001[\u0001\u0001\u0001] \u0001\u0001") }
@@ -84,6 +92,10 @@ object RuntimeData : Module() {
     }
 
     val reloadCapeMethod by +FindMethod { it.method.name == "reloadCape" }
+    val getDetails by +FindMethod {
+        featureDetailsClass != null &&
+                Type.getReturnType(it.method.desc).internalName == featureDetailsClass
+    }
 
     // Method descriptions that have been found
     lateinit var getDisplayToIPMapMethod: MethodDescription
@@ -96,6 +108,7 @@ object RuntimeData : Module() {
 
     // Field descriptions that have been found
     lateinit var assetsSocketField: FieldDescription
+    lateinit var positionField: FieldDescription
 
     val versionIdField
         get() = isVersionOldMethod?.method?.instructions
@@ -125,7 +138,8 @@ object RuntimeData : Module() {
         +FindMethod({ (_, method) ->
             toBridgeComponentMethod = method.calls
                 .find {
-                    Type.getArgumentTypes(it.desc).firstOrNull()?.internalName == componentName &&
+                    Type.getArgumentTypes(it.desc)
+                        .firstOrNull()?.internalName == "net/kyori/adventure/text/Component" &&
                             Type.getReturnType(it.desc).internalName.startsWith("lunar/")
                 }!!.asDescription()
         }) { it.method.hasConstant(" [x\u0001]") }
@@ -159,6 +173,12 @@ object RuntimeData : Module() {
 
             getDisplayToIPMapMethod = remapServerMethod.calls.first().asDescription()
         }) { it.hasConstant("https://servermappings.lunarclientcdn.com/servers.json") }
+
+        +FindClass({
+            positionField = it.fields.first { f -> Modifier.isStatic(f.access) }.asDescription(it)
+        }) { it.hasConstant("top_left") }
+
+        +FindClass({ featureDetailsClass = it.name }) { it.hasConstant("features.\u0001.details") }
     }
 
     @Transient
@@ -199,7 +219,7 @@ object RuntimeData : Module() {
             println("Couldn't load runtime values!")
         }
 
-        // Debuy log information
+        // Debug log information
         println("Runtime information: ${knownData.toList()}")
     }
 
