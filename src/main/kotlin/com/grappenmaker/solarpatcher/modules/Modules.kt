@@ -282,6 +282,7 @@ const val defaultClientID = 562286213059444737L
 const val defaultIcon = "icon_07_11_2020"
 const val defaultText = "Lunar Client"
 const val defaultVersionText = "Playing Minecraft \u0001"
+private const val builderClass = "com/jagrosh/discordipc/entities/RichPresence\$Builder"
 
 @Serializable
 data class RPCUpdate(
@@ -295,6 +296,7 @@ data class RPCUpdate(
     val displayActivity: Boolean = true,
     // EXACT MATCH -> display name
     val customServerMappings: Map<String, String> = mapOf(),
+    val showIcon: Boolean = true,
     override val isEnabled: Boolean = true
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
@@ -308,7 +310,6 @@ data class RPCUpdate(
                 // There is now a RichPresence.Builder on the stack
                 // Keep in mind that after dropping out of this advice
                 // the builder should be on the stack
-                val builderClass = "com/jagrosh/discordipc/entities/RichPresence\$Builder"
                 val setState = {
                     invokeMethod(
                         InvocationType.VIRTUAL,
@@ -378,12 +379,14 @@ data class RPCUpdate(
         if (customServerMappings.isNotEmpty()) {
             loader()
             invokeMethod(String::hashCode)
-            createLookupSwitch(defaultHandler, customServerMappings.mapKeys { (k) -> k.hashCode() }.mapValues { (_, v) ->
-                {
-                    visitLdcInsn(v)
-                    visitJumpInsn(GOTO, end)
-                }
-            })
+            createLookupSwitch(
+                defaultHandler,
+                customServerMappings.mapKeys { (k) -> k.hashCode() }.mapValues { (_, v) ->
+                    {
+                        visitLdcInsn(v)
+                        visitJumpInsn(GOTO, end)
+                    }
+                })
         }
 
         visitLabel(defaultHandler)
@@ -421,6 +424,30 @@ data class RPCUpdate(
         visitTypeInsn(CHECKCAST, "java/lang/String")
         visitInsn(SWAP) // string iterator
         pop() // string
+
+        if (showIcon) {
+            // As we found a match, might as well try to display an icon
+            visitInsn(SWAP) // string builder
+            loader() // string builder string
+            loadConstant('.')
+            loadConstant('_')
+            invokeMethod(
+                String::class.java.getMethod(
+                    "replace",
+                    Char::class.javaPrimitiveType,
+                    Char::class.javaPrimitiveType
+                )
+            ) // string builder string
+            loader() // string builder string string
+            invokeMethod(
+                InvocationType.VIRTUAL,
+                "setSmallImage",
+                "(L$internalString;L$internalString;)L$builderClass;",
+                builderClass
+            ) // string builder
+            visitInsn(SWAP) // builder string
+        }
+
         visitJumpInsn(GOTO, end) // exit with string
 
         visitLabel(reloop)
