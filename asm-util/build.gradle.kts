@@ -4,6 +4,9 @@ plugins {
 
     // Setup serialization
     kotlin("plugin.serialization")
+
+    // Because of the library aspect, also allow publishing
+    `maven-publish`
 }
 
 group = "com.grappenmaker"
@@ -24,4 +27,16 @@ dependencies {
 
     // Kotlin dependencies
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serializationJSON}")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.grappenmaker"
+            artifactId = "asm-util"
+            version = version
+
+            from(components["kotlin"])
+        }
+    }
 }

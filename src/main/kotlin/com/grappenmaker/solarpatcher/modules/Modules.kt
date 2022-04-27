@@ -297,6 +297,7 @@ data class RPCUpdate(
     // EXACT MATCH -> display name
     val customServerMappings: Map<String, String> = mapOf(),
     val showIcon: Boolean = true,
+    val bigServerIcon: Boolean = false,
     override val isEnabled: Boolean = true
 ) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
@@ -310,14 +311,11 @@ data class RPCUpdate(
                 // There is now a RichPresence.Builder on the stack
                 // Keep in mind that after dropping out of this advice
                 // the builder should be on the stack
-                val setState = {
-                    invokeMethod(
-                        InvocationType.VIRTUAL,
-                        "setState",
-                        "(L$internalString;)L$builderClass;",
-                        builderClass
-                    )
-                }
+
+                // Before doing anything, reset icon
+                visitLdcInsn(icon)
+                visitLdcInsn(iconText)
+                setImage(if (bigServerIcon) "setSmallImage" else "setLargeImage",)
 
                 // Labels to jump to
                 val wasNull = Label()
@@ -363,7 +361,6 @@ data class RPCUpdate(
             replaceClassConstants(
                 it, mapOf(
                     defaultClientID to clientID,
-                    defaultIcon to icon,
                     defaultText to iconText,
                     defaultVersionText to "$versionText \u0001"
                 )
@@ -439,12 +436,7 @@ data class RPCUpdate(
                 )
             ) // string builder string
             loader() // string builder string string
-            invokeMethod(
-                InvocationType.VIRTUAL,
-                "setSmallImage",
-                "(L$internalString;L$internalString;)L$builderClass;",
-                builderClass
-            ) // string builder
+            setImage(if (bigServerIcon) "setLargeImage" else "setSmallImage") // string builder
             visitInsn(SWAP) // builder string
         }
 
@@ -459,6 +451,20 @@ data class RPCUpdate(
         visitLdcInsn(default)
         visitLabel(end)
     }
+
+    private fun MethodVisitor.setState() = invokeMethod(
+        InvocationType.VIRTUAL,
+        "setState",
+        "(L$internalString;)L$builderClass;",
+        builderClass
+    )
+
+    private fun MethodVisitor.setImage(name: String) = invokeMethod(
+        InvocationType.VIRTUAL,
+        name,
+        "(L$internalString;L$internalString;)L$builderClass;",
+        builderClass
+    )
 }
 
 @Suppress("MemberVisibilityCanBePrivate") // can't be private because used in bytecode
@@ -817,6 +823,19 @@ data class EnableWrapped(override val isEnabled: Boolean = false) : Module() {
         ) { _, _ ->
             pop()
             visitInsn(ICONST_1)
+        })
+    }
+}
+
+@Serializable
+data class RemoveChatDelay(override val isEnabled: Boolean = true) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        if (!node.hasConstant("sendPlaceholder")) return null
+        return ClassTransform(VisitorTransform(matchAny()) { parent ->
+            replaceMethodConstants(
+                parent,
+                mapOf(2L to 0L)
+            )
         })
     }
 }
