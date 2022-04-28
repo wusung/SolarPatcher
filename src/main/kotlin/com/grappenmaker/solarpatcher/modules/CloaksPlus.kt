@@ -29,7 +29,6 @@ import com.grappenmaker.solarpatcher.asm.util.getObject
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.asm.util.loadVariable
 import com.grappenmaker.solarpatcher.asm.util.returnMethod
-import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.util.generation.Accessors
 import com.grappenmaker.solarpatcher.util.generation.IConfigDelegate
 import com.grappenmaker.solarpatcher.util.generation.Instances
@@ -145,4 +144,4 @@ object ConfigFetcher {
     }
 }
 
-fun shouldImplementItems() = Accessors.ConfigDelegate.getVersion() in listOf("v1_8", "v1_7")
+fun shouldImplementItems() = Accessors.ConfigDelegate.getVersion() in listOf("v1_12", "v1_8", "v1_7")
