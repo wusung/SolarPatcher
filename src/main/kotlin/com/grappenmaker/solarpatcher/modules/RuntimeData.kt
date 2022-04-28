@@ -25,7 +25,6 @@ import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.util.getField
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
-import com.grappenmaker.solarpatcher.config.Constants
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
@@ -81,7 +80,7 @@ object RuntimeData : Module() {
     val displayMessageMethod by +findBridgeMethod("bridge\$addChatMessage", { (owner) -> playerEntityBridge = owner })
     val renderPlayerItemsMethod by +FindMethod {
         it.method.name == "renderPlayerItems" &&
-                it.owner.name == Constants.playerConfigurationsName
+                it.owner.name.let { name -> name.startsWith("net/optifine/") && name.endsWith("PlayerConfigurations") }
     }
 
     val getVersionMethod by +FindMethod { it.method.calls(matchName("getMinecraftVersion")) }
@@ -144,20 +143,15 @@ object RuntimeData : Module() {
                 }!!.asDescription()
         }) { it.method.hasConstant(" [x\u0001]") }
 
-        +FindMethod({ (node, renderDelegate) ->
-            val renderCall = renderDelegate.calls.last()
-            renderLayerMethod = renderCall.asDescription()
-
-            val shouldRenderDelegate = node.methods.find { it.desc == "()Z" } ?: error("No shouldRender was found")
-            val shouldRenderCall = shouldRenderDelegate.calls.last()
-            shouldRenderLayerMethod = shouldRenderCall.asDescription()
-
-            skinLayerClass = shouldRenderLayerMethod.owner
+        val renderMethodFilter: (MethodNode) -> Boolean = { it.desc.endsWith("FFFFFFF)V") }
+        val shouldRenderMethodFilter: (MethodNode) -> Boolean = { it.desc == "()Z" }
+        +FindClass({
+            renderLayerMethod = it.methods.first(renderMethodFilter).asDescription(it)
+            shouldRenderLayerMethod = it.methods.first(shouldRenderMethodFilter).asDescription(it)
+            skinLayerClass = it.name
         }) {
-            !it.owner.isInterface && !it.owner.isAbstract && it.method.name == "bridge\$render"
-                    && it.method.desc.endsWith("FFFFFFF)V")
-                    && it.owner.methods.find { m -> m.desc == "()Z" }?.calls?.isNotEmpty() == true
-                    && it.method.calls.isNotEmpty()
+            it.name.startsWith("lunar/") && it.isInterface && it.methods.any(renderMethodFilter) &&
+                    it.methods.any(shouldRenderMethodFilter)
         }
 
         +FindClass({ node ->

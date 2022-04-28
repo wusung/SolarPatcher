@@ -20,7 +20,6 @@ package com.grappenmaker.solarpatcher.util.generation
 
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.modules.*
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
@@ -76,21 +75,26 @@ internal val configDelegateClass: Class<*> by lazy {
             )
         ) {
             visitCode()
+            val prefix =
+                if (Accessors.Utility.getVersion() == "v1_7") "net/optifine" else "net/optifine/player"
 
-            construct(Constants.playerConfigurationName, "()V")
+            val httpPrefix = if (Accessors.Utility.getVersion() == "v1_7") "net/optifine" else "net/optifine/http"
+            construct("$prefix/PlayerConfiguration", "()V")
             construct(
-                Constants.fileDownloadThreadName,
-                "(Ljava/lang/String;Lnet/optifine/http/IFileDownloadListener;)V"
+                "$httpPrefix/FileDownloadThread",
+                "(Ljava/lang/String;L$httpPrefix/IFileDownloadListener;)V"
             ) {
                 invokeMethod(
                     InvocationType.STATIC,
                     "getPlayerItemsUrl",
                     "()L$internalString;",
-                    Constants.httpUtilName
+                    if (Accessors.Utility.getVersion() == "v1_7") "net/optifine/HttpUtils"
+                    else "net/optifine/http/HttpUtils"
                 )
+
                 loadVariable(1)
                 concat("(L$internalString;L$internalString;)L$internalString;", "\u0001/users/\u0001.cfg")
-                construct(Constants.playerConfigReceivername, "(L$internalString;)V") { loadVariable(1) }
+                construct("$prefix/PlayerConfigurationReceiver", "(L$internalString;)V") { loadVariable(1) }
             }
 
             invokeMethod(Thread::start)
@@ -108,12 +112,14 @@ internal val configDelegateClass: Class<*> by lazy {
             callBridgeMethod(RuntimeData.getPlayerNameMethod)
             invokeMethod(java.util.Map::class.java.getMethod("remove", Any::class.java))
             pop()
-            getPlayerBridge()
-            val reloadCapeMethod = (RuntimeData.reloadCapeMethod?.asDescription()
-                ?: error("No reload cape method has been found"))
-            visitTypeInsn(CHECKCAST, Type.getArgumentTypes(reloadCapeMethod.descriptor).first().internalName)
 
-            invokeMethod(InvocationType.STATIC, reloadCapeMethod)
+            val reloadCapeMethod = RuntimeData.reloadCapeMethod?.asDescription()
+            if (reloadCapeMethod != null) {
+                getPlayerBridge()
+                visitTypeInsn(CHECKCAST, Type.getArgumentTypes(reloadCapeMethod.descriptor).first().internalName)
+                invokeMethod(InvocationType.STATIC, reloadCapeMethod)
+            }
+
             returnMethod()
 
             visitMaxs(-1, -1)

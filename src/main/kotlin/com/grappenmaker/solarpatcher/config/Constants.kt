@@ -34,11 +34,6 @@ object Constants {
 
     // The difference is one letter, beware
     private const val optifinePrefix = "net/optifine/player"
-    const val playerConfigurationsName = "$optifinePrefix/PlayerConfigurations"
-    const val playerConfigurationName = "$optifinePrefix/PlayerConfiguration"
-    const val playerConfigReceivername = "$optifinePrefix/PlayerConfigurationReceiver"
-    const val fileDownloadThreadName = "net/optifine/http/FileDownloadThread"
-    const val httpUtilName = "net/optifine/http/HttpUtils"
 
     object ToggleSprint {
         private const val defaultFlyingText = "flying"

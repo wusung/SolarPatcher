@@ -22,7 +22,6 @@ import com.grappenmaker.solarpatcher.asm.API
 import com.grappenmaker.solarpatcher.asm.asDescription
 import com.grappenmaker.solarpatcher.asm.calls
 import com.grappenmaker.solarpatcher.asm.isInterface
-import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
 import com.grappenmaker.solarpatcher.asm.transform.*
@@ -38,17 +37,18 @@ import kotlinx.serialization.Serializable
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 
 const val capeServer = "http://server.cloaksplus.com"
 
 @Serializable
-data class CloaksPlus(override val isEnabled: Boolean = true)
-    : JoinedModule(listOf(ChangeURL, ImplementConfigFetcher, ImplementSkinLayer, CapeServerURL))
+data class CloaksPlus(override val isEnabled: Boolean = true) :
+    JoinedModule(listOf(ChangeURL, ImplementConfigFetcher, ImplementSkinLayer, CapeServerURL))
 
 private object ChangeURL : Module(), TransformGenerator by matcherGenerator(
     ClassTransform(ConstantValueTransform(matchName("getPlayerItemsUrl"), capeServer)),
-    ClassMatching.matchName(Constants.httpUtilName)
+    matcher = { it.name.startsWith("net/optifine/") && it.name.endsWith("HttpUtils") }
 ) {
     override val isEnabled = true
 }
@@ -56,7 +56,7 @@ private object ChangeURL : Module(), TransformGenerator by matcherGenerator(
 private object ImplementConfigFetcher : Module() {
     override val isEnabled = true
     override fun generate(node: ClassNode): ClassTransform? {
-        if (node.name != Constants.playerConfigurationsName) return null
+        if (!(node.name.startsWith("net/optifine/") && node.name.endsWith("PlayerConfigurations"))) return null
 
         val getConfigMethod = node.methods.find { it.name == "getPlayerConfiguration" } ?: return null
         if (getConfigMethod.calls(matchName("getPlayerItemsUrl"))) return null
@@ -66,7 +66,7 @@ private object ImplementConfigFetcher : Module() {
                 getObject<Accessors.ConfigDelegate>()
                 loadVariable(0)
                 invokeMethod(IConfigDelegate::getPlayerConfig)
-                visitTypeInsn(CHECKCAST, Constants.playerConfigurationName)
+                visitTypeInsn(CHECKCAST, Type.getReturnType(getConfigMethod.desc).internalName)
                 returnMethod(ARETURN)
             },
             ImplementTransform(matchName("setPlayerConfiguration")) {
