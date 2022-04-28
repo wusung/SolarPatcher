@@ -1,5 +1,5 @@
 {
-    "patcherVersion": "1.6",
+    "patcherVersion": "1.6.1",
     "debug": false,
     "enableAll": false,
     "nickhider": {
@@ -89,6 +89,8 @@
         "displayActivity": true,
         "customServerMappings": {
         },
+        "showIcon": true,
+        "bigServerIcon": false,
         "isEnabled": true
     },
     "tasklistPrivacy": {
@@ -185,5 +187,8 @@
     "customMods": {
         "textMods": [
         ]
+    },
+    "removeChatDelay": {
+        "isEnabled": true
     }
 }
