@@ -14,16 +14,17 @@ NO warranty whatsoever is provided for this application, and support will not be
 USE AT YOUR OWN RISK.
 
 # Features
-Solar Patcher currently supports 32 distinctive modules, all very configurable.
+Solar Patcher currently supports 38 distinctive modules, all very configurable.
 A full list of these features can be found [here](Features.md)
 
 # Downloading
 You can download a prebuilt artifact from the [releases page](https://github.com/Solar-Tweaks/SolarPatcher/releases).
 
 # Usage
-In the near future, a new launcher will be released that uses this patcher automatically. Right now, you have to manually add the patcher as a launch parameter to a third-party. Add `-javaagent:/path/to/solar-patcher.jar=/path/to/config.json` to the JVM arguments.  
+Meant to be used by [our launcher](https://github.com/Solar-Tweaks/Solar-Tweaks). However, manual usage is also possible. Add `-javaagent:/path/to/solar-patcher.jar=/path/to/config.json` to the JVM arguments of a third party launcher or a self-made one.  
 
 ## Configuration
+*Note: Configuration can be done with the Solar Tweaks Launcher*  
 Open a `config.json` file (anywhere you like) with a text editor. An example configuration is shipped with the repository, or can be generated with `gradlew defaultConfig`.
 Edit the config as you wish. A part of the example configuration is shown below, with instructions on what to modify.
 ```json5
