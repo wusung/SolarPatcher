@@ -24,6 +24,7 @@ import com.grappenmaker.solarpatcher.asm.matching.asMatcher
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.util.*
+import com.grappenmaker.solarpatcher.configuration
 import com.grappenmaker.solarpatcher.util.generation.createAccountNameMod
 import com.grappenmaker.solarpatcher.util.generation.createTextMod
 import kotlinx.serialization.Serializable
@@ -33,6 +34,7 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
+import kotlin.reflect.KFunction
 
 // TextMod class for user configurable custom mods
 @Serializable
@@ -43,16 +45,22 @@ val TextMod.id get() = "${name.lowercase()}-custom"
 // Mod class for keeping track of mod data
 class Mod(val id: String, val displayName: String, val loader: MethodVisitor.() -> Unit)
 
+private fun createSimpleMod(id: String, displayName: String, method: KFunction<*>) =
+    Mod(id, displayName) {
+        visitLdcInsn(id)
+        invokeMethod(method)
+    }
+
 // Joined module that allows creation of custom mods
 @Serializable
 data class CustomMods(val textMods: List<TextMod> = listOf()) :
-    JoinedModule(listOf(ModRegistry(modLoaders(textMods)), LangMapper(langMap(textMods)))) {
+    JoinedModule(listOf(ModRegistry, LangMapper)) {
     @Transient
     override val isEnabled: Boolean = true
 }
 
 // Simple module that handles mod registration
-class ModRegistry(private val loaders: List<MethodVisitor.() -> Unit>) : Module() {
+private object ModRegistry : Module() {
     override val isEnabled = true
     override fun generate(node: ClassNode): ClassTransform? {
         if (node.methods.none { m ->
@@ -66,7 +74,7 @@ class ModRegistry(private val loaders: List<MethodVisitor.() -> Unit>) : Module(
                 parent,
                 method.asDescription(node).asMatcher(),
                 exitAdvice = {
-                    loaders.forEach {
+                    mods.map { it.loader }.forEach {
                         dup()
                         it()
                         invokeMethod(InvocationType.INTERFACE, "add", "(Ljava/lang/Object;)Z", "java/util/Set")
@@ -79,11 +87,14 @@ class ModRegistry(private val loaders: List<MethodVisitor.() -> Unit>) : Module(
 }
 
 // Simple language mapper for the custom mods
-class LangMapper(private val mapping: Map<String, String>) : Module() {
+private object LangMapper : Module() {
     override val isEnabled = true
     override fun generate(node: ClassNode): ClassTransform? {
-        if (mapping.isEmpty()) return null
         if (!node.hasConstant("language.json")) return null
+
+        val mapping = mods.associate { it.id to it.displayName }
+        if (mapping.isEmpty()) return null
+
         val method =
             node.methods.find { it.desc == "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;" }
                 ?: return null
@@ -128,25 +139,16 @@ class LangMapper(private val mapping: Map<String, String>) : Module() {
     }
 }
 
-// Custom mod that shows your account name
-private val nameMod = Mod("account-name", "Account Name") {
-    visitLdcInsn("account-name")
-    invokeMethod(::createAccountNameMod)
+private val mods by lazy { registerMods(configuration.customMods.textMods) }
+
+// TODO: mod system
+fun registerMods(configured: List<TextMod>) = listOf(nameMod) + configured.map {
+    Mod(it.id, it.name) {
+        visitLdcInsn(it.id)
+        visitLdcInsn(it.text)
+        invokeMethod(::createTextMod)
+    }
 }
 
-// List of custom mods
-private val customMods = listOf(nameMod)
-
-// Utility method for providing mod loaders
-private fun modLoaders(textMods: List<TextMod>) =
-    customMods.map { it.loader } + textMods.map {
-        {
-            visitLdcInsn(it.id)
-            visitLdcInsn(it.text)
-            invokeMethod(::createTextMod)
-        }
-    }
-
-// Utility method to get the language map
-private fun langMap(textMods: List<TextMod>) =
-    customMods.associate { it.id to it.displayName } + textMods.associate { it.id to it.name }
+// Custom mod that shows your account name
+private val nameMod = createSimpleMod("account-name", "Account Name", ::createAccountNameMod)

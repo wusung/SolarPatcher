@@ -26,41 +26,9 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import java.util.*
 
-private const val serializerName = "net/kyori/adventure/text/serializer/gson/GsonComponentSerializer"
-private const val componentName = "net/kyori/adventure/text/Component"
-
 // Generated class supplying various utility functions
 internal val utilityClass by lazy {
     generateClass("${GeneratedCode.prefix}/Utility", interfaces = arrayOf(getInternalName<IUtility>())) {
-        with(
-            visitMethod(
-                Opcodes.ACC_PUBLIC,
-                "displayMessage",
-                "(L${getInternalName<String>()};)V",
-                null,
-                null
-            )
-        ) {
-            visitCode()
-
-            getPlayerBridge()
-
-            visitMethodInsn(Opcodes.INVOKESTATIC, serializerName, "gson", "()L$serializerName;", true)
-            loadVariable(1)
-            invokeMethod(
-                InvocationType.INTERFACE,
-                "deserialize",
-                "(Ljava/lang/Object;)L$componentName;",
-                serializerName
-            )
-            toBridgeComponent()
-            callBridgeMethod(RuntimeData.displayMessageMethod)
-
-            returnMethod()
-            visitMaxs(-1, -1)
-            visitEnd()
-        }
-
         with(visitMethod(Opcodes.ACC_PUBLIC, "getPlayerName", "()L$internalString;", null, null)) {
             visitCode()
             getPlayerBridge()
@@ -136,7 +104,6 @@ internal val utilityClass by lazy {
 }
 
 interface IUtility {
-    fun displayMessage(message: String)
     fun getPlayerName(): String
     fun getPlayerUUID(): UUID
     fun getServerIP(): String?

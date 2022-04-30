@@ -70,7 +70,7 @@ class HandlerCommand(
 fun getCodeCommands(): Map<String, Command> {
     val easterEgg = HandlerCommand("???", hidden = true) {
         cancel()
-        Accessors.Utility.displayMessage(
+        Accessors.ChatUtility.displayComponent(
             """
             {
                 "color": "dark_purple",
@@ -102,13 +102,13 @@ fun getCodeCommands(): Map<String, Command> {
 
     val reloadCosmetics = HandlerCommand("Reloads your cosmetics (for the OptifineItems Module)") {
         cancel()
-        Accessors.Utility.displayMessage("""{"text": "Reloading your cosmetics...", "color": "gray"}""")
+        Accessors.ChatUtility.displayComponent("""{"text": "Reloading your cosmetics...", "color": "gray"}""")
 
         try {
             Accessors.ConfigDelegate.reloadPlayerCosmetics()
-            Accessors.Utility.displayMessage("""{"text": "Successfully unregistered cosmetics!", "color": "green"}""")
+            Accessors.ChatUtility.displayComponent("""{"text": "Successfully unregistered cosmetics!", "color": "green"}""")
         } catch (e: Exception) {
-            Accessors.Utility.displayMessage("""{"text": "There was an error while reloading your cosmetics:\n${e.message}", "color": "red"}""")
+            Accessors.ChatUtility.displayComponent("""{"text": "There was an error while reloading your cosmetics:\n${e.message}", "color": "red"}""")
         }
     }
 
@@ -122,7 +122,7 @@ fun getCodeCommands(): Map<String, Command> {
         val moduleText = configuration.modules.map { m -> m::class.simpleName ?: "Unnamed" }
             .sorted().joinToString()
 
-        Accessors.Utility.displayMessage(
+        Accessors.ChatUtility.displayComponent(
             """[
             "",
             {
@@ -205,7 +205,7 @@ fun getCodeCommands(): Map<String, Command> {
             }
 
         cancel()
-        Accessors.Utility.displayMessage(
+        Accessors.ChatUtility.displayComponent(
             """[
             "",
             {
@@ -221,9 +221,8 @@ fun getCodeCommands(): Map<String, Command> {
     }
 
     val extraHelp = HandlerCommand(hidden = true) {
-        Accessors.Utility.displayMessage(
-            """{
-            "text": "If you need Solar Tweaks related help, take a look in the discord server, or use /solarhelp",
+        Accessors.ChatUtility.displayComponent("""{
+            "text": "If you need Solar Tweaks related help, take a look in the github discussions, or use /solarhelp",
             "color": "dark_purple",
             "italic": true
         }"""

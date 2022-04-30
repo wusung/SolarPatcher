@@ -315,7 +315,7 @@ data class RPCUpdate(
                 // Before doing anything, reset icon
                 visitLdcInsn(icon)
                 visitLdcInsn(iconText)
-                setImage(if (bigServerIcon) "setSmallImage" else "setLargeImage",)
+                setImage(if (bigServerIcon) "setSmallImage" else "setLargeImage")
 
                 // Labels to jump to
                 val wasNull = Label()
@@ -828,7 +828,7 @@ data class EnableWrapped(override val isEnabled: Boolean = false) : Module() {
 }
 
 @Serializable
-data class RemoveChatDelay(override val isEnabled: Boolean = true) : Module() {
+data class RemoveChatDelay(override val isEnabled: Boolean = false) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         if (!node.hasConstant("sendPlaceholder")) return null
         return ClassTransform(VisitorTransform(matchAny()) { parent ->
@@ -836,6 +836,42 @@ data class RemoveChatDelay(override val isEnabled: Boolean = true) : Module() {
                 parent,
                 mapOf(2L to 0L)
             )
+        })
+    }
+}
+
+@Serializable
+data class AllowCosmeticCombinations(override val isEnabled: Boolean = true) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find {
+            it.desc == "(Lcom/google/gson/JsonObject;)V" &&
+                    it.hasConstant("compatible")
+        } ?: return null
+
+        val field = node.fields.find { it.desc == "Ljava/util/Map;" } ?: return null
+
+        return ClassTransform(VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
+            object : MethodVisitor(API, parent) {
+                var lastLdc: Any? = null
+                override fun visitLdcInsn(value: Any?) {
+                    lastLdc = value
+                    super.visitLdcInsn(value)
+                }
+
+                override fun visitJumpInsn(opcode: Int, label: Label) {
+                    if (opcode == IFEQ && lastLdc == "compatible") {
+                        pop()
+                        loadVariable(0)
+                        getField(field.asDescription(node))
+                        loadConstant("any")
+                        loadConstant(true)
+                        invokeMethod(java.util.Map<*, *>::put)
+                        super.visitJumpInsn(GOTO, label)
+                    } else {
+                        super.visitJumpInsn(opcode, label)
+                    }
+                }
+            }
         })
     }
 }

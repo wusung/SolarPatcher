@@ -20,5 +20,6 @@ package com.grappenmaker.solarpatcher.util.generation
 
 object Accessors {
     object Utility : IUtility by Instances.utility
+    object ChatUtility : IChatUtility by Instances.chatUtility
     object ConfigDelegate : IConfigDelegate by Instances.configDelegate
 }

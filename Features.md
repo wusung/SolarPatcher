@@ -35,11 +35,14 @@ A full list of all features supported by Solar Patcher with a short description.
 - MumbleFix - Can allow mumblelink on linux, but requires the user to have a special native (not recommended to use)
 - Websocket - Allows you to change the lunar client asset websocket URL
 - Enable Wrapped - Allows you to re-enable lunar client Wrapped, which can be useful for the people that still want to view it
+- Remove Chat Delay - Removes the client-side websocket chat delay (to lunar client friends)
+- Allow Cosmetic Cominations - Allows a user to use multiple incompatible cosmetics at once
 
 #### Always enabled modules (not configurable and internal)
 - RuntimeData - Internal module for looking for lunar client classes and methods
 - HandleNotifications - Allows usage of LCNotificationPacket
 - ModName - Changes the client brand to Solar Tweaks (version)/Lunar Client (version)
+- LaunchRequestModule - Request so we can keep track of some nerdy stats (it just increments a counter)
 
 #### Work in progress
 - Replace text modules with ingame mod menu

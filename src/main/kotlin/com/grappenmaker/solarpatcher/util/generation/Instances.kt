@@ -20,6 +20,7 @@ package com.grappenmaker.solarpatcher.util.generation
 
 object Instances {
     val utility by lazy { instance<IUtility>(utilityClass) }
+    val chatUtility by lazy { instance<IChatUtility>(chatUtilityClass) }
     val configDelegate by lazy { instance<IConfigDelegate>(configDelegateClass) }
     val playerItemsLayer by lazy { instance<Any>(playerItemsLayerClass) }
 

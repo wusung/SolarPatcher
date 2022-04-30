@@ -29,6 +29,7 @@ import kotlinx.serialization.decodeFromString
 import java.io.File
 import java.io.IOException
 import java.lang.instrument.Instrumentation
+import java.net.URL
 import java.util.*
 
 lateinit var configuration: Configuration
@@ -71,7 +72,7 @@ fun premain(arg: String?, inst: Instrumentation) {
     println("Launching Lunar Client")
     println()
 
-    // Add them to the instrumentation backend implementation of the jvm
+    // Add the transforms to the instrumentation backend implementation of the jvm
     inst.addTransformer(FileTransformer(transforms, debug = configuration.debug))
 
     // Utility to store lunar client's class loader

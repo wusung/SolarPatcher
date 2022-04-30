@@ -83,13 +83,15 @@ data class Configuration(
     val websocket: Websocket = Websocket(), // Allows you to set the websocket url
     val enableWrapped: EnableWrapped = EnableWrapped(), // Re-enables lunar client Wrapped
     val customMods: CustomMods = CustomMods(), // Allows the user to define and use custom mods
-    val removeChatDelay: RemoveChatDelay = RemoveChatDelay()
+    val removeChatDelay: RemoveChatDelay = RemoveChatDelay(), // Removes websocket chat delay
+    val allowCosmeticCombinations: AllowCosmeticCombinations = AllowCosmeticCombinations()
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification
     // ModName -> changes the vendor; enforced because this is not normal Lunar Client
+    // LaunchRequestModule -> request so we can keep track of some nerdy stats (it just increments a counter)
     @Transient
-    private val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ModName)
+    private val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ModName, LaunchRequestModule)
 
     // All enabled modules, cached
     // Retrieved with reflection, yes it is slow but i dont want to put
