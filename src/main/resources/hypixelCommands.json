@@ -1,0 +1,312 @@
+{
+  "armed4": {
+    "description": "armed bedwars",
+    "playCommand": "bedwars_four_four_armed"
+  },
+  "blitz": {
+    "description": "blitz duel",
+    "duelCommand": "blitz",
+    "playCommand": "duels_blitz_duel"
+  },
+  "blitz1": {
+    "description": "Blitz solo",
+    "playCommand": "blitz_solo_normal"
+  },
+  "blitz4": {
+    "description": "Blitz teams",
+    "playCommand": "blitz_teams_normal"
+  },
+  "bow": {
+    "description": "bow duel",
+    "duelCommand": "bow",
+    "playCommand": "duels_bow_duel"
+  },
+  "bowsp": {
+    "description": "bow spam (spleef)",
+    "duelCommand": "bowspleef",
+    "playCommand": "duels_bowspleef_duel"
+  },
+  "box": {
+    "description": "hit sync game",
+    "duelCommand": "boxing",
+    "playCommand": "duels_boxing_duel"
+  },
+  "br": {
+    "description": "bridge",
+    "duelCommand": "bridge",
+    "playCommand": "duels_bridge_duel"
+  },
+  "br2": {
+    "description": "bridge doubles",
+    "duelCommand": "bridge_doubles",
+    "playCommand": "duels_bridge_doubles"
+  },
+  "br2222": {
+    "description": "bridge 2v2v2v2",
+    "duelCommand": "bridge_2v2v2v2",
+    "playCommand": "duels_bridge_2v2v2v2"
+  },
+  "br3": {
+    "description": "bridge 3v3",
+    "duelCommand": "bridge_threes",
+    "playCommand": "duels_bridge_threes"
+  },
+  "br3333": {
+    "description": "bridge 3v3v3v3",
+    "duelCommand": "bridge_3v3v3v3",
+    "playCommand": "duels_bridge_3v3v3v3"
+  },
+  "br4": {
+    "description": "bridge 4v4",
+    "duelCommand": "bridge_four",
+    "playCommand": "duels_bridge_four"
+  },
+  "bw": {
+    "description": "bedwars solo",
+    "playCommand": "bedwars_eight_one"
+  },
+  "bw2": {
+    "description": "bedwars doubles",
+    "playCommand": "bedwars_eight_two"
+  },
+  "bw4": {
+    "description": "bedwars quadruples",
+    "playCommand": "bedwars_four_four"
+  },
+  "bw4v4": {
+    "description": "bedwars 4v4",
+    "playCommand": "bedwars_two_four"
+  },
+  "castle": {
+    "description": "bedwars castle",
+    "playCommand": "bedwars_castle"
+  },
+  "classic": {
+    "description": "classic duel",
+    "duelCommand": "classic",
+    "playCommand": "duels_classic_duel"
+  },
+  "combo": {
+    "description": "combo duel",
+    "duelCommand": "combo",
+    "playCommand": "duels_combo_duel"
+  },
+  "cops": {
+    "description": "copsncrims",
+    "playCommand": "mcgo_normal"
+  },
+  "copsdm": {
+    "description": "copsncrims dm",
+    "playCommand": "mcgo_deathmatch"
+  },
+  "copsdmp": {
+    "description": "copsncrims dm party",
+    "playCommand": "mcgo_deathmatch_party"
+  },
+  "copsp": {
+    "description": "copsncrims party",
+    "playCommand": "mcgo_normal_party"
+  },
+  "ctf3": {
+    "description": "bridge ctf 3v3",
+    "duelCommand": "capture_threes",
+    "playCommand": "duels_capture_threes"
+  },
+  "lucky4": {
+    "description": "bedwars lucky block",
+    "playCommand": "bedwars_four_four_lucky"
+  },
+  "meet": {
+    "description": "uhc meetup",
+    "duelCommand": "uhc_meetup",
+    "playCommand": "duels_uhc_meetup"
+  },
+  "mega": {
+    "description": "mega walls duel",
+    "duelCommand": "mega_walls",
+    "playCommand": "duels_mw_duel"
+  },
+  "mega2": {
+    "description": "mega walls doubles",
+    "duelCommand": "mw_doubles",
+    "playCommand": "duels_mw_doubles"
+  },
+  "murder": {
+    "description": "murder mystery",
+    "playCommand": "murder_classic"
+  },
+  "mw": {
+    "description": "mega walls",
+    "playCommand": "mw_standard"
+  },
+  "mwface": {
+    "description": "mega walls face off",
+    "playCommand": "mw_face_off"
+  },
+  "op": {
+    "description": "op duel",
+    "duelCommand": "op",
+    "playCommand": "duels_op_duel"
+  },
+  "op2": {
+    "description": "op doubles",
+    "duelCommand": "op_doubles",
+    "playCommand": "duels_op_doubles"
+  },
+  "park8": {
+    "description": "parkour duel",
+    "duelCommand": "parkour_eight",
+    "playCommand": "duels_parkour_eight"
+  },
+  "party": {
+    "description": "hidenseek party pooper",
+    "playCommand": "arcade_hide_and_seek_party_pooper"
+  },
+  "pot": {
+    "description": "nodebuff duel",
+    "duelCommand": "potion",
+    "playCommand": "duels_potion_duel"
+  },
+  "prop": {
+    "description": "prop hunt",
+    "playCommand": "arcade_hide_and_seek_prop_hunt"
+  },
+  "rush2": {
+    "description": "bedwars rush doubles",
+    "playCommand": "bedwars_eight_two_rush"
+  },
+  "rush4": {
+    "description": "bedwars rush fours",
+    "playCommand": "bedwars_four_four_rush"
+  },
+  "sumo": {
+    "description": "sumo",
+    "duelCommand": "sumo",
+    "playCommand": "duels_sumo_duel"
+  },
+  "sw": {
+    "description": "skywars duel",
+    "duelCommand": "skywars",
+    "playCommand": "duels_sw_duel"
+  },
+  "sw2": {
+    "description": "skywars doubles (duel)",
+    "duelCommand": "sw_doubles",
+    "playCommand": "duels_sw_doubles"
+  },
+  "swi": {
+    "description": "skywars insane",
+    "duelCommand": "skywars",
+    "playCommand": "solo_insane"
+  },
+  "swi2": {
+    "description": "skywars teams insane",
+    "duelCommand": "skywars",
+    "playCommand": "teams_insane"
+  },
+  "swi2l": {
+    "description": "skywars teams insane lucky",
+    "duelCommand": "skywars",
+    "playCommand": "teams_insane_lucky"
+  },
+  "swi2r": {
+    "description": "skywars teams insane rush",
+    "duelCommand": "skywars",
+    "playCommand": "teams_insane_rush"
+  },
+  "swi2s": {
+    "description": "skywars insane slime",
+    "duelCommand": "skywars",
+    "playCommand": "teams_insane_slime"
+  },
+  "swi2tnt": {
+    "description": "skywars tnt insane",
+    "duelCommand": "skywars",
+    "playCommand": "teams_insane_tnt_madness"
+  },
+  "swihvb": {
+    "description": "skywars hunters vs beasts",
+    "duelCommand": "skywars",
+    "playCommand": "solo_insane_hunters_vs_beasts"
+  },
+  "swil": {
+    "description": "skywars insane lucky",
+    "duelCommand": "skywars",
+    "playCommand": "solo_insane_lucky"
+  },
+  "swir": {
+    "description": "skywars insane rush",
+    "duelCommand": "skywars",
+    "playCommand": "solo_insane_rush"
+  },
+  "swis": {
+    "description": "skywars insane slime",
+    "duelCommand": "skywars",
+    "playCommand": "solo_insane_slime"
+  },
+  "switnt": {
+    "description": "skywars insane tnt",
+    "duelCommand": "skywars",
+    "playCommand": "solo_insane_tnt_madness"
+  },
+  "swn": {
+    "description": "skywars normal",
+    "duelCommand": "skywars",
+    "playCommand": "solo_normal"
+  },
+  "swn2": {
+    "description": "skywars teams normal",
+    "duelCommand": "skywars",
+    "playCommand": "teams_normal"
+  },
+  "swn4": {
+    "description": "speed skywars teams normal",
+    "duelCommand": "skywars",
+    "playCommand": "speed_team_normal"
+  },
+  "swns": {
+    "description": "speed skywars normal",
+    "duelCommand": "skywars",
+    "playCommand": "speed_solo_normal"
+  },
+  "swr": {
+    "description": "ranked skywars",
+    "duelCommand": "skywars",
+    "playCommand": "ranked_normal"
+  },
+  "uhc": {
+    "description": "uhc",
+    "duelCommand": "uhc_duel",
+    "playCommand": "uhc_solo"
+  },
+  "uhc2": {
+    "description": "uhc doubles",
+    "duelCommand": "uhc_doubles",
+    "playCommand": "duels_uhc_doubles"
+  },
+  "uhc4": {
+    "description": "uhc teams",
+    "duelCommand": "uhc_four",
+    "playCommand": "uhc_teams"
+  },
+  "uhcev": {
+    "description": "uhc events",
+    "playCommand": "uhc_events"
+  },
+  "ultimate2": {
+    "description": "bedwars ultimate doubles",
+    "playCommand": "bedwars_eight_two_ultimate"
+  },
+  "ultimate4": {
+    "description": "bedwars ultimate fours",
+    "playCommand": "bedwars_four_four_ultimate"
+  },
+  "voidless2": {
+    "description": "bedwars voidless doubles",
+    "playCommand": "bedwars_eight_two_voidless"
+  },
+  "voidless4": {
+    "description": "bedwars voidless fours",
+    "playCommand": "bedwars_four_four_voidless"
+  }
+}
