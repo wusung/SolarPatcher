@@ -25,7 +25,6 @@ import com.grappenmaker.solarpatcher.util.generation.Accessors
 import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.decodeFromStream
 import java.awt.Desktop
 import java.net.URI
 import java.time.Instant
@@ -221,7 +220,8 @@ fun getCodeCommands(): Map<String, Command> {
     }
 
     val extraHelp = HandlerCommand(hidden = true) {
-        Accessors.ChatUtility.displayComponent("""{
+        Accessors.ChatUtility.displayComponent(
+            """{
             "text": "If you need Solar Tweaks related help, take a look in the github discussions, or use /solarhelp",
             "color": "dark_purple",
             "italic": true
@@ -252,7 +252,7 @@ private fun loadHypixelCommands(): Map<String, HandlerCommand> {
                 duelCMD != null && arguments.isNotEmpty() -> "/duel ${arguments[0]} ${duelCMD}${
                     arguments.getOrNull(1)?.let { "_$it" } ?: ""
                 }"
-                else -> "/play ${playCMD}"
+                else -> "/play $playCMD"
             }
         }
     }

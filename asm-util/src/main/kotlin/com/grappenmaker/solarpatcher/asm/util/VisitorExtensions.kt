@@ -23,11 +23,9 @@ import com.grappenmaker.solarpatcher.asm.isStatic
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.method.invocationType
-import org.objectweb.asm.Handle
-import org.objectweb.asm.Label
-import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
-import org.objectweb.asm.Type
+import org.objectweb.asm.tree.MethodNode
 import java.io.PrintStream
 import java.lang.invoke.StringConcatFactory
 import java.lang.reflect.Constructor

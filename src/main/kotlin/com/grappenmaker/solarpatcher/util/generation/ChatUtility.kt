@@ -20,10 +20,7 @@ package com.grappenmaker.solarpatcher.util.generation
 
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.modules.RuntimeData
-import com.grappenmaker.solarpatcher.modules.callBridgeMethod
-import com.grappenmaker.solarpatcher.modules.getPlayerBridge
-import com.grappenmaker.solarpatcher.modules.toBridgeComponent
+import com.grappenmaker.solarpatcher.modules.*
 import org.objectweb.asm.Opcodes
 
 private const val serializerName = "net/kyori/adventure/text/serializer/gson/GsonComponentSerializer"
@@ -54,7 +51,7 @@ val chatUtilityClass by lazy {
                 serializerName
             )
             toBridgeComponent()
-            callBridgeMethod(RuntimeData.displayMessageMethod)
+            callBridgeMethod(Bridge.displayMessageMethod)
 
             returnMethod()
             visitMaxs(-1, -1)

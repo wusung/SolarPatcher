@@ -19,10 +19,8 @@
 package com.grappenmaker.solarpatcher.util.generation
 
 import com.grappenmaker.solarpatcher.asm.util.*
-import com.grappenmaker.solarpatcher.modules.RuntimeData
-import com.grappenmaker.solarpatcher.modules.callBridgeMethod
-import com.grappenmaker.solarpatcher.modules.getPlayerBridge
-import com.grappenmaker.solarpatcher.modules.internalString
+import com.grappenmaker.solarpatcher.modules.*
+import com.grappenmaker.solarpatcher.util.ensure
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
@@ -32,7 +30,7 @@ private var id: Int = 0
     get() = field++
 
 fun createLunarMod(name: String, previewText: String = name, provider: MethodVisitor.() -> Unit): Any {
-    val textModClass = RuntimeData.textModClass ?: error("Text mod class uninitialized")
+    val textModClass = ModRuntime.textModClass.ensure()
     val clazz = generateClass(
         "${GeneratedCode.prefix}/LunarMod$id",
         extends = textModClass.name,
@@ -44,7 +42,7 @@ fun createLunarMod(name: String, previewText: String = name, provider: MethodVis
             val ctor = textModClass.methods.find { it.name == "<init>" } ?: error("No ctor?")
             loadVariable(0)
             visitInsn(ICONST_0)
-            getField(RuntimeData.positionField)
+            getField(ModRuntime.positionField)
             visitMethodInsn(INVOKESPECIAL, textModClass.name, "<init>", ctor.desc, false)
             returnMethod()
 
@@ -84,7 +82,7 @@ fun createLunarMod(name: String, previewText: String = name, provider: MethodVis
         }
 
         // Implement get feature details
-        val (_, featureDetailsMethod) = RuntimeData.getDetails ?: error("No featuredetails method?")
+        val (_, featureDetailsMethod) = ModRuntime.getDetails.ensure()
         with(visitMethod(ACC_PUBLIC, featureDetailsMethod.name, featureDetailsMethod.desc, null, null)) {
             visitCode()
             construct(Type.getReturnType(featureDetailsMethod.desc).internalName, "(L$internalString;)V") {
@@ -102,7 +100,7 @@ fun createLunarMod(name: String, previewText: String = name, provider: MethodVis
 
 fun createAccountNameMod(name: String) = createLunarMod(name, "[Steve]") {
     getPlayerBridge()
-    callBridgeMethod(RuntimeData.getPlayerNameMethod)
+    callBridgeMethod(Bridge.getPlayerNameMethod)
 }
 
 fun createTextMod(name: String, text: String) =

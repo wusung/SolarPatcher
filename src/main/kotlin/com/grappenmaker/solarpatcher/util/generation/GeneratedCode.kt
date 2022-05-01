@@ -23,9 +23,12 @@ import com.grappenmaker.solarpatcher.asm.util.getField
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.asm.util.loadVariable
 import com.grappenmaker.solarpatcher.asm.util.returnMethod
+import com.grappenmaker.solarpatcher.modules.OtherRuntimeData
 import com.grappenmaker.solarpatcher.modules.RuntimeData
 import com.grappenmaker.solarpatcher.modules.internalString
 import com.grappenmaker.solarpatcher.util.LunarClassLoader
+import com.grappenmaker.solarpatcher.util.ensure
+import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
@@ -87,11 +90,10 @@ internal fun ClassVisitor.implementGetVersion() =
         visitCode()
         invokeMethod(
             InvocationType.STATIC,
-            RuntimeData.getVersionMethod?.asDescription()
-                ?: error("No get version method was found")
+            OtherRuntimeData.getVersionMethod.ensure().asDescription()
         )
         getField(
-            RuntimeData.versionIdField ?: error("No version id field was found!"),
+            OtherRuntimeData.versionIdField ?: error("No version id field was found!"),
             static = false
         )
         returnMethod(Opcodes.ARETURN)

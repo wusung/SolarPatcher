@@ -29,8 +29,8 @@ internal val configDelegateClass: Class<*> by lazy {
     generateClass("${GeneratedCode.prefix}/ConfigDelegate", interfaces = arrayOf(getInternalName<IConfigDelegate>())) {
         fun MethodVisitor.getName() {
             loadVariable(1)
-            visitTypeInsn(CHECKCAST, RuntimeData.playerEntityBridge.name)
-            callBridgeMethod(RuntimeData.getPlayerNameMethod)
+            visitTypeInsn(CHECKCAST, Bridge.playerEntityBridge.name)
+            callBridgeMethod(Bridge.getPlayerNameMethod)
         }
 
         with(visitMethod(ACC_PUBLIC, "getPlayerConfig", "(Ljava/lang/Object;)Ljava/lang/Object;", null, null)) {
@@ -109,11 +109,11 @@ internal val configDelegateClass: Class<*> by lazy {
             getObject<ConfigFetcher>()
             invokeMethod(ConfigFetcher::configs.getter)
             getPlayerBridge()
-            callBridgeMethod(RuntimeData.getPlayerNameMethod)
+            callBridgeMethod(Bridge.getPlayerNameMethod)
             invokeMethod(java.util.Map::class.java.getMethod("remove", Any::class.java))
             pop()
 
-            val reloadCapeMethod = RuntimeData.reloadCapeMethod?.asDescription()
+            val reloadCapeMethod = OtherRuntimeData.reloadCapeMethod?.asDescription()
             if (reloadCapeMethod != null) {
                 getPlayerBridge()
                 visitTypeInsn(CHECKCAST, Type.getArgumentTypes(reloadCapeMethod.descriptor).first().internalName)

@@ -26,17 +26,19 @@ import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.asm.util.loadVariable
 import com.grappenmaker.solarpatcher.asm.util.returnMethod
-import com.grappenmaker.solarpatcher.modules.RuntimeData
+import com.grappenmaker.solarpatcher.modules.Bridge
+import com.grappenmaker.solarpatcher.modules.SkinLayer
 import com.grappenmaker.solarpatcher.modules.shouldImplementItems
+import com.grappenmaker.solarpatcher.util.ensure
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 
 internal val playerItemsLayerClass: Class<*> by lazy {
-    generateClass("${GeneratedCode.prefix}/PlayerItemsLayer", interfaces = arrayOf(RuntimeData.skinLayerClass)) {
-        val (renderName, renderDesc) = RuntimeData.renderLayerMethod
-        val (shouldRenderName) = RuntimeData.shouldRenderLayerMethod
+    generateClass("${GeneratedCode.prefix}/PlayerItemsLayer", interfaces = arrayOf(SkinLayer.skinLayerClass.ensure().name)) {
+        val (renderName, renderDesc) = SkinLayer.renderLayerMethod.ensure().asDescription()
+        val (shouldRenderName) = SkinLayer.shouldRenderLayerMethod.ensure().asDescription()
 
         with(visitMethod(ACC_PUBLIC, renderName, renderDesc, null, null)) {
             visitCode()
@@ -55,7 +57,7 @@ internal val playerItemsLayerClass: Class<*> by lazy {
             val instanceof = Label()
             loadVariable(2)
             // Check cast for player entity bridge
-            val playerBridgeName = RuntimeData.playerEntityBridge.name
+            val playerBridgeName = Bridge.playerEntityBridge.name
             visitTypeInsn(INSTANCEOF, playerBridgeName)
             visitJumpInsn(IFEQ, instanceof)
 
@@ -64,7 +66,7 @@ internal val playerItemsLayerClass: Class<*> by lazy {
             callRenderer("bridge\$disableRescaleNormal")
 
             // Call render method
-            val methodInfo = RuntimeData.renderPlayerItemsMethod ?: error("No render player items method was found?")
+            val methodInfo = SkinLayer.renderPlayerItemsMethod.ensure()
             val arguments = Type.getArgumentTypes(methodInfo.method.desc)
 
             // Load arguments
@@ -102,7 +104,7 @@ private inline fun MethodVisitor.callRenderer(name: String, arguments: MethodVis
 }
 
 private fun getRendererMethod(name: String): MethodDescription {
-    val renderer = RuntimeData.renderer ?: error("Renderer has not been found!")
+    val renderer = SkinLayer.renderer ?: error("Renderer has not been found!")
     return renderer.methods.find { it.calls(MethodMatching.matchName(name)) }?.asDescription(renderer)
         ?: error("Requested render method does not exist!")
 }

@@ -34,6 +34,7 @@ import com.grappenmaker.solarpatcher.asm.transform.*
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.config.Constants
 import com.grappenmaker.solarpatcher.config.Constants.packetClassname
+import com.grappenmaker.solarpatcher.util.ensure
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.objectweb.asm.*
@@ -145,9 +146,10 @@ private const val logDetection = "No default value for Server Rule [\u0001] foun
 data class NoHitDelay(override val isEnabled: Boolean = false) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val method = node.methods.find { it.constants.contains(logDetection) } ?: return null
+        val desc = method.asDescription(node)
 
-        return ClassTransform(visitors = listOf {
-            AdviceClassVisitor(it, method.asDescription(node).asMatcher(), exitAdvice = { opcode: Int ->
+        return ClassTransform(listOf(VisitorTransform(desc.asMatcher()) { parent ->
+            createAdvice(desc, parent, exitAdvice = { opcode: Int ->
                 if (opcode == ARETURN) {
                     // No, this is not a redundant dup-pop
                     dup()
@@ -158,7 +160,7 @@ data class NoHitDelay(override val isEnabled: Boolean = false) : Module() {
                     pop()
                 }
             })
-        }, shouldExpand = true)
+        }), shouldExpand = true)
     }
 }
 
@@ -241,10 +243,10 @@ data class CustomCommands(
 
     override fun generate(node: ClassNode): ClassTransform? {
         val handleMethod = node.methods.find { it.constants.contains("EventBus [\u0001]: \u0001") } ?: return null
-        val matcher = handleMethod.asDescription(node).asMatcher()
+        val desc = handleMethod.asDescription(node)
 
-        return ClassTransform(visitors = listOf {
-            AdviceClassVisitor(it, matcher, exitAdvice = {
+        return ClassTransform(listOf(VisitorTransform(desc.asMatcher()) { parent ->
+            createAdvice(desc, parent, exitAdvice = {
                 val end = Label()
 
                 // Load event class name onto the stack
@@ -253,8 +255,8 @@ data class CustomCommands(
                 invokeMethod(Class<*>::getName)
 
                 // Load chat event class onto the stack
-                getObject<RuntimeData>()
-                invokeMethod(RuntimeData::outgoingChatEvent.getter)
+                getObject<Chat>()
+                invokeMethod(Chat::outgoingChatEvent.getter)
 
                 // Compare the strings
                 invokeMethod(String::equals)
@@ -274,7 +276,7 @@ data class CustomCommands(
                 // method end
                 visitLabel(end)
             })
-        }, shouldExpand = true)
+        }), shouldExpand = true)
     }
 }
 
@@ -337,7 +339,7 @@ data class RPCUpdate(
                 visitJumpInsn(IFNULL, wasNull)
 
                 // If it was not null, get the server ip
-                callBridgeMethod(RuntimeData.getServerIPMethod)
+                callBridgeMethod(Bridge.getServerIPMethod)
                 storeVariable(2) // Store the server ip
                 remapServerIP { loadVariable(2) }
                 concat("(L$internalString;)L$internalString;", "Playing on \u0001")
@@ -390,7 +392,7 @@ data class RPCUpdate(
         getServerMappings()
         invokeMethod(
             InvocationType.VIRTUAL,
-            RuntimeData.getDisplayToIPMapMethod
+            ServerMappings.getDisplayToIPMapMethod.ensure()
         ) // map
 
         // Create an inverse view onto the known servers map
@@ -585,7 +587,7 @@ object HandleNotifications : Module() {
                         getAssetsSocket()
 
                         // Create packet
-                        val popupMethod = RuntimeData.sendPopupMethod ?: error("No popup method?")
+                        val popupMethod = OtherRuntimeData.sendPopupMethod.ensure()
                         construct(
                             Type.getArgumentTypes(popupMethod.method.desc).first().internalName,
                             "(L$internalString;L$internalString;)V"
@@ -634,8 +636,8 @@ object ModName : Module(),
         // try-start
         visitLabel(start)
 
-        getObject<RuntimeData>()
-        invokeMethod(RuntimeData::version.getter)
+        getObject<CriticalRuntimeData>()
+        invokeMethod(CriticalRuntimeData::version.getter)
         concat("(L$internalString;)L$internalString;", "Lunar Client \u0001/$solarVersion")
         returnMethod(ARETURN)
 

@@ -23,6 +23,7 @@ import com.grappenmaker.solarpatcher.asm.hasConstant
 import com.grappenmaker.solarpatcher.asm.matching.asMatcher
 import com.grappenmaker.solarpatcher.asm.method.InvocationType
 import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
+import com.grappenmaker.solarpatcher.asm.transform.VisitorTransform
 import com.grappenmaker.solarpatcher.asm.util.*
 import com.grappenmaker.solarpatcher.configuration
 import com.grappenmaker.solarpatcher.util.generation.createAccountNameMod
@@ -69,20 +70,18 @@ private object ModRegistry : Module() {
             }) return null
 
         val method = node.methods.find { Type.getReturnType(it.desc).internalName == "java/util/Set" } ?: return null
-        return ClassTransform(visitors = listOf { parent ->
-            AdviceClassVisitor(
-                parent,
-                method.asDescription(node).asMatcher(),
-                exitAdvice = {
-                    mods.map { it.loader }.forEach {
-                        dup()
-                        it()
-                        invokeMethod(InvocationType.INTERFACE, "add", "(Ljava/lang/Object;)Z", "java/util/Set")
-                        pop()
-                    }
+        val desc = method.asDescription(node)
+
+        return ClassTransform(listOf(VisitorTransform(desc.asMatcher()) { parent ->
+            createAdvice(desc, parent, exitAdvice = {
+                mods.map { it.loader }.forEach {
+                    dup()
+                    it()
+                    invokeMethod(InvocationType.INTERFACE, "add", "(Ljava/lang/Object;)Z", "java/util/Set")
+                    pop()
                 }
-            )
-        }, shouldExpand = true)
+            })
+        }), shouldExpand = true)
     }
 }
 
@@ -99,8 +98,9 @@ private object LangMapper : Module() {
             node.methods.find { it.desc == "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;" }
                 ?: return null
 
-        return ClassTransform(visitors = listOf { parent ->
-            AdviceClassVisitor(parent, method.asDescription(node).asMatcher(), enterAdvice = {
+        val desc = method.asDescription(node)
+        return ClassTransform(listOf(VisitorTransform(desc.asMatcher()) { parent ->
+            createAdvice(desc, parent, enterAdvice = {
                 val noMatch = Label()
 
                 loadVariable(1)
@@ -135,7 +135,7 @@ private object LangMapper : Module() {
                 })
                 visitLabel(noMatch) // If we aren't supposed to handle the language, let it go
             })
-        }, shouldExpand = true)
+        }), shouldExpand = true)
     }
 }
 
