@@ -66,7 +66,7 @@ class HandlerCommand(
 }
 
 // Custom implemented commands
-fun getCodeCommands(): Map<String, Command> {
+fun getCodeCommands(hypixelCommands: Boolean): Map<String, Command> {
     val easterEgg = HandlerCommand("???", hidden = true) {
         cancel()
         Accessors.ChatUtility.displayComponent(
@@ -236,7 +236,7 @@ fun getCodeCommands(): Map<String, Command> {
         "solardebug" to debugCommand,
         "solarhelp" to helpCommand,
         "help" to extraHelp
-    ) + loadHypixelCommands()
+    ) + if (hypixelCommands) loadHypixelCommands() else mapOf()
 }
 
 private fun loadHypixelCommands(): Map<String, HandlerCommand> {
@@ -248,11 +248,13 @@ private fun loadHypixelCommands(): Map<String, HandlerCommand> {
     ).mapValues { (_, command) ->
         val (desc, playCMD, duelCMD) = command
         HandlerCommand(desc) {
-            text = when {
-                duelCMD != null && arguments.isNotEmpty() -> "/duel ${arguments[0]} ${duelCMD}${
-                    arguments.getOrNull(1)?.let { "_$it" } ?: ""
-                }"
-                else -> "/play $playCMD"
+            if (Accessors.Utility.getServerIP()?.endsWith("hypixel.net") == true) {
+                text = when {
+                    duelCMD != null && arguments.isNotEmpty() -> "/duel ${arguments[0]} ${duelCMD}${
+                        arguments.getOrNull(1)?.let { "_$it" } ?: ""
+                    }"
+                    else -> "/play $playCMD"
+                }
             }
         }
     }

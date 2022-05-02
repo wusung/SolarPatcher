@@ -312,9 +312,15 @@ data class FieldInfo(val owner: ClassNode, val field: FieldNode) {
 }
 
 fun findMethodFromClass(loader: () -> ClassNode?, condition: (MethodNode) -> Boolean) =
-    ReadOnlyProperty<Any, MethodInfo?> { _, prop ->
-        val owner = loader() ?: error("No class was found when finding a method for ${prop.name}!")
-        owner.methods.find(condition)?.let { MethodInfo(owner, it) }
+    object : ReadOnlyProperty<Any, MethodInfo?> {
+        private var method: MethodInfo? = null
+
+        override fun getValue(thisRef: Any, prop: KProperty<*>): MethodInfo? {
+            if (method != null) return method
+
+            val owner = loader() ?: error("No class was found when finding a method for ${prop.name}!")
+            return owner.methods.find(condition)?.let { MethodInfo(owner, it) }?.also { method = it }
+        }
     }
 
 fun MethodVisitor.invokeMethod(info: MethodInfo) {

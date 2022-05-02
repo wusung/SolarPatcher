@@ -158,10 +158,6 @@
     "duelCommand": "parkour_eight",
     "playCommand": "duels_parkour_eight"
   },
-  "party": {
-    "description": "hidenseek party pooper",
-    "playCommand": "arcade_hide_and_seek_party_pooper"
-  },
   "pot": {
     "description": "nodebuff duel",
     "duelCommand": "potion",

@@ -201,7 +201,8 @@ data class CustomCommands(
         "qbd" to TextCommand("/play duels_bridge_doubles"),
         "db" to TextCommand("/duel ", " bridge"),
         "bwp" to TextCommand("/play bedwars_practice")
-    )
+    ),
+    val useHypixelCommands: Boolean = true
 ) : Module() {
     @Transient
     override val isEnabled = true
@@ -214,7 +215,7 @@ data class CustomCommands(
 
     @Transient
     internal val actualCommands: List<Pair<String, Command>> =
-        (commands + getCodeCommands()).toList()
+        (commands + getCodeCommands(useHypixelCommands)).toList()
 
     companion object {
         // Instance of this class, initialized at runtime
