@@ -62,24 +62,6 @@ sealed class JoinedModule(@Transient private val modules: List<Module> = listOf(
         modules.mapNotNull { it.generate(node) }.reduceTransforms()
 }
 
-const val initMethodName = "init"
-
-private val metadataMatcher: ClassMatcher = { node ->
-    val metaTypes = listOf(
-        "blogPosts",
-        "modSettings",
-        "clientSettings",
-        "pinnedServers",
-        "serverIntegration",
-        "featureFlag",
-        "knownServersHash",
-        "store"
-    )
-
-    node.methods.find { it.name == initMethodName }
-        ?.constants?.containsAll(metaTypes) == true
-}
-
 @Serializable
 data class Metadata(
     val removeCalls: List<String> = listOf(
@@ -90,10 +72,23 @@ data class Metadata(
         "blogPosts"
     ),
     override val isEnabled: Boolean = false
-) : Module(),
-    TransformGenerator by matcherGenerator(
-        ClassTransform(
-            VisitorTransform(matchName(initMethodName)) { parent ->
+) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val metaTypes = listOf(
+            "blogPosts",
+            "modSettings",
+            "clientSettings",
+            "pinnedServers",
+            "serverIntegration",
+            "featureFlag",
+            "knownServersHash",
+            "store"
+        )
+
+        val method = node.methods.find { it.constants.containsAll(metaTypes) } ?: return null
+
+        return ClassTransform(
+            VisitorTransform(method.asDescription(node).asMatcher()) { parent ->
                 object : MethodVisitor(API, parent) {
                     private var lastMetadata: String? = null
 
@@ -110,15 +105,16 @@ data class Metadata(
                         isInterface: Boolean
                     ) {
                         if (
-                            descriptor != "(L$internalString;L${getInternalName<Consumer<*>>()};)V"
+                            !descriptor.contains("Ljava/util/HashMap;)")
                             || lastMetadata !in removeCalls
                         ) {
                             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
                         }
                     }
                 }
-            }), matcher = metadataMatcher
-    )
+            })
+    }
+}
 
 @Serializable
 data class ModpacketRemoval(
