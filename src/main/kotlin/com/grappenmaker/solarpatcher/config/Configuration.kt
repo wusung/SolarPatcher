@@ -84,7 +84,8 @@ data class Configuration(
     val enableWrapped: EnableWrapped = EnableWrapped(), // Re-enables lunar client Wrapped
     val customMods: CustomMods = CustomMods(), // Allows the user to define and use custom mods
     val removeChatDelay: RemoveChatDelay = RemoveChatDelay(), // Removes websocket chat delay
-    val allowCosmeticCombinations: AllowCosmeticCombinations = AllowCosmeticCombinations()
+    val allowCosmeticCombinations: AllowCosmeticCombinations = AllowCosmeticCombinations(),
+    val removeSplashBlur: RemoveSplashBlur = RemoveSplashBlur()
 ) {
     // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification
