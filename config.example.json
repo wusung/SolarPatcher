@@ -196,6 +196,6 @@
         "isEnabled": false
     },
     "removeSplashBlur": {
-        "isEnabled": true
+        "isEnabled": false
     }
 }

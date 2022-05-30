@@ -876,7 +876,7 @@ data class AllowCosmeticCombinations(override val isEnabled: Boolean = false) : 
 }
 
 @Serializable
-data class RemoveSplashBlur(override val isEnabled: Boolean = true) : Module() {
+data class RemoveSplashBlur(override val isEnabled: Boolean = false) : Module() {
     override fun generate(node: ClassNode): ClassTransform? {
         val init = node.methods.find { it.name == "<init>" } ?: return null
         if (!init.hasConstant("backgrounds/panorama_0.png")) return null

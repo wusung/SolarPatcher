@@ -98,7 +98,7 @@ data class Configuration(
     // Retrieved with reflection, yes it is slow but i dont want to put
     // the mess of all the modules twice.
     @Transient
-    val modules = Configuration::class.memberProperties
+    val enabledModules = Configuration::class.memberProperties
         .filter { it.visibility == KVisibility.PUBLIC }
         .map { it(this) }
         .filterIsInstance<Module>().filter { it.isEnabled || enableAll } + alwaysEnabledModules
