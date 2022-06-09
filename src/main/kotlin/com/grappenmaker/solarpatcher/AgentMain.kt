@@ -65,7 +65,7 @@ fun premain(arg: String?, inst: Instrumentation) {
 
         errorPopup("Using default config, pass a valid config! (When on Solar Tweaks, disable skip checks)")
         Configuration()
-    }.modulesClone() // TODO: remove, see modulesClone function
+    }
 
     // Define transforms and visitors
     val transforms = configuration.enabledModules.also {
