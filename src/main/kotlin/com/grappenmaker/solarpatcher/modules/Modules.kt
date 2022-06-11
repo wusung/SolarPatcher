@@ -246,14 +246,17 @@ data class CustomCommands(
             createAdvice(desc, parent, exitAdvice = {
                 val end = Label()
 
+                // Load chat event class onto the stack
+                getObject<Chat>()
+                getProperty(Chat::outgoingChatEvent)
+                dup()
+                val ifNull = Label()
+                visitJumpInsn(IFNULL, ifNull)
+
                 // Load event class name onto the stack
                 loadVariable(1) // Parameter 0, variable 1
                 invokeMethod(Object::class.java.getMethod("getClass"))
                 invokeMethod(Class<*>::getName)
-
-                // Load chat event class onto the stack
-                getObject<Chat>()
-                getProperty(Chat::outgoingChatEvent)
 
                 // Compare the strings
                 invokeMethod(String::equals)
@@ -269,6 +272,10 @@ data class CustomCommands(
                     "(Ljava/lang/Object;)V",
                     getInternalName<CustomCommands>()
                 )
+
+                visitJumpInsn(GOTO, end)
+                visitLabel(ifNull)
+                pop()
 
                 // method end
                 visitLabel(end)

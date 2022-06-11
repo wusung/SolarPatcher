@@ -20,7 +20,8 @@ package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.asm.*
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
-import com.grappenmaker.solarpatcher.asm.method.*
+import com.grappenmaker.solarpatcher.asm.method.InvocationType
+import com.grappenmaker.solarpatcher.asm.method.MethodDescription
 import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.util.getField
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
@@ -168,7 +169,7 @@ object SkinLayer : FinderContainer {
 
 // Chat related methods go here
 object Chat : FinderContainer {
-    lateinit var outgoingChatEvent: String // not internal name!
+    var outgoingChatEvent: String? = null // not internal name!
 
     private val componentMethod by +FindMethod { it.method.hasConstant(" [x\u0001]") }
     val toBridgeComponentMethod: MethodDescription
@@ -179,15 +180,15 @@ object Chat : FinderContainer {
                         Type.getReturnType(it.desc).internalName.startsWith("lunar/")
             }!!.asDescription()
 
-    init {
-        +FindMethod({
-            outgoingChatEvent = it.method.instructions.filterIsInstance<MethodInsnNode>()
-                .last { c -> c.name == "getMessage" }
-                .owner.replace('/', '.')
-        }) {
-            it.method.calls { m -> m.name == "getMessage" && m.owner.startsWith("lunar/") }
-                    && it.owner.name.startsWith("net/minecraft/")
-        }
+    private val clientClass by +FindClass({
+        val sendCommandMethod = it.methods.find { m -> m.hasConstant("/\u0001") || m.calls(matchName("getMessage")) }!!
+        val constructor = sendCommandMethod.instructions.filterIsInstance<TypeInsnNode>()
+            .first { t -> t.desc.startsWith("lunar/") }
+
+        outgoingChatEvent = constructor.desc.replace('/', '.')
+    }) {
+        it.methods.any { m -> m.name == "bridge\$getClientBrand" } &&
+                it.name.startsWith("net/minecraft/")
     }
 }
 

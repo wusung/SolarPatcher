@@ -75,29 +75,36 @@ internal val configDelegateClass: Class<*> by lazy {
             )
         ) {
             visitCode()
-            val prefix =
-                if (Accessors.Utility.getVersion() == "v1_7") "net/optifine" else "net/optifine/player"
+            when {
+                // On 1.19, there is no optifine yet...
+                Accessors.Utility.getVersion() != "v1_19" -> {
+                    val prefix =
+                        if (Accessors.Utility.getVersion() == "v1_7") "net/optifine" else "net/optifine/player"
 
-            val httpPrefix = if (Accessors.Utility.getVersion() == "v1_7") "net/optifine" else "net/optifine/http"
-            construct("$prefix/PlayerConfiguration", "()V")
-            construct(
-                "$httpPrefix/FileDownloadThread",
-                "(Ljava/lang/String;L$httpPrefix/IFileDownloadListener;)V"
-            ) {
-                invokeMethod(
-                    InvocationType.STATIC,
-                    "getPlayerItemsUrl",
-                    "()L$internalString;",
-                    if (Accessors.Utility.getVersion() == "v1_7") "net/optifine/HttpUtils"
-                    else "net/optifine/http/HttpUtils"
-                )
+                    val httpPrefix = if (Accessors.Utility.getVersion() == "v1_7") "net/optifine" else "net/optifine/http"
+                    construct("$prefix/PlayerConfiguration", "()V")
+                    construct(
+                        "$httpPrefix/FileDownloadThread",
+                        "(Ljava/lang/String;L$httpPrefix/IFileDownloadListener;)V"
+                    ) {
+                        invokeMethod(
+                            InvocationType.STATIC,
+                            "getPlayerItemsUrl",
+                            "()L$internalString;",
+                            if (Accessors.Utility.getVersion() == "v1_7") "net/optifine/HttpUtils"
+                            else "net/optifine/http/HttpUtils"
+                        )
 
-                loadVariable(1)
-                concat("(L$internalString;L$internalString;)L$internalString;", "\u0001/users/\u0001.cfg")
-                construct("$prefix/PlayerConfigurationReceiver", "(L$internalString;)V") { loadVariable(1) }
+                        loadVariable(1)
+                        concat("(L$internalString;L$internalString;)L$internalString;", "\u0001/users/\u0001.cfg")
+                        construct("$prefix/PlayerConfigurationReceiver", "(L$internalString;)V") { loadVariable(1) }
+                    }
+
+                    invokeMethod(Thread::start)
+                }
+                else -> visitInsn(ACONST_NULL)
             }
 
-            invokeMethod(Thread::start)
             returnMethod(ARETURN)
 
             visitMaxs(-1, -1)
