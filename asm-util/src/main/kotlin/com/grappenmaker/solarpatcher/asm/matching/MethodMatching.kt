@@ -36,13 +36,6 @@ object MethodMatching {
     fun matchOwner(owner: String): MethodMatcher = { it.owner == owner }
     fun matchAccess(access: Int): MethodMatcher = { it.access == access }
     fun matchDescriptor(descriptor: String): MethodMatcher = { it.descriptor == descriptor }
-    fun matchData(data: MethodMatcherData): MethodMatcher = {
-        val matchesName = (data.name ?: it.name) == it.name
-        val matchesDesc = (data.descriptor ?: it.descriptor) == it.descriptor
-        val matchesOwner = (data.owner ?: it.owner) == it.owner
-        val matchesAccess = (data.access ?: it.access) == it.access
-        matchesName && matchesDesc && matchesOwner && matchesAccess
-    }
 
     fun matchDescription(method: MethodDescription): MethodMatcher = {
         method.name == it.name
@@ -52,8 +45,8 @@ object MethodMatching {
     }
 
     // Utility to match clinit
-    fun matchClinit(): MethodMatcher = matchData(MethodMatcherData.CLINIT)
-    fun matchInit(): MethodMatcher = { it.name == "<init>" }
+    fun matchClinit(): MethodMatcher = matchName("<clinit>")
+    fun matchInit(): MethodMatcher = matchName("<init>")
 
     // Utility to chain matchers
     operator fun MethodMatcher.plus(other: MethodMatcher): MethodMatcher = { this(it) && other(it) }
@@ -62,26 +55,6 @@ object MethodMatching {
 
     // Utility to provide a match function, for clarity
     fun MethodMatcher.match(other: MethodDescription) = this(other)
-}
-
-// Utility data class for providing multiple optional fields to match on
-@Serializable
-data class MethodMatcherData(
-    val name: String? = null,
-    val descriptor: String? = null,
-    val owner: String? = null,
-    val access: Int? = null
-) {
-    companion object {
-        // Match on any method, but as matcher data
-        val any = MethodMatcherData()
-
-        // Shortcut to match on CLINIT
-        val CLINIT = MethodMatcherData("<clinit>", "()V", access = Opcodes.ACC_STATIC)
-    }
-
-    // Utility to convert a description to a matcher
-    fun asMatcher() = MethodMatching.matchData(this)
 }
 
 // Util to generate a matcher from method description

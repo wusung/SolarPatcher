@@ -36,15 +36,6 @@ object ClassMatching {
     fun implements(interfaceName: String): ClassMatcher = { it.interfaces.contains(interfaceName) }
     fun extends(superClass: String): ClassMatcher = { it.superName == superClass }
 
-    // Utility to match on class matcher data
-    fun matchData(data: ClassMatcherData): ClassMatcher = {
-        val matchesName = (data.name ?: it.name) == it.name
-        val matchesAccess = (data.access ?: it.access) == it.access
-        val matchesInterfaces = it.interfaces.containsAll(data.interfaces ?: it.interfaces)
-        val matchesSuperClass = (data.superClass ?: it.superName) == it.superName
-        matchesName && matchesAccess && matchesInterfaces && matchesSuperClass
-    }
-
     // Utility to chain matchers
     operator fun ClassMatcher.plus(other: ClassMatcher): ClassMatcher = { this(it) && other(it) }
 
@@ -53,21 +44,4 @@ object ClassMatching {
 
     // Utility to provide a match function, for clarity
     fun ClassMatcher.match(other: ClassNode) = this(other)
-}
-
-// Utility data class for providing multiple optional fields to match on
-@Serializable
-data class ClassMatcherData(
-    val name: String? = null,
-    val access: Int? = null,
-    val interfaces: List<String>? = null,
-    val superClass: String? = null
-) {
-    companion object {
-        // Match on any class, as matcher data
-        val any = ClassMatcherData()
-    }
-
-    // Utility to convert a description to a matcher
-    fun asMatcher() = ClassMatching.matchData(this)
 }

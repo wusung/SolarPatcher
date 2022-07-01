@@ -22,6 +22,9 @@ import com.grappenmaker.solarpatcher.Versioning
 import com.grappenmaker.solarpatcher.config.json
 import com.grappenmaker.solarpatcher.configuration
 import com.grappenmaker.solarpatcher.util.generation.Accessors
+import com.grappenmaker.solarpatcher.util.generation.getBoundServerData
+import com.grappenmaker.solarpatcher.util.generation.getBoundSession
+import com.grappenmaker.solarpatcher.util.generation.getClientBridge
 import com.grappenmaker.solarpatcher.util.javaReflectionProperty
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -121,6 +124,10 @@ fun getCodeCommands(hypixelCommands: Boolean): Map<String, Command> {
         val moduleText = configuration.enabledModules.map { m -> m::class.simpleName ?: "Unnamed" }
             .sorted().joinToString()
 
+        val clientBridge = getClientBridge()
+        val session = clientBridge.getBoundSession()
+        val server = clientBridge.getBoundServerData()
+
         Accessors.ChatUtility.displayComponent(
             """[
             "",
@@ -164,21 +171,21 @@ fun getCodeCommands(hypixelCommands: Boolean): Map<String, Command> {
                 "color": "green"
             },
             {
-                "text": "${Accessors.Utility.getPlayerName()}\n"
+                "text": "${session?.getUsername() ?: "No username"}\n"
             },
             {
                 "text": "UUID: ",
                 "color": "green"
             },
             {
-                "text": "${Accessors.Utility.getPlayerUUID()}\n"
+                "text": "${session?.getPlayerID() ?: "Not on legitimate account"}\n"
             },
             {
                 "text": "Current Server: ",
                 "color": "green"
             },
             {
-                "text": "${Accessors.Utility.getServerIP() ?: "Singleplayer"}\n"
+                "text": "${server?.serverIP() ?: "Singleplayer"}\n"
             },
             {
                 "text": "Active modules (${configuration.enabledModules.size}): ",
@@ -248,7 +255,10 @@ private fun loadHypixelCommands(): Map<String, HandlerCommand> {
     ).mapValues { (_, command) ->
         val (desc, playCMD, duelCMD) = command
         HandlerCommand(desc) {
-            if (Accessors.Utility.getServerIP()?.endsWith("hypixel.net") == true) {
+            val clientBridge = getClientBridge()
+            val server = clientBridge.getBoundServerData()
+
+            if (server?.serverIP()?.endsWith("hypixel.net") == true) {
                 text = when {
                     duelCMD != null && arguments.isNotEmpty() -> "/duel ${arguments[0]} ${duelCMD}${
                         arguments.getOrNull(1)?.let { "_$it" } ?: ""

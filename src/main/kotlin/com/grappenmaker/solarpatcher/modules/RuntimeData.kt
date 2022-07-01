@@ -26,17 +26,20 @@ import com.grappenmaker.solarpatcher.asm.transform.ClassTransform
 import com.grappenmaker.solarpatcher.asm.util.getField
 import com.grappenmaker.solarpatcher.asm.util.invokeMethod
 import com.grappenmaker.solarpatcher.util.ensure
+import com.grappenmaker.solarpatcher.util.generation.Bindings
+import org.objectweb.asm.ClassReader
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import java.lang.instrument.ClassFileTransformer
 import java.lang.reflect.Modifier
+import java.security.ProtectionDomain
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-// Utility "module" to get runtime data
 // Internally used to lookup classes and methods that can't be recognized with simple analysis
-object RuntimeData : Module() {
+object RuntimeData : ClassFileTransformer {
     internal val finders = mutableListOf<Finder<*>>()
     private val containers = listOf(
         CriticalRuntimeData,
@@ -52,9 +55,17 @@ object RuntimeData : Module() {
         println("Loaded ${finders.size} finders from ${containers.size} containers!")
     }
 
-    @Transient
-    override val isEnabled = true
-    override fun generate(node: ClassNode): ClassTransform? {
+    override fun transform(
+        loader: ClassLoader?,
+        className: String,
+        classBeingRedefined: Class<*>?,
+        protectionDomain: ProtectionDomain,
+        classfileBuffer: ByteArray
+    ): ByteArray? {
+        // Convert incoming classfile to classnode
+        val node = ClassNode()
+        ClassReader(classfileBuffer).accept(node, 0)
+
         // Find the requested classes and methods
         finders.asSequence().filter { it.value == null }.forEach { finder ->
             when (finder) {
@@ -64,7 +75,13 @@ object RuntimeData : Module() {
             }
         }
 
-        return null // Dont perform transformation
+        // Also present bridge interfaces to the bridge generation
+        if (node.name.startsWith("lunar/") && node.methods.any { it.name.startsWith("bridge\$") }) {
+            Bindings.onBridgeLoad(node)
+        }
+
+        // Never interested in transformation
+        return null
     }
 }
 
@@ -104,7 +121,6 @@ object Bridge : FinderContainer {
     val playerEntityBridge: ClassNode get() = displayMessageMethod?.owner.ensure()
     val getPlayerMethod by +findBridgeMethod("bridge\$getPlayer")
     val getPlayerNameMethod by +findBridgeMethod("bridge\$getName") { (owner) -> owner.methods.any { it.name == "bridge\$getGameProfile" } }
-    val getUUIDMethod by +findBridgeMethod("bridge\$getUniqueID")
     val isWindowFocusedMethod by +findBridgeMethod("bridge\$isWindowFocused")
     val getServerDataMethod by +findBridgeMethod("bridge\$getCurrentServerData")
     val getServerIPMethod by +findBridgeMethod("bridge\$serverIP")

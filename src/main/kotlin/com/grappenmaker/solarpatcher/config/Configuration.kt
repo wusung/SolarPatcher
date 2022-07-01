@@ -87,12 +87,11 @@ data class Configuration(
     val allowCosmeticCombinations: AllowCosmeticCombinations = AllowCosmeticCombinations(),
     val removeSplashBlur: RemoveSplashBlur = RemoveSplashBlur()
 ) {
-    // RuntimeData -> Internal module to retrieve information about the current lunar installation
     // HandleNotifications -> forced because it fixes a Lunar Client bug, brings back the LCPacketNotification
     // ModName -> changes the vendor; enforced because this is not normal Lunar Client
     // LaunchRequestModule -> request so we can keep track of some nerdy stats (it just increments a counter)
     @Transient
-    private val alwaysEnabledModules = listOf(RuntimeData, HandleNotifications, ModName, LaunchRequestModule)
+    private val alwaysEnabledModules = listOf(HandleNotifications, ModName, LaunchRequestModule)
 
     // All enabled modules, cached
     // Retrieved with reflection, yes it is slow but i dont want to put

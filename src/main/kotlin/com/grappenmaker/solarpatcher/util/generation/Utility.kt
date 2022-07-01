@@ -30,45 +30,6 @@ import java.util.*
 // Generated class supplying various utility functions
 internal val utilityClass by lazy {
     generateClass("${GeneratedCode.prefix}/Utility", interfaces = arrayOf(getInternalName<IUtility>())) {
-        with(visitMethod(Opcodes.ACC_PUBLIC, "getPlayerName", "()L$internalString;", null, null)) {
-            visitCode()
-            getPlayerBridge()
-            callBridgeMethod(Bridge.getPlayerNameMethod)
-            returnMethod(Opcodes.ARETURN)
-            visitMaxs(-1, -1)
-            visitEnd()
-        }
-
-        with(visitMethod(Opcodes.ACC_PUBLIC, "getPlayerUUID", "()L${getInternalName<UUID>()};", null, null)) {
-            visitCode()
-            getPlayerBridge()
-            callBridgeMethod(Bridge.getUUIDMethod)
-            returnMethod(Opcodes.ARETURN)
-            visitMaxs(-1, -1)
-            visitEnd()
-        }
-
-        with(visitMethod(Opcodes.ACC_PUBLIC, "getServerIP", "()L$internalString;", null, null)) {
-            visitCode()
-
-            val label = Label()
-
-            getServerData()
-            dup()
-            visitJumpInsn(Opcodes.IFNULL, label)
-
-            callBridgeMethod(Bridge.getServerIPMethod)
-            returnMethod(Opcodes.ARETURN)
-
-            visitLabel(label)
-            pop()
-            visitInsn(Opcodes.ACONST_NULL)
-            returnMethod(Opcodes.ARETURN)
-
-            visitMaxs(-1, -1)
-            visitEnd()
-        }
-
         // Arguments:
         // 0: this (automatically stacked by jvm)
         // 1: title: java/lang/String
@@ -100,14 +61,22 @@ internal val utilityClass by lazy {
             visitEnd()
         }
 
+        with(visitMethod(Opcodes.ACC_PUBLIC, "getClientBridge", "()Ljava/lang/Object;", null, null)) {
+            visitCode()
+            getClientBridge()
+            returnMethod(Opcodes.ARETURN)
+            visitMaxs(-1, -1)
+            visitEnd()
+        }
+
         implementGetVersion()
     }
 }
 
 interface IUtility {
-    fun getPlayerName(): String
-    fun getPlayerUUID(): UUID
-    fun getServerIP(): String?
     fun getVersion(): String
     fun displayPopup(title: String, description: String)
+    fun getClientBridge(): Any
 }
+
+fun getClientBridge() = bindBridge<ClientBridge>(Accessors.Utility.getClientBridge())

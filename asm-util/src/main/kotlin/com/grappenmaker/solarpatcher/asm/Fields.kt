@@ -23,7 +23,6 @@ import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
 // Description of a field (simple)
-@Serializable
 data class FieldDescription(
     val name: String,
     val descriptor: String,

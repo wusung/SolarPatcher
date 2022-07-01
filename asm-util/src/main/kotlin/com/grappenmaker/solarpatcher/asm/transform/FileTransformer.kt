@@ -85,7 +85,12 @@ class FileTransformer(
 
 // Utility to get a class transform based on the name
 private fun Collection<TransformGenerator>.getFromNode(node: ClassNode) =
-    mapNotNull { it.generate(node) }.reduceTransforms()
+    mapNotNull {
+        runCatching { it.generate(node) }.onFailure {
+            println("Exception while generating transform:")
+            it.printStackTrace()
+        }.getOrNull()
+    }.reduceTransforms()
 
 fun Collection<ClassTransform>.reduceTransforms() = reduceOrNull { acc, cur ->
     ClassTransform(

@@ -71,7 +71,7 @@ val chatUtilityClass by lazy {
 
             loadVariable(0)
             loadVariable(1)
-            concat("(Ljava/lang/String;)Ljava/lang/String;", """{"text": "\u0001"}""")
+            concat("(Ljava/lang/String;)Ljava/lang/String;", "{\"text\": \"\u0001\"}")
             invokeMethod(
                 InvocationType.VIRTUAL,
                 "displayComponent",

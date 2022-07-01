@@ -23,6 +23,7 @@ package com.grappenmaker.solarpatcher
 import com.grappenmaker.solarpatcher.asm.transform.FileTransformer
 import com.grappenmaker.solarpatcher.config.Configuration
 import com.grappenmaker.solarpatcher.config.json
+import com.grappenmaker.solarpatcher.modules.RuntimeData
 import com.grappenmaker.solarpatcher.util.LunarClassLoader
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
@@ -75,6 +76,9 @@ fun premain(arg: String?, inst: Instrumentation) {
 
     println("Launching Lunar Client")
     println()
+
+    // RuntimeData uses its own transformer
+    inst.addTransformer(RuntimeData)
 
     // Add the transforms to the instrumentation backend implementation of the jvm
     inst.addTransformer(FileTransformer(transforms, debug = configuration.debug))

@@ -22,7 +22,6 @@ import kotlinx.serialization.Serializable
 import org.objectweb.asm.Opcodes.*
 
 // Description of a method (simple)
-@Serializable
 data class MethodDescription(
     val name: String,
     val descriptor: String,

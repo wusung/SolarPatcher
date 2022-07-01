@@ -20,10 +20,9 @@ package com.grappenmaker.solarpatcher.modules
 
 import com.grappenmaker.solarpatcher.Versioning
 import com.grappenmaker.solarpatcher.asm.*
-import com.grappenmaker.solarpatcher.asm.matching.ClassMatcher
 import com.grappenmaker.solarpatcher.asm.matching.ClassMatching
-import com.grappenmaker.solarpatcher.asm.matching.MethodMatcherData
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchAny
+import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchClinit
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchDescriptor
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchName
 import com.grappenmaker.solarpatcher.asm.matching.MethodMatching.matchOwner
@@ -42,7 +41,6 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.tree.*
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
-import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.stream.Stream
 import kotlin.math.floor
@@ -166,7 +164,7 @@ data class FPSSpoof(
     override val isEnabled: Boolean = false
 ) : Module(), TransformGenerator by matcherGenerator(ClassTransform(InvokeAdviceTransform(
     matchAny(),
-    MethodMatcherData("bridge\$getDebugFPS", "()I").asMatcher(),
+    matchName("bridge\$getDebugFPS"),
     afterAdvice = {
         if (floor(multiplier) == multiplier && multiplier <= 0xFF) {
             // Whole number, can load as byte integer
@@ -497,7 +495,7 @@ data class UncapReach(override val isEnabled: Boolean = false) : Module(), Trans
         listOf(
             RemoveInvokeTransform(
                 matchAny(),
-                MethodMatcherData("min", "(DD)D").asMatcher()
+                matchName("min") + matchDescriptor("(DD)D")
             )
         ),
         listOf { parent: ClassVisitor -> replaceClassConstants(parent, mapOf(3.0 to null)) }),
@@ -523,21 +521,12 @@ data class RemoveFakeLevelhead(override val isEnabled: Boolean = false) : Module
     )
 
 @Serializable
-data class RemoveHashing(
-    val className: String = "WMMWMWMMWMWWMWMWWWWWWWMMM",
-    val method: MethodMatcherData = MethodMatcherData(
-        "WWWWWNNNNWMWWWMWWMMMWMMWM",
-        "(L$internalString;[BZ)Z"
-    ),
-    override val isEnabled: Boolean = false
-) : Module(), TransformGenerator by matcherGenerator(
-    ClassTransform(
-        ImplementTransform(method.asMatcher()) {
-            visitInsn(ICONST_1)
-            returnMethod(IRETURN)
-        }
-    ), matcher = ClassMatching.matchName(className)
-)
+data class RemoveHashing(override val isEnabled: Boolean = false) : Module() {
+    override fun generate(node: ClassNode): ClassTransform? {
+        val method = node.methods.find { it.hasConstant("Unexpected class \u0001") } ?: return null
+        return ClassTransform(ConstantValueTransform(method.asDescription(node).asMatcher(), true))
+    }
+}
 
 @Serializable
 data class DebugPackets(override val isEnabled: Boolean = false) : Module(),
@@ -564,10 +553,9 @@ data class DebugPackets(override val isEnabled: Boolean = false) : Module(),
 @Serializable
 data class ToggleSprintText(
     val replacements: Map<String, String> = Constants.ToggleSprint.defaultConfig,
-    val method: MethodMatcherData = MethodMatcherData.CLINIT,
     override val isEnabled: Boolean = false,
 ) : Module(), TransformGenerator by matcherGenerator(
-    ClassTransform(replacements.map { (from, to) -> TextTransform(method.asMatcher(), from, to) }),
+    ClassTransform(replacements.map { (from, to) -> TextTransform(matchClinit(), from, to) }),
     matcher = { it.constants.containsAll(replacements.keys) }
 )
 
