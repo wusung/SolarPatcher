@@ -112,4 +112,4 @@ fun matcherGenerator(transform: ClassTransform, matcher: ClassMatcher) = object 
 }
 
 // Utility method to match on lunar client classes only
-fun matchLunar(): ClassMatcher = { it.name.startsWith("lunar/") }
+fun matchLunar(): ClassMatcher = { it.name.startsWith("com/moonsworth/lunar") }
